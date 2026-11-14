@@ -1,8 +1,10 @@
 // The Scenario Lab's rules, kept apart from its page so they can be tested:
 // which inputs a featured scenario sets, how a scenario is scored, and where the data stops.
 
+import { SOLID_O2_LIMIT } from "./data";
 import { g } from "./format";
 import { R } from "./ranking";
+import { numberIn } from "./url-values";
 import type { FlexRow, Fuel, ScenarioInput, SolidData } from "./types";
 
 export type MaterialKey = "pmma" | "sibal" | "nomex" | "silicone" | "heptane" | "methanol";
@@ -35,6 +37,29 @@ export const HRR_LARGE = "large sample (vehicle scale)";
 export const DEFAULT_STATE: LabState = {
   material: "pmma", o2: 21, p: 101.3, flow: 10, g: 0, co2: 0, he: 0, d0: 3, hrr: HRR_SMALL, volume: 50,
 };
+
+/** The range each control allows. A value from the address bar is kept inside it. */
+export const LIMITS = {
+  o2: [10, 60], p: [20, 310], flow: [0, 80], co2: [0, 80], he: [0, 80], d0: [0.5, 8], volume: [1, 1000],
+} as const satisfies Partial<Record<keyof LabState, readonly [number, number]>>;
+
+/**
+ * The lab's state from the address bar. Anything that is not a known material, a gravity level
+ * the formula has, a known size, or a number is replaced by the default, so a hand-typed link can
+ * never produce an estimate for inputs the reader did not choose.
+ */
+export function parseState(q: Record<keyof LabState, string>): LabState {
+  const d = DEFAULT_STATE;
+  const number = (key: keyof typeof LIMITS) => numberIn(q[key], LIMITS[key][0], LIMITS[key][1], d[key]);
+  const gravity = Number(q.g);
+  return {
+    material: Object.hasOwn(MATERIALS, q.material) ? (q.material as MaterialKey) : d.material,
+    o2: number("o2"), p: number("p"), flow: number("flow"), co2: number("co2"), he: number("he"), d0: number("d0"),
+    g: q.g.trim() !== "" && R.gravity_score.some((x) => x.g === gravity) ? gravity : d.g,
+    hrr: Object.hasOwn(R.hrr_scale_w, q.hrr) ? q.hrr : d.hrr,
+    volume: number("volume"),
+  };
+}
 
 const CODE_TO_KEY: Record<string, MaterialKey> = { PMMA: "pmma", "SIBAL-cotton": "sibal", Nomex: "nomex", silicone: "silicone" };
 
@@ -98,8 +123,8 @@ const inside = (v: number, lo: number, hi: number) => lo <= v && v <= hi;
 export function gaps(s: LabState, flexRows: FlexRow[], solid: SolidData): string[] {
   const m = MATERIALS[s.material];
   const out: string[] = [];
-  if (s.g === 0.16 || s.g === 0.38) out.push(`gravity: no repository test at ${g(s.g)} g`);
-  else if (s.g === 1) out.push("gravity: the data are microgravity tests");
+  if (s.g === 1) out.push("gravity: the data are microgravity tests");
+  else if (s.g !== 0) out.push(`gravity: no repository test at ${g(s.g)} g`);
 
   if (m.kind === "droplet") {
     const f = flexRows.filter((r) => r.fuel === (m.code as Fuel));
@@ -134,8 +159,8 @@ export function gaps(s: LabState, flexRows: FlexRow[], solid: SolidData): string
     // both ends: no solid test was run in still gas, so 0 cm/s is outside the range too
     if (!inside(s.flow, env.flow[0], env.flow[1])) out.push(`flow: ${m.label} was tested from ${g(env.flow[0])} to ${g(env.flow[1])} cm/s`);
   }
-  if (s.o2 > 34 && solid.envelope_all.o2) {
-    out.push(`oxygen above 34%: no solid-material test point exists at any pressure (highest with a stated outcome: ${solid.envelope_all.o2[1].toFixed(1)}%)`);
+  if (s.o2 > SOLID_O2_LIMIT && solid.envelope_all.o2) {
+    out.push(`oxygen above ${SOLID_O2_LIMIT}%: no solid-material test point exists at any pressure (highest with a stated outcome: ${solid.envelope_all.o2[1].toFixed(1)}%)`);
   }
   return out;
 }
