@@ -58,6 +58,13 @@ def test_planned_and_pending_statuses(inv):
     assert by_id.loc["FM2", "status"] == "planned"
     assert by_id.loc["LUCI", "status"] == "flown_analysis_pending"
     assert by_id.loc["FM2", "n_tests"] == ""                  # nothing flown, so no test count
+    # a planned test matrix is a note, never a tested range that ranking or tagging could read
+    for col in ("o2_min_pct", "o2_max_pct", "pressure_min_kPa", "pressure_max_kPa"):
+        assert by_id.loc["FM2", col] == "", col
+    assert "Planned, not flown" in by_id.loc["FM2", "note"] and "37, 33, 29 and 25% O2" in by_id.loc["FM2", "note"]
+    assert by_id.loc["FM2", "environments"] == ["Lunar"]      # tagged by its gravity alone
+    ranked = cat.rank_investigations(34, 56.5, 5, "solid", 0.16).set_index("investigation_id")
+    assert ranked.loc["FM2", "rel_oxygen"] == 0.0 and ranked.loc["FM2", "rel_pressure"] == 0.0
 
 
 def test_nothing_is_imputed_where_psi_is_silent(inv):
@@ -189,6 +196,30 @@ def test_search_applies_a_fuel_class_named_without_an_oxygen_limit():
     for s in droplet["statements"]:
         cls = "droplet" if s["doc_id"].startswith("flex-") and s["doc_id"] not in ev.index else ev.loc[s["doc_id"], "evidence_class"]
         assert cls in classes, s["doc_id"]
+
+
+def test_key_values_belong_to_their_own_investigation(inv):
+    by_id = inv.set_index("investigation_id")
+    assert (float(by_id.loc["Saffire-I", "key_result_value"]), by_id.loc["Saffire-I", "key_result_unit"]) == (0.18, "cm/s (Saffire I)")
+    assert (float(by_id.loc["Saffire-III", "key_result_value"]), by_id.loc["Saffire-III", "key_result_unit"]) == (0.23, "cm/s (Saffire III)")
+    assert (float(by_id.loc["Saffire-IV", "key_result_value"]), by_id.loc["Saffire-IV", "key_result_unit"]) == (3150.0, "W (average, IV-1)")
+    assert (float(by_id.loc["Saffire-V", "key_result_value"]), by_id.loc["Saffire-V", "key_result_unit"]) == (2800.0, "W (average, V-2)")
+    for investigation, value in [("Saffire-III", "0.23 cm/s"), ("Saffire-V", "2,800 W")]:
+        assert value in by_id.loc[investigation, "key_result"]          # the number is in the statement shown
+
+
+def test_counts_are_of_tests_only(inv):
+    by_id = inv.set_index("investigation_id")
+    assert int(by_id.loc["BASS", "n_tests"]) == 121              # 122 rows, one of them "SOOT Cleaning"
+    assert "89 test points" in by_id.loc["BASS", "n_tests_source"]
+    assert by_id.loc["SLICE", "n_tests"] == ""                   # PSI lists test days, not tests
+    assert "test days" in by_id.loc["SLICE", "range_source"]
+
+
+def test_co2_in_a_question_is_not_read_as_an_oxygen_limit():
+    assert cat.parse_filters("which droplets burned in CO2 above 30%?") == {"evidence_class": "droplet"}
+    assert cat.parse_filters("tests with o2 above 30%") == {"o2_at_least": 30.0}
+    assert cat.parse_filters("oxygen below 15 percent for solids") == {"o2_at_most": 15.0, "evidence_class": "solid"}
 
 
 def test_catalogue_counts_use_distinct_tests(inv):
