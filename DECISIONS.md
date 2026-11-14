@@ -151,3 +151,10 @@ sources themselves.
   quotes with page and read level. LUCI, the 2026 Saffire table, the SoFIE-GEL table, the BASS-II
   poster and the lunar-gravity ignition paper were then re-read directly before use. Statements
   that rest on an agent's reading alone say "read by research agent" in their read level.
+- **D33. Hosting.** The public link is GitHub Pages, running the app in the browser through stlite
+  (pinned to 1.12.0, Streamlit 1.65). The brief's default, Streamlit Community Cloud, needs an
+  account sign-in that only the team can do (QUESTIONS.md Q7); the app runs there unchanged. The
+  page mounts the repository's own files by URL, each tagged with a content hash so a cached file
+  is never mixed with a newer build, and a 404 page sends deep links home.
+- **D34. The deck is one HTML file** with inline SVG and CSS charts, no images and no external
+  script. Its numbers are asserted against the data by `tests/test_deck.py`.
