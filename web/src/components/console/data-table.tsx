@@ -59,7 +59,7 @@ export function DataTable<T>({
   }, [rows, columns, sort]);
 
   return (
-    <div className="overflow-auto border border-line" style={{ maxHeight }} tabIndex={0} role="region" aria-label={caption}>
+    <div className="overflow-auto rounded-xl border border-line bg-surface" style={{ maxHeight }} tabIndex={0} role="region" aria-label={caption}>
       <Table className="text-body" style={minWidth ? { minWidth } : undefined}>
         <caption className="sr-only">{caption}</caption>
         <TableHeader className="sticky top-0 z-10 bg-secondary">
