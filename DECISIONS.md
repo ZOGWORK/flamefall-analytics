@@ -6,6 +6,9 @@ read and where.
 
 ## Corrections found by checking primary sources (14 Nov 2026)
 
+C1 to C14 correct the research notes or the brief. C15 is an inconsistency inside a primary
+source itself.
+
 | # | Claim in the research notes or brief | What the primary source shows | What the dashboard does |
 |---|---|---|---|
 | C1 | FLEX gas fractions "sum to 1.00 for all rows except FLEX-069, 075, 076, 079, 080, 081 (0.98)" | Table IX prints fractions to two decimals: 247 rows sum to 1.00, **22 rows to 0.99**, 6 rows to 0.98 and 1 row (FLEX-162) to 1.01. Confirmed cell by cell against the PDF | States the real distribution; `test_gas_fraction_sums` asserts it |
@@ -22,6 +25,8 @@ read and where.
 | C12 | PSI's FLEX experimental table would match Table IX row for row | PSI's table (PSI-69) has 274 rows numbered 1 to 274 in sequence. All 274 match Table IX value for value when aligned on the CIR identifier and time, but PSI's numbering stops agreeing with the FLEX test numbers after test 155, and FLEX-216 and FLEX-230 are absent | Table IX stays the authority for test numbers. `test_psi_flex_table_matches_table_ix_value_for_value` |
 | C13 | "ACME operations Nov 2017 to Feb 2022"; "E-FIELD 14 Mar to Nov 2018" | Operations ran Sept 2017 to Feb 2022 with first science in Nov 2017; E-FIELD ran March to May and September to November 2018 (no day given) | Dates in the catalogue come from the PSI record; the E-FIELD statement uses the months only |
 | C14 | "Three cool flames" in CFI-G | The press releases say three were first noticed on 23 June 2021. PSI's table marks 7 of 179 normal-flame tests as cool flames (5 on day 174 of 2021, 2 on day 291) | Both are shown, each attributed |
+
+| C15 | The report's figure captions restate each test's atmosphere, so they could be quoted as evidence | 45 of the 268 captions that state an atmosphere differ from the report's own Table IX: 29 by 0.01 to 0.02, 16 by more (FLEX-185's caption sums to 1.47; FLEX-280's swaps nitrogen and helium). Table IX agrees with PSI's table on these tests | Table IX is the source of every value. The caption's wording is stored separately, never used as a value, and the Explorer notes the conflict on those 45 tests. `test_caption_atmosphere_is_recorded_but_never_used` |
 
 ## Verified as stated
 
