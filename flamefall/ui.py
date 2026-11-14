@@ -49,11 +49,15 @@ def section(title: str, explainer: str, level: int = 2) -> None:
     st.markdown(f'<p class="ff-explain">{_t(explainer)}</p>', unsafe_allow_html=True)
 
 
-def source(text: str, url: str | None = None, extra: str = "") -> None:
-    """Provenance footnote. No number goes on screen without one of these under it."""
+def source(text: str, url: str | None = None, extra: str = "", verification: str | None = None) -> None:
+    """Provenance footnote. No number goes on screen without one of these under it.
+
+    `verification` (verified_live / index / unverified) puts the matching badge in front.
+    """
     link = f' · <a href="{esc(url)}" target="_blank" rel="noopener">open source</a>' if url else ""
     tail = f" · {_t(extra)}" if extra else ""
-    st.markdown(f'<div class="ff-src">Source: {_t(text)}{link}{tail}</div>', unsafe_allow_html=True)
+    lead = verification_badge(verification) if verification else ""
+    st.markdown(f'<div class="ff-src">{lead}Source: {_t(text)}{link}{tail}</div>', unsafe_allow_html=True)
 
 
 def badge(text: str, kind: str = "mute") -> Html:
