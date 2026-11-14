@@ -212,6 +212,28 @@ def test_extinction_column_is_only_called_extinction_for_extinction_outcomes(f):
         assert (charts.END_MARKER_OTHER.format(outcome=outcome) in names) == (outcome != "Extinction"), test_id
 
 
+def test_end_diameter_is_labelled_by_outcome():
+    """The single-test panel and the chart use the same rule for the extinction-diameter column."""
+    from pathlib import Path
+
+    from streamlit.testing.v1 import AppTest
+
+    from flamefall import charts
+
+    assert charts.end_diameter_label("Extinction") == "Ext. diameter"
+    assert charts.end_diameter_label("Disruption") == charts.end_diameter_label("Completion") == "Diameter at test end"
+    at = AppTest.from_file(str(Path(flex.__file__).resolve().parents[1] / "app.py"), default_timeout=120)
+    at.run()
+    at.switch_page("views/flex_explorer.py")
+    at.run()                                                   # default selection is FLEX-001, a Disruption
+    panel = " ".join(m.value for m in at.markdown)
+    assert "Diameter at test end" in panel and ">Ext. diameter<" not in panel
+    pick = next(s for s in at.selectbox if s.label == "Test")
+    pick.set_value("FLEX-002").run()                           # an Extinction
+    panel = " ".join(m.value for m in at.markdown)
+    assert ">Ext. diameter<" in panel and "Diameter at test end" not in panel
+
+
 def test_flex_212_keeps_its_printed_atmosphere(raw):
     r = raw.set_index("test_no").loc[212]
     assert r["pressure_mmhg"] == 759.8 and (r["o2"], r["n2"], r["co2"], r["he"]) == (0.16, 0.84, 0.0, 0.0)

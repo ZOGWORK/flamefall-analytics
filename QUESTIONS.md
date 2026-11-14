@@ -57,7 +57,3 @@ was unreachable, so FLARE has no numbers in the catalogue.
 verified test points and scores no better than chance on unseen test series (AUC 0.48). The
 Scenario Lab therefore gives nearest real tests and no probability for solids. I think this is the
 right call for the Validity score; say so if you would rather hide the solid model entirely.
-
-**Q7. Demo deck hosting.** The deck is a single HTML file in `deck/` served by GitHub Pages from
-this public repository, so the link needs no account. If you prefer a slides service, the content
-is plain HTML and easy to move.

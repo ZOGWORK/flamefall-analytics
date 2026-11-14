@@ -176,6 +176,32 @@ def test_search_applies_a_stated_oxygen_filter():
         assert ev.loc[i, "o2_max_pct"] >= 25 and ev.loc[i, "evidence_class"] in ("solid", "partial_g")
 
 
+def test_search_applies_a_fuel_class_named_without_an_oxygen_limit():
+    """A question that names a class but no oxygen limit is still answered from that class only."""
+    res = cat.answer("Did the smoke detector miss anything?")
+    assert res["filters"] == {"evidence_class": "smoke"}
+    ev = cat.load_evidence().set_index("id")
+    assert res["statements"]
+    assert all(ev.loc[s["doc_id"], "evidence_class"] == "smoke" for s in res["statements"])
+    droplet = cat.answer("what happened to the droplet flames")
+    assert droplet["filters"] == {"evidence_class": "droplet"} and droplet["statements"]
+    classes = {"droplet"}
+    for s in droplet["statements"]:
+        cls = "droplet" if s["doc_id"].startswith("flex-") and s["doc_id"] not in ev.index else ev.loc[s["doc_id"], "evidence_class"]
+        assert cls in classes, s["doc_id"]
+
+
+def test_catalogue_counts_use_distinct_tests(inv):
+    by_id = inv.set_index("investigation_id")
+    assert int(by_id.loc["ACME-CFI-G", "n_tests"]) == 179 + 154          # not the 1,015 lines of the padded file
+    assert int(by_id.loc["CFI", "n_tests"]) == 79
+    assert int(by_id.loc["ACME-EFIELD", "n_tests"]) == 219
+    assert int(by_id.loc["SPICE", "n_tests"]) == 435
+    for investigation in ("CFI", "ACME-EFIELD", "SPICE"):
+        assert "exact repeats" in by_id.loc[investigation, "n_tests_source"]
+    assert "padding rows" in by_id.loc["ACME-CFI-G", "n_tests_source"]
+
+
 def test_search_with_no_match_returns_nothing_rather_than_a_guess():
     res = cat.answer("zebra accounting spreadsheet")
     assert res["n_hits"] == 0 and res["statements"] == []

@@ -135,6 +135,10 @@ See `DECISIONS.md` for where the schema had to be extended to avoid inventing a 
   with their content unchanged (git may normalise line endings). 22 of the 26 records attach at
   least one.
 
+Row counts need care. The CFI-G inverse-flame file has 861 comma-only padding rows after its 154
+tests, and three files repeat a block of rows exactly (CFI 8 rows, SPICE 34, E-FIELD Flames 8). The
+files are stored as published; `flamefall/psi.py` drops blank rows on read and counts distinct rows.
+
 Text from the API contains U+FFFD characters where PSI's source had dashes or quotes. The files
 keep PSI's bytes; `flamefall/psi.py::fix_text` repairs them for display only.
 
@@ -151,7 +155,7 @@ test number, and does not list FLEX-216 or FLEX-230 (`tests/test_psi.py`).
 | NTRS record | https://ntrs.nasa.gov/citations/20210011385 |
 | PDF | https://ntrs.nasa.gov/api/citations/20210011385/downloads/TM-20210011385.pdf (48,972,416 bytes, 144 pages, SHA-256 `5ffa911fd9b6356f204646003fb9342e341810dcdfdf5cb15756e7f01ec5f770`) |
 | Scripts | `scripts/bass2/run_all.sh` rebuilds every CSV from the PDF; output checked byte-identical |
-| Details | `bass2/README.md`: column mapping, labelling rules, checks, and 28 listed judgement calls |
+| Details | `bass2/README.md`: column mapping, labelling rules, checks, and 30 listed judgement calls |
 
 Verbatim tables: 2.1, 4.1, 4.2, 5.1 (20 slab tests), 7.1 (31 fabric rows), D.2, and Appendix A
 (126 tests, all 35 printed columns). Every row was compared with the text of its PDF page: 0
@@ -187,4 +191,4 @@ states, is empty. 26 rows are the PSI search hits; 7 are investigations the sear
 
 Written by `scripts/train_models.py` (seed 42): coefficients, preprocessing statistics, every
 validation metric, out-of-fold predictions, 1,000 bootstrap coefficient sets, and the exact fold
-membership of every row.
+membership of every row. The cards are strict JSON: a missing value is `null`, never `NaN`.

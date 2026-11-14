@@ -79,6 +79,27 @@ def test_scenario_outside_the_envelope_is_flagged():
     assert "Oxygen: FLEX heptane tests cover 13 to 34%" in text
 
 
+def test_cool_flame_estimate_is_flagged_outside_its_own_envelope():
+    """30% O2 is inside the extinction model's range but outside the cool-flame model's (13 to 24%)."""
+    at = open_page("views/scenario_lab.py")
+    at.selectbox(key="sl_material").set_value("n-Heptane droplet")
+    at.slider(key="sl_o2").set_value(30.0)
+    at.slider(key="sl_flow").set_value(0.0)
+    at.run()
+    assert not at.exception
+    text = text_of(at)
+    assert "outside what the exploratory cool-flame model has seen" in text and "is a DEMO value" in text
+
+
+def test_model_lab_names_the_right_class_for_the_cool_flame_model():
+    at = open_page("views/model_lab.py")
+    at.radio[0].set_value("droplet_cool_flame")
+    at.run()
+    assert not at.exception
+    text = text_of(at)
+    assert "cool-flame evidence after the visible flame went out" in text and "flame present" not in text
+
+
 def test_solid_scenario_shows_no_model_probability():
     text = text_of(open_page("views/scenario_lab.py"))          # default: PMMA, a solid
     assert "No model estimate for solid materials" in text and "failed validation" in text

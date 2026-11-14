@@ -6,8 +6,8 @@ read and where.
 
 ## Corrections found by checking primary sources (14 Nov 2026)
 
-C1 to C14 correct the research notes or the brief. C15 is an inconsistency inside a primary
-source itself.
+C1 to C14 correct the research notes or the brief. C15 and C16 are inconsistencies inside the
+sources themselves.
 
 | # | Claim in the research notes or brief | What the primary source shows | What the dashboard does |
 |---|---|---|---|
@@ -15,7 +15,7 @@ source itself.
 | C2 | "The BASS-II memo PDF returned HTTP 404; Tables 5.1, 7.1 and A.2 are unverified. Do not display row-level values" | The NTRS record's own metadata lists the file as `TM-20210011385.pdf`. That URL returns the 144-page memo; the 404 came from a guessed filename. Tables 2.1, 4.1, 4.2, 5.1, 7.1, D.2 and the six Appendix A test matrices were transcribed by script and every row checked against the page text (0 mismatches) | BASS-II rows are shown as verified and cite the memo's table and page. `data/bass2/`, `scripts/bass2/` |
 | C3 | "26 PSI combustion investigations" | The PSI search for "combustion" returns 26 records, but 2 are not combustion science (PSI-181, a solder study; PSI-108, a fluid-physics experiment). 24 carry Research Area = Combustion Science | Shows "26 search results, 24 combustion science"; the two others are listed and never ranked |
 | C4 | Saffire: "IV-1 SIBAL, peak HRR 3,150 W, 409 kJ" and "V-2 2,800 W" | In ICES-2024-365 Table 2 those are **average** heat release from fuel-consumption calorimetry. Peak heat release by oxygen-consumption calorimetry exists only for VI-2, VI-3 and VI-4 (3,217 / 3,080 / 1,507 W) | Two separate evidence rows, each with its method and "average" or "peak" in the text |
-| C5 | "The 85% O2 figure belongs to Flame Design inverse flames, never to CFI-G" | PSI's own CFI-G inverse-flame table (PSI-159, 1,015 rows) has burner oxygen up to 0.85, and so does PSI's Flame Design inverse-flame table (PSI-10). The challenge page says the same: an oxygen-nitrogen mixture of up to 85% oxygen "flowed from the spherical burner creating an inside-out flame". Chamber-ambient oxygen in both normal-flame tables stops at 0.40 | The essential point stands and is enforced: 85% is a **burner feed, not an ambient**. It is attributed to the inverse flames of both investigations. `o2_is_ambient = False`; `test_inverse_flame_oxygen_is_a_burner_feed_not_an_ambient` |
+| C5 | "The 85% O2 figure belongs to Flame Design inverse flames, never to CFI-G" | PSI's own CFI-G inverse-flame table (PSI-159, 154 tests) has burner oxygen up to 0.85, and so does PSI's Flame Design inverse-flame table (PSI-10). The challenge page says the same: an oxygen-nitrogen mixture of up to 85% oxygen "flowed from the spherical burner creating an inside-out flame". Chamber-ambient oxygen in both normal-flame tables stops at 0.40 | The essential point stands and is enforced: 85% is a **burner feed, not an ambient**. It is attributed to the inverse flames of both investigations. `o2_is_ambient = False`; `test_inverse_flame_oxygen_is_a_burner_feed_not_an_ambient` |
 | C6 | "LUCI has NO published quantitative results as of 14 Nov 2026. Do not present LUCI spread rates" | A conference presentation is on NTRS (20250010653, ASGSR, Dec 2025) with spread rates for both samples in simulated lunar gravity and in normal gravity, and chamber oxygen histories. Read in full | Shown on *What We Don't Know* and in the Scenario Lab as the nearest real tests to partial gravity, labelled as preliminary slides, one flight, centrifuge-simulated gravity, not a PSI dataset. No limiting oxygen value is claimed, because the slides state none. See QUESTIONS.md Q3 |
 | C7 | "There is NO Saffire VI-vs-IV spread-rate comparison in the literature. Do not present one" | ICES-2026-577 (NTRS 20260001992) Table 1 lists thin-fuel spread rates side by side: IV-1 3.6 mm/s, V-2 3.4 mm/s, VI-2 4.05 mm/s. Read in full | The three rates are shown together with their pressures and source. No ratio or trend is derived from them. See QUESTIONS.md Q3 |
 | C8 | "CO/CO2 molar ratio 0.01 to 0.1" (ICES-2015-196) | The paper states no such range. It gives 550 ppm CO per 1% CO2 for concurrent rods and 370 ppm for thick slabs, about ten times efficient flue gas | The stated slopes are shown instead |
@@ -27,6 +27,8 @@ source itself.
 | C14 | "Three cool flames" in CFI-G | The press releases say three were first noticed on 23 June 2021. PSI's table marks 7 of 179 normal-flame tests as cool flames (5 on day 174 of 2021, 2 on day 291) | Both are shown, each attributed |
 
 | C15 | The report's figure captions restate each test's atmosphere, so they could be quoted as evidence | 45 of the 268 captions that state an atmosphere differ from the report's own Table IX: 29 by 0.01 to 0.02, 16 by more (FLEX-185's caption sums to 1.47; FLEX-280's swaps nitrogen and helium). Table IX agrees with PSI's table on these tests | Table IX is the source of every value. The caption's wording is stored separately, never used as a value, and the Explorer notes the conflict on those 45 tests. `test_caption_atmosphere_is_recorded_but_never_used` |
+
+| C16 | PSI experimental tables can be counted row by row | Three files repeat a block of rows exactly (8 rows in the CFI table, 34 in SPICE, 8 in E-FIELD Flames), and the CFI-G inverse-flame file carries 861 comma-only padding rows after its 154 tests | Blank rows are dropped on read; test counts and flame totals use distinct rows, and each count's source note says how many repeats were left out. `test_psi_tables_are_counted_without_padding_or_repeats` |
 
 ## Verified as stated
 

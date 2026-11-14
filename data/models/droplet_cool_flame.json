@@ -3,6 +3,7 @@
  "title": "Droplet model: cool-flame evidence after visible extinction",
  "target_label": "report caption states evidence of cool-flame burning after the visible flame went out",
  "burning_is_y1": true,
+ "burning_label": "cool-flame evidence after the visible flame went out",
  "seed": 42,
  "n_rows": 47,
  "n_positive": 39,
@@ -10292,7 +10293,7 @@
    "o2_partial_kpa": 16.2077,
    "co2_pct": 0.0,
    "he_pct": 0.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "y": 1
   },
   {

@@ -95,7 +95,7 @@ with left:
                       xaxis=dict(range=[-0.02, 1.02]), yaxis=dict(range=[-0.02, 1.02]))
     ui.plotly(fig, key="roc")
     sens90 = m["burning_sensitivity_at_90_specificity"]
-    burning = "flame persists" if not r["burning_is_y1"] else "flame present"
+    burning = r["burning_label"]
     st.markdown(
         '<div class="ff-kv">'
         f'<div class="k">PR-AUC</div><div class="ff-mono">{f2(m["pr_auc"])}</div>'

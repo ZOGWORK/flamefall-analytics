@@ -284,26 +284,45 @@ def answer(query: str, k: int = 6) -> dict:
     filters = parse_filters(query)
     hits = search(query, k=k)
     statements = hits[hits["kind"] == "evidence"]
-    if "o2_at_least" in filters or "o2_at_most" in filters:
-        ev = ambient_evidence()
-        if "o2_at_least" in filters:
-            ev = ev[ev["o2_max_pct"] >= filters["o2_at_least"]]
-        if "o2_at_most" in filters:
-            ev = ev[ev["o2_min_pct"] <= filters["o2_at_most"]]
-        if "evidence_class" in filters:
-            wanted = {filters["evidence_class"]} | ({"partial_g"} if filters["evidence_class"] == "solid" else set())
-            ev = ev[ev["evidence_class"].isin(wanted)]
+    has_o2 = "o2_at_least" in filters or "o2_at_most" in filters
+    if filters:
         vec, matrix = _index()
         scores = (matrix @ vec.transform([expand(query)]).T).toarray().ravel()
-        score_of = dict(zip(corpus()["doc_id"], scores))
-        statements = pd.DataFrame({
-            "doc_id": ev["id"], "kind": "evidence", "investigation_id": ev["investigation_id"],
-            "title": ev["investigation_id"], "text": ev["statement"], "source_ref": ev["source_ref"],
-            "source_url": ev["source_url"], "verification": ev["verification"],
-            "score": [float(score_of.get(i, 0.0)) for i in ev["id"]]}).sort_values("score", ascending=False).head(k)
+        docs = corpus().assign(score=scores)
+        docs = docs[docs["kind"] == "evidence"].merge(_evidence_facets(), on="doc_id", how="left")
+        if has_o2:
+            docs = docs[docs["o2_is_ambient"] & docs["o2_max_pct"].notna()]      # a burner feed is never matched
+            if "o2_at_least" in filters:
+                docs = docs[docs["o2_max_pct"] >= filters["o2_at_least"]]
+            if "o2_at_most" in filters:
+                docs = docs[docs["o2_min_pct"] <= filters["o2_at_most"]]
+        else:
+            docs = docs[docs["score"] >= 0.04]                                    # class only: still a text match
+        if "evidence_class" in filters:
+            wanted = {filters["evidence_class"]} | ({"partial_g"} if filters["evidence_class"] == "solid" else set())
+            docs = docs[docs["evidence_class"].isin(wanted)]
+        statements = docs.sort_values("score", ascending=False).head(k)[
+            ["doc_id", "kind", "investigation_id", "title", "text", "source_ref", "source_url", "verification", "score"]]
+        if "evidence_class" in filters:
+            keep = set(statements["investigation_id"]) | set(
+                load_investigations().loc[load_investigations()["evidence_class"].isin(wanted), "investigation_id"])
+            hits = hits[hits["investigation_id"].isin(keep)]
     investigations = list(dict.fromkeys(list(statements["investigation_id"]) + list(hits["investigation_id"])))
     return {"query": query, "filters": filters, "n_hits": int(len(statements) + (hits["kind"] != "evidence").sum()),
             "statements": statements.to_dict("records"), "investigations": investigations, "hits": hits}
+
+
+@lru_cache(maxsize=1)
+def _evidence_facets() -> pd.DataFrame:
+    """Fuel class and recorded ambient-oxygen range of every evidence document, for filtering."""
+    e = load_evidence()
+    facets = pd.DataFrame({"doc_id": e["id"], "evidence_class": e["evidence_class"], "o2_min_pct": e["o2_min_pct"],
+                           "o2_max_pct": e["o2_max_pct"], "o2_is_ambient": e["o2_is_ambient"].astype(bool)})
+    f = flex.load_flex()
+    computed = pd.DataFrame({"doc_id": [d["doc_id"] for d in flex_documents()], "evidence_class": "droplet",
+                             "o2_min_pct": float(f["o2_pct"].min()), "o2_max_pct": float(f["o2_pct"].max()),
+                             "o2_is_ambient": True})
+    return pd.concat([computed, facets], ignore_index=True)
 
 
 # =============================================================================== nearest real tests

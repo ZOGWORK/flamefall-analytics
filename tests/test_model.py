@@ -146,6 +146,29 @@ def test_more_oxygen_means_less_extinction_and_more_co2_means_more():
     assert with_co2 > without
 
 
+def test_model_cards_are_strict_json():
+    """No bare NaN or Infinity token: the cards must load in any JSON parser, not only Python's."""
+    def reject(token):
+        raise ValueError(f"non-finite token {token}")
+
+    for name in model.SPECS:
+        text = (model.MODEL_DIR / f"{name}.json").read_text(encoding="utf-8")
+        json.loads(text, parse_constant=reject)
+    json.loads((model.DATA / "cv_splits.json").read_text(encoding="utf-8"), parse_constant=reject)
+    rows = json.loads((model.MODEL_DIR / "droplet_extinction.json").read_text(encoding="utf-8"))["training_rows"]
+    missing = [r for r in rows if r["d0_mm"] is None]
+    assert len(missing) == 12                                   # the 12 tests with no printed diameter
+    fm = model.Fitted("droplet_extinction")
+    assert 0 < fm.predict(dict(o2_pct=21, pressure_kpa=101.3, o2_partial_kpa=21.3, co2_pct=0, he_pct=0, d0_mm=None,
+                               fuel_heptane=0.0))["p"] < 1     # a missing diameter is imputed, not an error
+
+
+def test_each_model_names_its_burning_class(cards):
+    assert cards["droplet_extinction"]["burning_label"] == "the visible flame did not go out"
+    assert "cool-flame evidence" in cards["droplet_cool_flame"]["burning_label"]
+    assert cards["solid_sustained"]["burning_label"] == "the flame was sustained"
+
+
 def test_auc_helper():
     y = np.array([0, 0, 1, 1])
     assert model.auc(y, np.array([0.1, 0.2, 0.8, 0.9])) == 1.0

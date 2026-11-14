@@ -3,6 +3,7 @@
  "title": "Droplet model: did the visible flame go out?",
  "target_label": "test ended in Extinction (visible flame went out before the fuel was gone)",
  "burning_is_y1": false,
+ "burning_label": "the visible flame did not go out",
  "seed": 42,
  "n_rows": 275,
  "n_positive": 185,
@@ -13839,7 +13840,7 @@
    "o2_partial_kpa": 21.2782,
    "co2_pct": 0.0,
    "he_pct": 0.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 1.0,
    "y": 0
   },
@@ -14004,7 +14005,7 @@
    "o2_partial_kpa": 24.6049,
    "co2_pct": 0.0,
    "he_pct": 0.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 1.0,
    "y": 0
   },
@@ -14323,7 +14324,7 @@
    "o2_partial_kpa": 21.5638,
    "co2_pct": 0.0,
    "he_pct": 0.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 1.0,
    "y": 0
   },
@@ -14620,7 +14621,7 @@
    "o2_partial_kpa": 13.3456,
    "co2_pct": 0.0,
    "he_pct": 0.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 1.0,
    "y": 1
   },
@@ -14631,7 +14632,7 @@
    "o2_partial_kpa": 13.349,
    "co2_pct": 0.0,
    "he_pct": 0.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 1.0,
    "y": 1
   },
@@ -14653,7 +14654,7 @@
    "o2_partial_kpa": 12.351,
    "co2_pct": 0.0,
    "he_pct": 0.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 0.0,
    "y": 1
   },
@@ -14796,7 +14797,7 @@
    "o2_partial_kpa": 17.0994,
    "co2_pct": 20.0,
    "he_pct": 0.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 1.0,
    "y": 0
   },
@@ -15247,7 +15248,7 @@
    "o2_partial_kpa": 24.5932,
    "co2_pct": 20.0,
    "he_pct": 0.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 1.0,
    "y": 0
   },
@@ -16039,7 +16040,7 @@
    "o2_partial_kpa": 16.2077,
    "co2_pct": 0.0,
    "he_pct": 0.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 1.0,
    "y": 1
   },
@@ -16193,7 +16194,7 @@
    "o2_partial_kpa": 20.2543,
    "co2_pct": 0.0,
    "he_pct": 5.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 0.0,
    "y": 1
   },
@@ -16358,7 +16359,7 @@
    "o2_partial_kpa": 17.2162,
    "co2_pct": 0.0,
    "he_pct": 20.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 1.0,
    "y": 0
   },
@@ -16413,7 +16414,7 @@
    "o2_partial_kpa": 16.2333,
    "co2_pct": 0.0,
    "he_pct": 25.0,
-   "d0_mm": NaN,
+   "d0_mm": null,
    "fuel_heptane": 0.0,
    "y": 1
   },
