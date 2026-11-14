@@ -32,9 +32,10 @@ function NavLink({ item, active, onNavigate, marker }: { item: NavItem; active: 
         active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
       )}
     >
-      {active && <motion.span layoutId={marker} className="absolute inset-y-1 left-0 w-0.5 bg-amber" />}
-      <Icon aria-hidden className={cn("size-4 shrink-0", active ? "text-amber" : "text-dim")} strokeWidth={1.75} />
-      <span className={active ? "font-medium" : undefined}>{item.label}</span>
+      {active && <motion.span layoutId={marker} className="absolute inset-y-1 left-0 w-0.5 bg-amber shadow-[0_0_14px_2px_rgba(255,140,26,0.9)]" />}
+      {active && <span aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,140,26,0.14),transparent_70%)]" />}
+      <Icon aria-hidden className={cn("relative size-4 shrink-0", active ? "text-amber" : "text-dim")} strokeWidth={1.75} />
+      <span className={cn("relative", active && "font-medium")}>{item.label}</span>
     </Link>
   );
 }
@@ -70,7 +71,7 @@ function Fineprint() {
 /** Fixed rail on wide screens. */
 export function Sidebar() {
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-background lg:flex">
+    <aside className="glass-rail fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line lg:flex">
       <div className="border-b border-line px-4 py-4">
         <Wordmark />
       </div>
@@ -88,7 +89,7 @@ export function Sidebar() {
 export function TopBar() {
   const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-line bg-background px-4 lg:hidden">
+    <header className="glass-rail sticky top-0 z-30 flex h-12 items-center justify-between border-b border-line px-4 lg:hidden">
       <Wordmark />
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger render={<Button variant="outline" size="icon" aria-label="Open the page menu" />}>
