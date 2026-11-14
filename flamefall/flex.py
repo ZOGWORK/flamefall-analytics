@@ -99,9 +99,12 @@ def load_flex() -> pd.DataFrame:
     df["pdf_page"] = pages[: len(df)]
     caps = load_captions().rename(columns={"cool_flame": "cool_flame_label", "figure_no": "caption_figure"})
     df = df.merge(caps[["test_no", "caption_figure", "support", "cool_flame_label", "cool_flame_quote",
-                        "extinction_wording", "extinction_quote"]], on="test_no", how="left")
-    for col in ("support", "cool_flame_label", "cool_flame_quote", "extinction_wording", "extinction_quote"):
+                        "extinction_wording", "extinction_quote", "caption_atmosphere", "support_quote"]], on="test_no",
+                  how="left")
+    for col in ("support", "support_quote", "cool_flame_label", "cool_flame_quote", "extinction_wording", "extinction_quote",
+                "caption_atmosphere"):
         df[col] = df[col].fillna("")
+    df["caption_atmosphere_differs"] = df.apply(_caption_differs, axis=1)
     df["source"] = df.apply(
         lambda r: f"{REPORT}, Table IX, PDF p. {r['pdf_page']}, row {r['test_id']}", axis=1)
     return df
@@ -222,6 +225,36 @@ def summary() -> dict:
         "captions": int((f["caption_figure"].notna()).sum()),
     }
     return out
+
+
+def table_atmosphere(row: pd.Series) -> str:
+    """Table IX gas fractions in the caption's own notation, e.g. '0.21/0.79 O2/N2'."""
+    parts = [(g.upper() if g != "he" else "He", row[g]) for g in ("o2", "n2", "co2", "he") if row[g] > 0]
+    return "/".join(f"{v:.2f}" for _, v in parts) + " " + "/".join(name for name, _ in parts)
+
+
+def _caption_differs(row: pd.Series) -> bool:
+    """True when the figure caption words the atmosphere differently from Table IX (0.005 tolerance)."""
+    text = row["caption_atmosphere"]
+    if not text:
+        return False
+    values, gases = text.split(" ")
+    caption = dict(zip(gases.split("/"), (float(v) for v in values.split("/"))))
+    table = {"O2": row["o2"], "N2": row["n2"], "CO2": row["co2"], "He": row["he"]}
+    return any(abs(caption.get(g, 0.0) - table[g]) > 0.005 for g in table)
+
+
+def caption_atmosphere_conflicts() -> pd.DataFrame:
+    """Tests whose Appendix B caption states a different atmosphere from Table IX.
+
+    Table IX is used everywhere (it also agrees with the repository's own table); the caption's
+    wording is kept only so the conflict can be seen.
+    """
+    f = load_flex()
+    differs = f[f["caption_atmosphere_differs"]]
+    out = differs[["test_id", "caption_atmosphere"]].copy()
+    out["table_ix"] = differs.apply(table_atmosphere, axis=1)
+    return out.reset_index(drop=True)
 
 
 def wilson_interval(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
