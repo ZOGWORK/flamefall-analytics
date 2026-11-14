@@ -123,7 +123,8 @@ def extinction_mode(row: pd.Series) -> str:
     if cool == "indicated":
         return "radiative_then_diffusive"
     if wording == "radiative":
-        return "radiative_cool_flame_not_stated"
+        # the caption either says there was no cool-flame evidence, or says nothing either way
+        return "radiative_no_cool_flame_evidence" if cool == "not_indicated" else "radiative_cool_flame_not_stated"
     if wording == "diffusive":
         return "diffusive_only"
     return "visible_extinction_mode_not_stated"
@@ -137,7 +138,7 @@ def build_schema_frame() -> pd.DataFrame:
     """
     f = load_flex()
     mode = f.apply(extinction_mode, axis=1)
-    radiative = mode.isin(["radiative_then_diffusive", "radiative_cool_flame_not_stated"])
+    radiative = mode.isin(["radiative_then_diffusive", "radiative_cool_flame_not_stated", "radiative_no_cool_flame_evidence"])
     cool = f["cool_flame_label"].map({"indicated": True, "not_indicated": False})
     out = pd.DataFrame({
         "test_id": [f"FLEX-{FUEL_SCHEMA_NAME[fu]}-{n:03d}" for fu, n in zip(f["fuel"], f["test_no"])],

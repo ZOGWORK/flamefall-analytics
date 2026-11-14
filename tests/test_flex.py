@@ -275,6 +275,43 @@ def test_rule_a(sch):
     assert len(gaps) == 16                                      # dashes in the source, not imputed
 
 
+def test_rule_a_catches_a_burning_rate_on_a_test_that_did_not_ignite(sch):
+    """Table IX has no test that failed to ignite, so the rule is exercised with a planted row."""
+    assert "no_ignition" not in set(sch["extinction_mode"])
+    probe = sch.head(3).copy()
+    probe.loc[probe.index[0], "extinction_mode"] = "no_ignition"          # keeps its burning rate: a violation
+    probe.loc[probe.index[1], ["extinction_mode", "K_hot_mm2_s"]] = ["no_ignition", float("nan")]   # consistent
+    assert probe.loc[probe.index[0], "K_hot_mm2_s"] == probe.loc[probe.index[0], "K_hot_mm2_s"]     # not NaN
+    assert schema.rule_a_no_ignition_has_no_K(probe) == [probe.loc[probe.index[0], "test_id"]]
+
+
+def test_extinction_mode_says_what_the_caption_says(sch):
+    """A caption that reports no cool-flame evidence is not labelled "not stated"."""
+    f = flex.load_flex()
+    radiative = f["extinction_wording"] == "radiative"
+    mode = dict(zip(f["test_no"], sch["extinction_mode"]))
+    stated_none = sorted(f.loc[radiative & (f["cool_flame_label"] == "not_indicated") & (f["outcome"] == "Extinction"), "test_no"])
+    assert stated_none == [130, 266, 267]
+    assert {mode[n] for n in stated_none} == {"radiative_no_cool_flame_evidence"}
+    silent = f.loc[radiative & (f["cool_flame_label"] == "") & (f["outcome"] == "Extinction"), "test_no"]
+    assert {mode[n] for n in silent} <= {"radiative_cool_flame_not_stated"}
+    assert not sch.loc[sch["extinction_mode"] == "radiative_no_cool_flame_evidence", "cool_flame_observed"].astype(bool).any()
+
+
+def test_d2_line_never_goes_below_zero(f):
+    from flamefall import aggregates
+
+    lines = {r["test_id"]: aggregates.d2_line(r) for _, r in f.iterrows()}
+    drawn = {t: line for t, line in lines.items() if line is not None}
+    assert all(line["d2_end"] >= 0 for line in drawn.values())
+    stopped = {t: line for t, line in drawn.items() if line["t_zero"] is not None}
+    assert len(stopped) == 31                                    # printed K and burn time overshoot D0 squared
+    for t, line in stopped.items():
+        assert line["d2_end"] == 0.0 and 0 < line["t_zero"] < line["t_end"] and line["t_line_end"] == line["t_zero"], t
+    whole = drawn["FLEX-002"]
+    assert whole["t_zero"] is None and whole["t_line_end"] == whole["t_end"]
+
+
 def test_rule_b(sch):
     assert schema.rule_b_cool_flame_needs_radiative_diameter(sch) == list(schema.KNOWN_SOURCE_GAPS["b"])
 
