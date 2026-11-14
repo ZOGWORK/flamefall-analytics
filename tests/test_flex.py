@@ -119,6 +119,27 @@ def test_disruption_is_never_extinction(f):
     assert dis["D_rad_ext_mm"].isna().all() and dis["D_diff_ext_mm"].isna().all()
 
 
+def test_extinction_column_is_only_called_extinction_for_extinction_outcomes(f):
+    """Table IX prints a value in the extinction-diameter column for 39 tests that did not extinguish."""
+    from flamefall import charts
+
+    printed = f[f["extinction_diameter_mm"].notna()].groupby("outcome").size().to_dict()
+    assert printed == {"Completion": 15, "Disruption": 24, "Extinction": 159}
+    assert set(f.loc[f["extinction_diameter_mm"] == 0, "outcome"]) == {"Disruption", "Completion"}
+    by_id = f.set_index("test_id")
+    for test_id, outcome in [("FLEX-001", "Disruption"), ("FLEX-051", "Completion"), ("FLEX-002", "Extinction")]:
+        row = by_id.loc[test_id]
+        assert row["outcome"] == outcome
+        names = [t.name for t in charts.d2_reconstruction(row).data]
+        assert (charts.END_MARKER_EXTINCTION in names) == (outcome == "Extinction"), test_id
+        assert (charts.END_MARKER_OTHER.format(outcome=outcome) in names) == (outcome != "Extinction"), test_id
+
+
+def test_flex_212_keeps_its_printed_atmosphere(raw):
+    r = raw.set_index("test_no").loc[212]
+    assert r["pressure_mmhg"] == 759.8 and (r["o2"], r["n2"], r["co2"], r["he"]) == (0.16, 0.84, 0.0, 0.0)
+
+
 # ------------------------------------------------------------- schema rules (a)-(e)
 
 @pytest.fixture(scope="module")
