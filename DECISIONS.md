@@ -48,13 +48,13 @@ to differ from its primary source. Newest entries at the bottom of each section.
   It is copied to `D_rad_ext_mm` only when the caption states radiative extinction or cool-flame
   evidence, to `D_diff_ext_mm` only when the caption states diffusive extinction, and is always
   kept in the extra column `visible_ext_diameter_mm`.
-- **D6. Fourth headline card.** The brief lists "26 PSI investigations" as a headline card. Until the
-  catalogue rows are in the repo the Overview shows the cool-flame count instead, which comes from
-  data already committed. The investigations card joins when the catalogue lands.
+- **D6. Layers.** Python owns the data: loading, checking, aggregating and (later) fitting. The
+  front end is a separate React app that reads what Python exports and never re-derives a source
+  value. This part of the repository is the Python layer only.
 - **D7. "D² versus time" for a single test** is a d²-law line rebuilt from three printed numbers
-  (D0, average K, burn time). Table IX has no time series. The chart says so and points to the
-  report figure that holds the measured trace.
+  (D0, average K, burn time). Table IX has no time series. `aggregates.d2_line` returns the two
+  ends of that line and names the end marker by outcome; it is never called a measured trace.
 - **D8. Shares are shown with Wilson 95% intervals** so a share from 3 tests cannot be mistaken for
   one from 30.
-- **D9. Stack.** Streamlit 1.67 multipage app (`st.navigation`), Plotly, pandas; versions pinned in
+- **D9. Stack.** pandas and numpy for the data layer, scikit-learn for fitting; versions pinned in
   `requirements.txt` to the ones the tests ran on.
