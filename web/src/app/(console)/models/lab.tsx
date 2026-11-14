@@ -1,5 +1,6 @@
 "use client";
 
+import { Activity, Database, ShieldAlert } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { CalibrationChart, CoefficientChart, ConfusionMatrix, RocChart } from "@/components/charts/model-charts";
@@ -172,13 +173,14 @@ export function ModelLab() {
         key={name}
         kicker={`Headline AUC · ${r.headline_is === "leave-one-material-out" ? stress : r.headline_is}`}
         value={f2(r.headline_auc)}
+        dial={{ value: r.headline_auc ?? 0, tick: 0.5, caption: "mark: coin flip" }}
         tone={failed ? "ext" : "amber"}
         source={`scripts/train_models.py → data/models/${name}.json; fold membership in data/cv_splits.json`}
         readouts={
           <>
-            <Readout className="border-0" tone="data" value={f2(m.roc_auc)} label="grouped-CV ROC-AUC" source={`95% interval ${f2(m.roc_auc_ci[0])} to ${f2(m.roc_auc_ci[1])} · cluster bootstrap over ${r.n_split_groups} groups`} />
-            <Readout className="border-0" tone="ext" value={pc(cy.false_positive_rate)} label="false-positive rate at the working threshold" source={`${cy.fp} of ${cy.fp + cy.tn} negatives called positive at threshold ${cy.threshold.toFixed(2)} (Youden's J)`} />
-            <Readout className="border-0" tone="done" value={r.n_rows} label="rows after exclusions" source={`${r.n_positive} positive (${pc(r.positive_share)}) · ${r.n_groups} groups · class weights ${r.class_weight_balanced ? "balanced" : "not needed"}`} />
+            <Readout className="border-0" icon={Activity} meter={m.roc_auc ?? 0} tone="data" value={f2(m.roc_auc)} label="grouped-CV ROC-AUC" source={`95% interval ${f2(m.roc_auc_ci[0])} to ${f2(m.roc_auc_ci[1])} · cluster bootstrap over ${r.n_split_groups} groups`} />
+            <Readout className="border-0" icon={ShieldAlert} meter={cy.false_positive_rate ?? 0} tone="ext" value={pc(cy.false_positive_rate)} label="false-positive rate at the working threshold" source={`${cy.fp} of ${cy.fp + cy.tn} negatives called positive at threshold ${cy.threshold.toFixed(2)} (Youden's J)`} />
+            <Readout className="border-0" icon={Database} meter={r.positive_share} tone="done" value={r.n_rows} label="rows after exclusions" source={`${r.n_positive} positive (${pc(r.positive_share)}) · ${r.n_groups} groups · class weights ${r.class_weight_balanced ? "balanced" : "not needed"}`} />
           </>
         }
       >
