@@ -36,11 +36,12 @@ PAGE = """<!doctype html>
 <style>
   html, body {{ margin: 0; height: 100%; background: #0B0F14; color: #E6EDF3; font-family: system-ui, sans-serif; }}
   #boot {{ position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: 10px; text-align: center; padding: 24px; background: #0B0F14; z-index: 0; }}
+          gap: 10px; text-align: center; padding: 24px; background: #0B0F14; z-index: 2; }}
   #boot b {{ font: 700 0.8rem ui-monospace, Menlo, Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; color: #F59E0B; }}
   #boot p {{ margin: 0; color: #9AA7B6; max-width: 46ch; line-height: 1.5; }}
   #boot a {{ color: #22D3EE; }}
-  /* stlite positions the app absolutely inside this element, so it must fill the viewport */
+  /* stlite positions the app absolutely inside this element, so it must fill the viewport.
+     The loading note sits above it (z-index 2) so its links work, and is removed once the app draws. */
   #root {{ position: fixed; inset: 0; z-index: 1; }}
 </style>
 </head>
