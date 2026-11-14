@@ -8,7 +8,9 @@ Three models, one protocol:
 Protocol (research specification section 7.3):
   * features are initial conditions: nothing measured after ignition is a feature, with one stated
     exception. A solid-fuel flame that went out is placed at the end-of-test oxygen reading, the
-    oxygen it went out at (see `solid_frame`); the model card counts the rows this moves;
+    oxygen it went out at (see `solid_frame`). The oxygen partial pressure and the oxygen-flow
+    interaction are computed from that reading, so they carry it too; the model card counts the
+    rows this moves;
   * L2 logistic regression, C chosen from {0.01, 0.1, 1, 10} by inner grouped CV;
   * outer GroupKFold(5), inner GroupKFold(3): a group is never split between train and test;
   * a separate leave-one-material-out stress test; the headline is the WORSE of the two AUCs
@@ -149,7 +151,8 @@ def solid_frame() -> pd.DataFrame:
     s["y"] = s["sustained"].astype(int)
     s["o2_initial_pct"] = s["o2_pct"]
     # Extinctions are placed at the oxygen they happened at. That reading is taken after ignition and
-    # only for flames that went out, so it is the one input chosen with knowledge of the outcome.
+    # only for flames that went out, so oxygen is chosen with knowledge of the outcome. The partial
+    # pressure below and the oxygen-flow interaction are computed from it and carry the same reading.
     s["o2_pct"] = s["o2_at_outcome_pct"]
     s["o2_partial_kpa"] = s["o2_pct"] / 100 * s["pressure_kPa"]
     s["pressure_kpa"] = s["pressure_kPa"]
@@ -453,8 +456,9 @@ def data_notes(name: str, df: pd.DataFrame) -> list[str]:
     moved = df[df["o2_initial_pct"] != df["o2_pct"]]
     return [f"Oxygen is the initial reading, except for a flame that quenched or blew off: there it is the "
             f"end-of-test reading, the oxygen the flame went out at. This moves {len(moved)} of the {len(df)} rows, "
-            f"{int((moved['y'] == 0).sum())} of them not sustained, so this one input is chosen with knowledge of "
-            "the outcome. It is the only input that is not an initial condition."]
+            f"{int((moved['y'] == 0).sum())} of them not sustained, so oxygen is chosen with knowledge of the "
+            "outcome. The oxygen partial pressure and the oxygen-flow interaction are computed from it and carry "
+            "the same reading; every other input is an initial condition."]
 
 
 def headline_note(lomo: dict) -> str:

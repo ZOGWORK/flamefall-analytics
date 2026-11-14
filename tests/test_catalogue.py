@@ -174,6 +174,19 @@ def test_a_question_naming_two_classes_is_not_filtered_to_one():
 
 
 def test_an_oxygen_limit_filters_the_listed_investigations_too(inv):
+    top_o2 = pd.to_numeric(inv.set_index("investigation_id")["o2_max_pct"], errors="coerce")
+    res = cat.answer("solid materials above 30% oxygen")
+    assert res["filters"] == {"o2_at_least": 30.0, "evidence_class": "solid"}
+    listed = list(res["hits"].loc[res["hits"]["kind"] == "investigation", "investigation_id"])
+    assert "Saffire-VI" in listed                                   # tested at 31% O2: kept
+    assert all(top_o2[i] >= 30 for i in listed), listed
+    # the text search alone returns investigations that never reached 30%, or state no range at all
+    unfiltered = cat.search("solid materials above 30% oxygen", k=6)
+    dropped = set(unfiltered.loc[unfiltered["kind"] == "investigation", "investigation_id"]) - set(listed)
+    assert {"LUCI", "Saffire-IV", "FLARE"} <= dropped
+    assert top_o2["LUCI"] < 30 and top_o2["Saffire-IV"] < 30 and pd.isna(top_o2["FLARE"])
+    assert not dropped & set(res["investigations"])
+
     res = cat.answer("Which experiments ran above 80% oxygen?")
     assert res["filters"] == {"o2_at_least": 80.0}
     top = pd.to_numeric(inv.set_index("investigation_id")["o2_max_pct"], errors="coerce")

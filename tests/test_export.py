@@ -134,6 +134,10 @@ def test_reference_answers_cover_the_cases_review_found():
     filters = {a["query"]: a["filters"] for a in g["answer"]}
     assert filters["Which materials did the smoke detector miss?"] == {}
     assert filters["Which experiments ran above 80% oxygen?"] == {"o2_at_least": 80.0}
+    # a question whose text match lists investigations that never reached the limit: the filter drops them
+    listed = next(a for a in g["answer"] if a["query"] == "solid materials above 30% oxygen")
+    assert "Saffire-VI" in listed["investigations"]
+    assert not {"LUCI", "Saffire-IV", "FLARE"} & set(listed["investigations"])
 
 
 def test_model_cards_reach_the_app_without_per_row_predictions():
