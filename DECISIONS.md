@@ -9,14 +9,14 @@ read and where.
 C1 to C14 correct the research notes or the brief. C15 and C16 are inconsistencies inside the
 sources themselves.
 
-| # | Claim in the research notes or brief | What the primary source shows | What the dashboard does |
+| # | Claim in the research notes or brief | What the primary source shows | What this project does |
 |---|---|---|---|
 | C1 | FLEX gas fractions "sum to 1.00 for all rows except FLEX-069, 075, 076, 079, 080, 081 (0.98)" | Table IX prints fractions to two decimals: 247 rows sum to 1.00, **22 rows to 0.99**, 6 rows to 0.98 and 1 row (FLEX-162) to 1.01. Confirmed cell by cell against the PDF | States the real distribution; `test_gas_fraction_sums` asserts it |
 | C2 | "The BASS-II memo PDF returned HTTP 404; Tables 5.1, 7.1 and A.2 are unverified. Do not display row-level values" | The NTRS record's own metadata lists the file as `TM-20210011385.pdf`. That URL returns the 144-page memo; the 404 came from a guessed filename. Tables 2.1, 4.1, 4.2, 5.1, 7.1, D.2 and the six Appendix A test matrices were transcribed by script and every row checked against the page text (0 mismatches) | BASS-II rows are shown as verified and cite the memo's table and page. `data/bass2/`, `scripts/bass2/` |
 | C3 | "26 PSI combustion investigations" | The PSI search for "combustion" returns 26 records, but 2 are not combustion science (PSI-181, a solder study; PSI-108, a fluid-physics experiment). 24 carry Research Area = Combustion Science | Shows "26 search results, 24 combustion science"; the two others are listed and never ranked |
 | C4 | Saffire: "IV-1 SIBAL, peak HRR 3,150 W, 409 kJ" and "V-2 2,800 W" | In ICES-2024-365 Table 2 those are **average** heat release from fuel-consumption calorimetry. Peak heat release by oxygen-consumption calorimetry exists only for VI-2, VI-3 and VI-4 (3,217 / 3,080 / 1,507 W) | Two separate evidence rows, each with its method and "average" or "peak" in the text |
 | C5 | "The 85% O2 figure belongs to Flame Design inverse flames, never to CFI-G" | PSI's own CFI-G inverse-flame table (PSI-159, 154 tests) has burner oxygen up to 0.85, and so does PSI's Flame Design inverse-flame table (PSI-10). The challenge page says the same: an oxygen-nitrogen mixture of up to 85% oxygen "flowed from the spherical burner creating an inside-out flame". Chamber-ambient oxygen in both normal-flame tables stops at 0.40 | The essential point stands and is enforced: 85% is a **burner feed, not an ambient**. It is attributed to the inverse flames of both investigations. `o2_is_ambient = False`; `test_inverse_flame_oxygen_is_a_burner_feed_not_an_ambient` |
-| C6 | "LUCI has NO published quantitative results as of 14 Nov 2026. Do not present LUCI spread rates" | A conference presentation is on NTRS (20250010653, ASGSR, Dec 2025) with spread rates for both samples in simulated lunar gravity and in normal gravity, and chamber oxygen histories. Read in full | Shown on *What We Don't Know* as the nearest real tests to partial gravity, labelled as preliminary slides, one flight, centrifuge-simulated gravity, not a PSI dataset. No limiting oxygen value is claimed, because the slides state none. See QUESTIONS.md Q3 |
+| C6 | "LUCI has NO published quantitative results as of 14 Nov 2026. Do not present LUCI spread rates" | A conference presentation is on NTRS (20250010653, ASGSR, Dec 2025) with spread rates for both samples in simulated lunar gravity and in normal gravity, and chamber oxygen histories. Read in full | Recorded as the nearest real tests to partial gravity, labelled as preliminary slides, one flight, centrifuge-simulated gravity, not a PSI dataset. No limiting oxygen value is claimed, because the slides state none. See QUESTIONS.md Q3 |
 | C7 | "There is NO Saffire VI-vs-IV spread-rate comparison in the literature. Do not present one" | ICES-2026-577 (NTRS 20260001992) Table 1 lists thin-fuel spread rates side by side: IV-1 3.6 mm/s, V-2 3.4 mm/s, VI-2 4.05 mm/s. Read in full | The three rates are shown together with their pressures and source. No ratio or trend is derived from them. See QUESTIONS.md Q3 |
 | C8 | "CO/CO2 molar ratio 0.01 to 0.1" (ICES-2015-196) | The paper states no such range. It gives 550 ppm CO per 1% CO2 for concurrent rods and 370 ppm for thick slabs, about ten times efficient flue gas | The stated slopes are shown instead |
 | C9 | "Buoyant velocities: 1 g 24 cm/s, lunar about 10 cm/s, Martian about 15 cm/s" | These come from ICES-2019-101, which could not be re-read (QUESTIONS.md Q2). A 2025 paper by the same group takes 35 cm/s as a high estimate for normal gravity and says the lunar value "is not known"; a 2004 paper expects more than 20 cm/s on the Moon and Mars | Shown as disagreeing estimates. The 24 / 10 / 15 figures are greyed as not re-verified |
@@ -26,7 +26,7 @@ sources themselves.
 | C13 | "ACME operations Nov 2017 to Feb 2022"; "E-FIELD 14 Mar to Nov 2018" | Operations ran Sept 2017 to Feb 2022 with first science in Nov 2017; E-FIELD ran March to May and September to November 2018 (no day given) | Dates in the catalogue come from the PSI record; the E-FIELD statement uses the months only |
 | C14 | "Three cool flames" in CFI-G | The press releases say three were first noticed on 23 June 2021. PSI's table marks 7 of 179 normal-flame tests as cool flames (5 on day 174 of 2021, 2 on day 291) | Both are shown, each attributed |
 
-| C15 | The report's figure captions restate each test's atmosphere, so they could be quoted as evidence | 45 of the 268 captions that state an atmosphere differ from the report's own Table IX: 29 by 0.01 to 0.02, 16 by more (FLEX-185's caption sums to 1.47; FLEX-280's swaps nitrogen and helium). Table IX agrees with PSI's table on these tests | Table IX is the source of every value. The caption's wording is stored separately, never used as a value, and the Explorer notes the conflict on those 45 tests. `test_caption_atmosphere_is_recorded_but_never_used` |
+| C15 | The report's figure captions restate each test's atmosphere, so they could be quoted as evidence | 45 of the 268 captions that state an atmosphere differ from the report's own Table IX: 29 by 0.01 to 0.02, 16 by more (FLEX-185's caption sums to 1.47; FLEX-280's swaps nitrogen and helium). Table IX agrees with PSI's table on these tests | Table IX is the source of every value. The caption's wording is stored separately, never used as a value, and those 45 tests are flagged (`caption_atmosphere_differs`). `test_caption_atmosphere_is_recorded_but_never_used` |
 
 | C16 | PSI experimental tables can be counted row by row | Three files repeat a block of rows exactly (8 rows in the CFI table, 34 in SPICE, 8 in E-FIELD Flames), and the CFI-G inverse-flame file carries 861 comma-only padding rows after its 154 tests | Blank rows are dropped on read; test counts and flame totals use distinct rows, and each count's source note says how many repeats were left out. `test_psi_tables_are_counted_without_padding_or_repeats` |
 
@@ -84,11 +84,11 @@ sources themselves.
   extinctions as fan potentiometer settings. The memo prints no conversion to cm/s, so 100 of 290
   points have no velocity and are not used in any model.
 
-### Dashboard
+### Presentation rules
 - **D11. "D² versus time" for a single test** is a d²-law line rebuilt from D0, average K and burn
-  time. Table IX has no time series; the chart says so.
+  time. Table IX has no time series, so it is never called a measured trace.
 - **D12. Shares carry Wilson 95% intervals.**
-- **D13. The end marker on that chart** is called an extinction diameter only when the outcome is
+- **D13. The end marker of that line** is called an extinction diameter only when the outcome is
   Extinction; 24 Disruption and 15 Completion rows also print a value in that column.
 - **D14. Environment filter.** Tags are computed from each investigation's own tested ranges by a
   stated rule. Station: tested near 21% O2. Rover: tested at 30% O2 or more, or at 70.3 kPa or
@@ -98,11 +98,11 @@ sources themselves.
   statements. The answer is the matching statements with their sources. No text is generated, so
   no number can be invented. An oxygen limit stated in the question is applied as a filter on the
   recorded ambient range, and the filter is echoed back.
-- **D16. Two SAME tables on separate tabs,** never averaged.
+- **D16. The two SAME tables stay two tables,** never averaged.
 
 ### Triage score
 - **D17. Formula and weights** are the research specification's. All weights and lookup values are
-  design choices and are shown and adjustable.
+  design choices, stated as such.
 - **D18. No renormalisation for solids.** The specification says the cool-flame weight is
   "renormalised over the remaining terms" for solids, but its own worked example (0.637 / 0.687 /
   0.337) does not renormalise. The worked example is followed, because the brief requires it as a
@@ -110,7 +110,7 @@ sources themselves.
 - **D19. Oxygen minimum** is 13.6% × 101 kPa for PMMA, as in the worked example, and 16.9% × 101.3
   kPa for SIBAL fabric (lowest oxygen with a flame in memo Table 7.1). Other materials use the PMMA
   value and are flagged.
-- **D20. The formula disagrees with one real test, and the dashboard says so.** By partial pressure
+- **D20. The formula disagrees with one real test.** By partial pressure
   the Saffire VI fabric burn (31% O2 at 54 kPa, 16.8 kPa of oxygen) scores zero on the oxygen term,
   yet the fabric burned. A limit measured at 1 atm does not transfer to low pressure by partial
   pressure alone.
@@ -119,8 +119,9 @@ sources themselves.
   term is a design choice, not a finding.
 
 ### Process
-- **D31. Stack.** Streamlit 1.67 (`st.navigation`), Plotly, pandas, scikit-learn; versions pinned
-  to the ones the tests ran on.
+- **D31. Layers and stack.** Python owns the data: loading, checking, aggregating and fitting
+  (pandas, numpy, scikit-learn; versions pinned to the ones the tests ran on). The front end is a
+  separate React app that reads what Python exports and never re-derives a source value.
 - **D32. Research agents.** Four background agents read sources in parallel and reported verbatim
   quotes with page and read level. LUCI, the 2026 Saffire table, the SoFIE-GEL table, the BASS-II
   poster and the lunar-gravity ignition paper were then re-read directly before use. Statements
