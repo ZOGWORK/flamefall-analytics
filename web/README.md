@@ -1,6 +1,6 @@
 # Flamefall Analytics: the web app
 
-Next.js (App Router) with shadcn/ui, Recharts and Framer Motion. It is exported as a static site:
+Next.js (App Router) with shadcn/ui, Recharts, Motion and react-countup. It is exported as a static site:
 every route is prerendered, and moving between pages or changing a filter happens in the browser
 with no page reload.
 
