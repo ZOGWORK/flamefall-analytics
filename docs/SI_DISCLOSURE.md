@@ -16,10 +16,13 @@ SI tools were used throughout, and are disclosed in full in the repository
 - **Code review.** Loopy, an SI code-review bot, reviewed the first four pull requests over
   several rounds and its findings were fixed. It stopped on 14 Nov, when the organisation's monthly
   review allowance ran out, before any pull request reached its top score; it did not review the
-  final code. The final version of every pull request was instead self-reviewed by the SI coding
-  agent: four fresh reviewer agents per pull request, given only the code and the project's rules,
-  looked for rule violations and bugs, and every finding was fixed or is listed with the reason it
-  was kept (`DECISIONS.md` D42). That is SI checking SI-written code. It is not a human review.
+  final code. After that the pull requests were self-reviewed by the SI coding agent, in passes.
+  First, four fresh reviewer agents per pull request, given only the code and the project's rules,
+  looked for rule violations and bugs in the code as it was first written. Then further fresh
+  agents read each round of corrections, until a pass on the latest corrections found nothing
+  above a minor point. Every finding was fixed or is listed with the reason it was kept
+  (`DECISIONS.md` D42). The reviewer agents are the same model as the coding agent. That is SI
+  checking SI-written code. It is not a human review.
 - **Inside the console there is no generative model.** "SI-powered" means three auditable
   things: retrieval and extraction over sourced statements (TF-IDF search, no generated text),
   ranking by a stated formula with visible weights, and small logistic-regression models validated
@@ -46,7 +49,7 @@ SI tools were used throughout, and are disclosed in full in the repository
 | Claude Code, model Claude Fable 5.2 (Anthropic) | Code generation, data extraction, analysis, writing | All code in `flamefall/`, `scripts/`, `tests/` and `web/`; the data files derived from primary sources; documentation; the slide deck | Whole repository |
 | Background research agents (same model) | Source reading | Verbatim quotes, pages and read levels for literature values; the PSI repository snapshot; the BASS-II table transcription | `data/evidence.json` (read level per statement), `data/psi/`, `data/bass2/` |
 | Loopy (`loopyreviews-bot`) | SI code review | Review findings on the first four pull requests, until its monthly allowance ran out on 14 Nov. It did not review the final code | Pull-request threads |
-| Reviewer agents (same model as the coding agent) | SI code review | Self-review of the final version of each pull request: rule violations and bugs, each fixed or listed with the reason it was kept | `DECISIONS.md` D42 |
+| Reviewer agents (same model as the coding agent) | SI code review | Self-review of each pull request in passes (the code as first written, then each round of corrections): rule violations and bugs, each fixed or listed with the reason it was kept | `DECISIONS.md` D42 |
 | scikit-learn logistic regression | Statistical model | Three small classifiers and their validation metrics | `data/models/`, Model Lab page |
 | TF-IDF retrieval (scikit-learn) | Search | Ranking of sourced statements against a question | Catalogue page |
 
@@ -72,6 +75,6 @@ SI tools were used throughout, and are disclosed in full in the repository
 
 The checks above were run by the SI coding agent, with scripts that anyone can re-run. They are
 machine checks against primary sources, not independent human review. The same holds for the code
-review of the final version: it was done by SI reviewer agents, not by a person and not by the
-review bot. The team's own spot-checks
+review after the bot stopped: it was done by SI reviewer agents of the same model as the coding
+agent, not by a person and not by the review bot. The team's own spot-checks
 are recorded separately in `docs/HUMAN_VERIFICATION.md`.
