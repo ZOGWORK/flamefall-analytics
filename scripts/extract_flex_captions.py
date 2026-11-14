@@ -40,6 +40,8 @@ UNCLEAR = re.compile(
 
 # "diffusively or radiatively", "radiative or diffusive": the caption does not choose
 EITHER_MODE = re.compile(r"(radiativ\w*|diffusiv\w*) or (radiativ\w*|diffusiv\w*)|difficult to (say|tell)", re.I)
+# e.g. "0.21/0.79 O2/N2" or "0.21/0.09/0.70 O2/N2/CO2": the atmosphere as the caption words it
+ATMOSPHERE = re.compile(r"\d*\.\d+(?:/\d*\.\d+)+ (?:O2|N2|CO2|He)(?:/(?:O2|N2|CO2|He))+")
 EITHER_OR = re.compile(r"\beither\b.*\bor\b", re.I)
 STATED_MODE = re.compile(r"extinguish\w*,? (?:\w+ )?(radiatively|diffusively)|(?:to|near) (radiative|diffusive)", re.I)
 
@@ -114,8 +116,14 @@ def main() -> int:
             support = ""
         cool, cool_q = classify_cool(sents)
         ext, ext_q = classify_ext(sents)
+        # The support label rests on the opening words only ("Free-floating methanol droplet").
+        # The rest of that sentence restates the atmosphere, and the report's captions get it wrong
+        # for some tests, so it is kept apart in `caption_atmosphere` and never used as a value.
+        opening = re.match(r".*?(?=\s+burning\b)", first)     # everything before the word "burning"
+        atmosphere = ATMOSPHERE.search(first)
         rows.append(dict(test_no=int(m.group(2)), figure_no=int(m.group(1)), support=support,
-                         support_quote=first if support else "", cool_flame=cool,
+                         support_quote=(opening.group(0) if opening else "") if support else "",
+                         caption_atmosphere=atmosphere.group(0) if atmosphere else "", cool_flame=cool,
                          cool_flame_quote=cool_q, extinction_wording=ext,
                          extinction_quote=ext_q,
                          source="NASA/TP-2015-216046, Appendix B, Figure %s caption" % m.group(1),
