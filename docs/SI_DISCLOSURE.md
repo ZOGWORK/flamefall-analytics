@@ -56,7 +56,7 @@ SI tools were used throughout, and are disclosed in full in the repository
 | BASS-II tables (126 tests) | Every transcribed row compared with the text of its PDF page; long cells also found in the NTRS full text; pipeline re-run from the PDF | 0 mismatches; output byte-identical on re-run |
 | PSI catalogue | Pulled from the repository's public endpoints and stored unedited (contact details removed) | 26 records, 25 tables |
 | Literature values (66 statements) | Each traced to a table, page or slide; a verbatim quote and the read level stored | 60 verified in full text, 2 abstract-only, 4 not re-read and shown greyed |
-| Code | Automated tests, including the acceptance behaviours | 98 tests |
+| Code | Automated tests, including the acceptance behaviours | More than 100 tests; run `python -m pytest` for the current count |
 
 ### Limits of that checking
 
