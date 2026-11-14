@@ -126,9 +126,15 @@ export function nearestTests(pool: FlexRow[], o2Pct: number, pressureAtm: number
 }
 
 export interface D2Line {
+  /** The printed burn time. */
   t_end: number;
   d2_start: number;
+  /** Never below zero: a diameter squared cannot be negative. */
   d2_end: number;
+  /** When the printed K and burn time take the line to zero before the burn ends: the time it gets there. */
+  t_zero: number | null;
+  /** Where the line stops: t_zero when it reaches zero early, otherwise the burn time. */
+  t_line_end: number;
   marker: { name: string; t: number; d2: number; diameter_mm: number } | null;
 }
 
@@ -139,7 +145,16 @@ export interface D2Line {
 export function d2Line(row: FlexRow, markerExtinction: string, markerOther: string): D2Line | null {
   const { d0_mm: d0, burning_rate_mm2_s: k, burn_time_s: tEnd } = row;
   if (d0 === null || k === null || tEnd === null) return null;
-  const line: D2Line = { t_end: tEnd, d2_start: d0 ** 2, d2_end: d0 ** 2 - k * tEnd, marker: null };
+  const d2End = d0 ** 2 - k * tEnd;
+  const tZero = d2End < 0 ? d0 ** 2 / k : null;
+  const line: D2Line = {
+    t_end: tEnd,
+    d2_start: d0 ** 2,
+    d2_end: Math.max(d2End, 0),
+    t_zero: tZero,
+    t_line_end: tZero ?? tEnd,
+    marker: null,
+  };
   const dext = row.extinction_diameter_mm;
   if (dext !== null) {
     // Table IX prints a value in this column for some Disruption and Completion tests too.
