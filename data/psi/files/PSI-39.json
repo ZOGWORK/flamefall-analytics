@@ -1,0 +1,43 @@
+{
+ "psi_id": "PSI-39",
+ "record_version": 4,
+ "file_count": 2812,
+ "total_bytes": 718887023417.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 10237
+  },
+  "Raw Data": {
+   "files": 2771,
+   "bytes": 718850418928.0
+  },
+  "Analyzed Data": {
+   "files": 32,
+   "bytes": 13614684.0
+  },
+  "Reports": {
+   "files": 1,
+   "bytes": 811459.0
+  },
+  "Engineering Documents": {
+   "files": 1,
+   "bytes": 115496.0
+  },
+  "Science Documents": {
+   "files": 3,
+   "bytes": 16099538.0
+  },
+  "Presentations": {
+   "files": 2,
+   "bytes": 5945283.0
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 7792
+  }
+ },
+ "experimental_tables": [
+  "PSI-39_Experimental table_CFI.csv"
+ ]
+}
