@@ -158,7 +158,8 @@ with b:
         f'<div class="k">Pressure</div><div class="ff-mono">{ui.fmt(row["pressure_mmhg"], 1, "mmHg")} '
         f'({ui.fmt(row["pressure_atm"], 2, "atm")})</div>'
         f'<div class="k">D0</div><div class="ff-mono">{ui.fmt(row["d0_mm"], 2, "mm")}</div>'
-        f'<div class="k">Ext. diameter</div><div class="ff-mono">{ui.fmt(row["extinction_diameter_mm"], 2, "mm")}</div>'
+        f'<div class="k">{charts.end_diameter_label(row["outcome"])}</div>'
+        f'<div class="ff-mono">{ui.fmt(row["extinction_diameter_mm"], 2, "mm")}</div>'
         f'<div class="k">K</div><div class="ff-mono">{ui.fmt(row["burning_rate_mm2_s"], 2, "mm²/s")}</div>'
         f'<div class="k">Burn time</div><div class="ff-mono">{ui.fmt(row["burn_time_s"], 1, "s")}</div>'
         "</div>", unsafe_allow_html=True)
@@ -193,7 +194,10 @@ st.dataframe(
         "co2": st.column_config.NumberColumn("CO2", format="%.2f"),
         "he": st.column_config.NumberColumn("He", format="%.2f"),
         "d0_mm": st.column_config.NumberColumn("D0, mm", format="%.2f"),
-        "extinction_diameter_mm": st.column_config.NumberColumn("Ext. diameter, mm", format="%.2f"),
+        "extinction_diameter_mm": st.column_config.NumberColumn(
+            "End diameter, mm", format="%.2f",
+            help="The value Table IX prints in its extinction-diameter column. It is an extinction diameter "
+                 "only when the outcome is Extinction; 24 Disruption and 15 Completion rows also print one."),
         "burning_rate_mm2_s": st.column_config.NumberColumn("K, mm²/s", format="%.2f"),
         "burn_time_s": st.column_config.NumberColumn("Burn time, s", format="%.1f"),
         "outcome": "Outcome",

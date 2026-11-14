@@ -140,6 +140,11 @@ def burning_rate_figure(df: pd.DataFrame, xcol: str = "d0_mm") -> go.Figure:
     return fig
 
 
+def end_diameter_label(outcome: str) -> str:
+    """What to call the value from Table IX's extinction-diameter column for a given outcome."""
+    return "Ext. diameter" if outcome == "Extinction" else "Diameter at test end"
+
+
 END_MARKER_EXTINCTION = "Reported visible-flame extinction diameter²"
 END_MARKER_OTHER = "Diameter² printed at test end ({outcome}, not an extinction)"
 
