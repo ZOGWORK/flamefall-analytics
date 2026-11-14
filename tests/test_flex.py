@@ -111,6 +111,28 @@ def test_caption_annotations(f):
     assert s["cool_flame"] == {"indicated": 39, "not_indicated": 8, "unclear": 6, "": 7}
 
 
+def test_extinction_wording_takes_the_stated_mode(f):
+    by_no = f.set_index("test_no")
+    assert f["extinction_wording"].value_counts().to_dict() == {"": 187, "radiative": 46, "diffusive": 39,
+                                                                "both_mentioned": 4}
+    # stated diffusive, with radiative loss named only as a contribution
+    assert by_no.loc[225, "extinction_wording"] == "diffusive"
+    # captions that say they cannot tell which
+    assert set(by_no.loc[[247, 251, 255, 264], "extinction_wording"]) == {"both_mentioned"}
+    sch = flex.build_schema_frame().set_index("flex_no")
+    assert sch.loc[225, "extinction_mode"] == "diffusive_only"
+    assert sch.loc[225, "D_diff_ext_mm"] == by_no.loc[225, "extinction_diameter_mm"]
+    assert pd.isna(sch.loc[247, "D_diff_ext_mm"]) and pd.isna(sch.loc[247, "D_rad_ext_mm"])
+
+
+def test_outcome_badges_use_the_chart_colours():
+    from flamefall import theme, ui
+
+    assert ui.OUTCOME_BADGE == {"Extinction": "bad", "Disruption": "violet", "Completion": "ok"}
+    assert ".ff-badge.violet" in theme.CSS
+    assert ui.OUTCOME_BADGE["Disruption"] != "mute"          # grey is reserved for unverified / no data
+
+
 def test_disruption_is_never_extinction(f):
     assert f.loc[f["outcome"] == "Disruption", "extinguished"].sum() == 0
     sch = flex.build_schema_frame()
