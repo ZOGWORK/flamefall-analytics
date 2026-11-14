@@ -1,0 +1,197 @@
+{
+ "retrieved_utc": "2026-11-14T16:07Z",
+ "search_term": "combustion",
+ "search_hits": 26,
+ "records": [
+  {
+   "rank": 1,
+   "psi_id": "PSI-22",
+   "files": 2590,
+   "tables": 1
+  },
+  {
+   "rank": 2,
+   "psi_id": "PSI-10",
+   "files": 3807,
+   "tables": 2
+  },
+  {
+   "rank": 3,
+   "psi_id": "PSI-159",
+   "files": 3756,
+   "tables": 2
+  },
+  {
+   "rank": 4,
+   "psi_id": "PSI-107",
+   "files": 188,
+   "tables": 1
+  },
+  {
+   "rank": 5,
+   "psi_id": "PSI-106",
+   "files": 23463,
+   "tables": 1
+  },
+  {
+   "rank": 6,
+   "psi_id": "PSI-100",
+   "files": 87,
+   "tables": 1
+  },
+  {
+   "rank": 7,
+   "psi_id": "PSI-102",
+   "files": 101,
+   "tables": 1
+  },
+  {
+   "rank": 8,
+   "psi_id": "PSI-69",
+   "files": 6555,
+   "tables": 1
+  },
+  {
+   "rank": 9,
+   "psi_id": "PSI-39",
+   "files": 2812,
+   "tables": 1
+  },
+  {
+   "rank": 10,
+   "psi_id": "PSI-21",
+   "files": 4883,
+   "tables": 1
+  },
+  {
+   "rank": 11,
+   "psi_id": "PSI-68",
+   "files": 10156,
+   "tables": 1
+  },
+  {
+   "rank": 12,
+   "psi_id": "PSI-26",
+   "files": 210,
+   "tables": 1
+  },
+  {
+   "rank": 13,
+   "psi_id": "PSI-117",
+   "files": 16,
+   "tables": 0
+  },
+  {
+   "rank": 14,
+   "psi_id": "PSI-23",
+   "files": 4165,
+   "tables": 1
+  },
+  {
+   "rank": 15,
+   "psi_id": "PSI-20",
+   "files": 2361,
+   "tables": 1
+  },
+  {
+   "rank": 16,
+   "psi_id": "PSI-142",
+   "files": 3,
+   "tables": 1
+  },
+  {
+   "rank": 17,
+   "psi_id": "PSI-60",
+   "files": 1,
+   "tables": 0
+  },
+  {
+   "rank": 18,
+   "psi_id": "PSI-62",
+   "files": 1,
+   "tables": 0
+  },
+  {
+   "rank": 19,
+   "psi_id": "PSI-99",
+   "files": 217,
+   "tables": 1
+  },
+  {
+   "rank": 20,
+   "psi_id": "PSI-25",
+   "files": 695,
+   "tables": 1
+  },
+  {
+   "rank": 21,
+   "psi_id": "PSI-115",
+   "files": 47,
+   "tables": 0
+  },
+  {
+   "rank": 22,
+   "psi_id": "PSI-47",
+   "files": 33,
+   "tables": 1
+  },
+  {
+   "rank": 23,
+   "psi_id": "PSI-98",
+   "files": 76,
+   "tables": 1
+  },
+  {
+   "rank": 24,
+   "psi_id": "PSI-181",
+   "files": 340,
+   "tables": 1
+  },
+  {
+   "rank": 25,
+   "psi_id": "PSI-108",
+   "files": 56,
+   "tables": 2
+  },
+  {
+   "rank": 26,
+   "psi_id": "PSI-101",
+   "files": 344,
+   "tables": 1
+  }
+ ],
+ "experimental_tables": [
+  "PSI-100_Experimental table_SAFFIRE-3.csv",
+  "PSI-101_Experimental table_SAME-R.csv",
+  "PSI-102_Experimental table_SAME.csv",
+  "PSI-106_Experimental table_Slice.csv",
+  "PSI-107_Experimental table_Spice.csv",
+  "PSI-108_Experimental table_STDCE-1(1).csv",
+  "PSI-108_Experimental table_STDCE-1.csv",
+  "PSI-10_Experimental table_Flame Design_Inverse Flame.csv",
+  "PSI-10_Experimental table_Flame Design_Normal Flame.csv",
+  "PSI-142_Experimental table_Data Summary Table.csv",
+  "PSI-159_Experimental table_CFI-G_Inverse Flames.csv",
+  "PSI-159_Experimental table_CFI-G_Normal Flames.csv",
+  "PSI-181_Experimental table_Experimental Table_PSI_181.csv",
+  "PSI-20_Experimental table_ACME BRE.csv",
+  "PSI-21_Experimental table_CLD Flame.csv",
+  "PSI-22_Experimental table_ACME E-FIELD Flames.csv",
+  "PSI-23_Experimental table_ACME s-Flame.csv",
+  "PSI-25_Experimental table_BASS-II.csv",
+  "PSI-26_Experimental table_BASS.csv",
+  "PSI-39_Experimental table_CFI.csv",
+  "PSI-47_Experimental table_DAFT.csv",
+  "PSI-68_Experimental table_Flex2.csv",
+  "PSI-69_Experimental table_FLEX.csv",
+  "PSI-98_Experimental table_SAFFIRE-1.csv",
+  "PSI-99_Experimental table_SAFFIRE-2.csv"
+ ],
+ "endpoints": [
+  "https://psi.nasa.gov/geode-py/ws/repo/search",
+  "https://psi.nasa.gov/geode-py/ws/repo/investigations/<id>",
+  "https://psi.nasa.gov/geode-py/ws/files/v2",
+  "https://psi.nasa.gov/geode-py/ws/studies/<id>/download"
+ ],
+ "human_record_url": "https://psi.nasa.gov/physci/repo/data/investigations/<id>"
+}
