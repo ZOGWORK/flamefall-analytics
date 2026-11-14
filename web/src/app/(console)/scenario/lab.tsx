@@ -341,7 +341,7 @@ export function Lab() {
           <Panel className="xl:col-span-2" title="Your scenario">
             <div className="flex items-center gap-5">
               <Dial value={score} tone="amber" size={148} label={`Triage score ${score.toFixed(3)} on a scale of 0 to 1`}>
-                <span className="glow num text-heading font-bold text-amber">{score.toFixed(3)}</span>
+                <span className="num text-heading font-bold text-amber">{score.toFixed(3)}</span>
                 <span className="kicker text-dim">of 1</span>
               </Dial>
               <p className="text-body text-foreground">triage score, from 0 to 1</p>
