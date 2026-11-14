@@ -65,11 +65,11 @@ export function CalibrationChart({ card }: { card: ModelCard }) {
             }}
           />
           <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke="var(--dim)" strokeDasharray="3 3" />
-          <Line data={bins} dataKey="y" stroke="var(--data)" strokeWidth={1.5} dot={false} activeDot={false} isAnimationActive={false} tooltipType="none" />
+          <Line data={bins} dataKey="y" stroke="var(--data)" strokeWidth={1.5} dot={false} activeDot={false} tooltipType="none" />
           <Scatter
             data={bins}
             fill="var(--data)"
-            isAnimationActive={false}
+           
             shape={(props: { cx?: number; cy?: number; payload?: { n: number } }) => (
               <circle cx={props.cx} cy={props.cy} r={3 + 1.25 * Math.sqrt(props.payload?.n ?? 1)} fill="var(--data)" stroke="var(--background)" strokeWidth={1} />
             )}
@@ -108,7 +108,7 @@ export function CoefficientChart({ card, label }: { card: ModelCard; label: (fea
             }}
           />
           <ReferenceLine x={0} stroke="var(--input)" />
-          <Bar dataKey="log_odds" isAnimationActive={false}>
+          <Bar dataKey="log_odds">
             {rows.map((r) => (
               <Cell key={r.feature} fill={r.log_odds > 0 ? "var(--ext)" : "var(--data)"} />
             ))}
