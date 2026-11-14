@@ -126,6 +126,10 @@ describe("what the address bar can and cannot do", () => {
     expect(oneOf("constructor", ["o2_pct", "co2_pct"] as const, "o2_pct")).toBe("o2_pct");
     expect(numberIn("12.5", 0, 80, 3)).toBe(12.5);
     expect(numberIn(" ", 0, 80, 3)).toBe(3);
+    // the catalogue's ranking choice: only the picker's own options count
+    const options = ["none", "0", "1", "2", "3", "4"] as const;
+    for (const bad of ["", "0x1", "1e0", "5", "-1", "toString"]) expect(oneOf(bad, options, "none"), bad).toBe("none");
+    expect(oneOf("3", options, "none")).toBe("3");
   });
 });
 
