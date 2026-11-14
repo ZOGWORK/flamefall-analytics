@@ -22,6 +22,18 @@ def splits() -> dict:
     return json.loads((model.DATA / "cv_splits.json").read_text(encoding="utf-8"))
 
 
+def test_bootstrap_counts_match_what_the_provenance_file_says():
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    kept = {name: json.loads((root / "data" / "models" / f"{name}.json").read_text(encoding="utf-8"))["bootstrap"]["n"]
+            for name in ("droplet_extinction", "droplet_cool_flame", "solid_sustained")}
+    assert kept == {"droplet_extinction": 1000, "droplet_cool_flame": 992, "solid_sustained": 1000}
+    text = (root / "data" / "PROVENANCE.md").read_text(encoding="utf-8")
+    assert "1,000 for droplet extinction, 992 for droplet cool-flame evidence, 1,000 for solids" in " ".join(text.split())
+
+
 def test_three_models_and_they_never_pool_droplets_with_solids():
     assert set(model.SPECS) == {"droplet_extinction", "droplet_cool_flame", "solid_sustained"}
     droplet = set(model.frame_for("droplet_extinction")["row_id"])
