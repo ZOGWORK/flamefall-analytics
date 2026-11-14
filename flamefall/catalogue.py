@@ -379,7 +379,11 @@ def nearest_flex(fuel: str, o2_pct: float, pressure_kpa: float, co2_pct: float, 
 
 
 def _stated_first(frame: pd.DataFrame, k: int) -> pd.DataFrame:
-    """The k nearest rows: those that state every compared quantity first, then by distance."""
+    """The k nearest rows: those that state every compared quantity first, then by distance.
+
+    A row with no oxygen value has no distance at all and is not ranked.
+    """
+    frame = frame[frame["distance"].notna()]
     order = frame.assign(_partial=frame["not_compared"] != "").sort_values(["_partial", "distance"], kind="stable")
     return order.drop(columns="_partial").head(k)
 
