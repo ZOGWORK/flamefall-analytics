@@ -19,15 +19,16 @@ Sciences Informatics (PSI) repository. Three rules hold on every page:
 
 ```bash
 python -m venv .venv
-.venv/Scripts/python -m pip install -r requirements.txt   # macOS/Linux: .venv/bin/python
-.venv/Scripts/python -m streamlit run app.py
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+python -m pip install -r requirements.txt
+python -m streamlit run app.py
 ```
 
-Tests:
+Tests, in the same activated environment:
 
 ```bash
-.venv/Scripts/python -m pip install pytest
-.venv/Scripts/python -m pytest
+python -m pip install pytest
+python -m pytest
 ```
 
 ## What is in the repository
