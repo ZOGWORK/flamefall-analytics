@@ -65,7 +65,10 @@ export default function Page() {
           </Quote>
         </div>
         <div className="mt-4">
-          <EvidenceGroup ids={["lunar-g-centrifuge-delta", "partial-g-kc135", "partial-g-wires", "buoyant-velocity-unknown", "fm2-plan", "luci-method", "buoyant-velocity-ices2019"]} label="sourced statements on partial gravity" />
+          <EvidenceGroup ids={["lunar-g-centrifuge-delta", "partial-g-kc135", "partial-g-wires", "buoyant-velocity-unknown", "luci-method", "buoyant-velocity-ices2019"]} label="sourced statements on partial gravity" />
+        </div>
+        <div className="mt-3">
+          <EvidenceGroup ids={["fm2-plan"]} label="sourced statement on an experiment that is planned, not flown: a plan, not evidence" />
         </div>
       </Section>
 
