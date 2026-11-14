@@ -3,7 +3,8 @@
 
 import { ArrowUpRight, type LucideIcon } from "lucide-react";
 
-import { Decode } from "@/components/console/decode";
+import { Count } from "@/components/console/count";
+import { Reveal } from "@/components/console/reveal";
 import { Dial, IconChip, Meter } from "@/components/console/viz";
 import { cn } from "@/lib/utils";
 import type { Outcome, Verification } from "@/lib/types";
@@ -99,7 +100,7 @@ export function Section({
       <p className="mt-1 max-w-3xl text-body text-muted-foreground">
         <Prose text={explainer} />
       </p>
-      <div className="mt-4">{children}</div>
+      <Reveal className="mt-4">{children}</Reveal>
     </section>
   );
 }
@@ -337,7 +338,7 @@ export function HeroBand({
         <Kicker className="text-dim">{kicker}</Kicker>
         <div className="mt-2 flex items-center justify-between gap-4">
           <p className={cn("glow num text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
-            {typeof value === "string" || typeof value === "number" ? <Decode text={String(value)} /> : value}
+            {typeof value === "string" || typeof value === "number" ? <Count text={String(value)} /> : value}
           </p>
           {dial && (
             <div className="hidden shrink-0 flex-col items-center gap-1 sm:flex">
@@ -384,7 +385,7 @@ export function Tile({
       {icon && <IconChip icon={icon} tone={tone} className="absolute top-4 right-4" />}
       {tag && <p className="mb-2">{tag}</p>}
       <p className={cn("glow num text-[clamp(1.875rem,3.4vw,2.75rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
-        {typeof value === "string" || typeof value === "number" ? <Decode text={String(value)} /> : value}
+        {typeof value === "string" || typeof value === "number" ? <Count text={String(value)} /> : value}
         {unit && <span className="ml-1.5 text-panel font-medium text-muted-foreground">{unit}</span>}
       </p>
       {meter !== undefined && <Meter value={meter} tone={tone} label={label} className="mt-3" />}
