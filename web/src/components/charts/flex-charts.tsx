@@ -87,7 +87,7 @@ export function ShareChart({ rows, xcol }: { rows: FlexRow[]; xcol: GasColumn })
           />
           {trends.map((t) =>
             t.data.length ? (
-              <Line key={`trend-${t.fuel}`} data={t.data} dataKey="y" type="monotone" stroke={FUEL_COLOR[t.fuel]} strokeWidth={1.5} strokeDasharray="3 3" dot={false} activeDot={false} isAnimationActive={false} tooltipType="none" />
+              <Line key={`trend-${t.fuel}`} data={t.data} dataKey="y" type="monotone" stroke={FUEL_COLOR[t.fuel]} strokeWidth={1.5} strokeDasharray="3 3" dot={false} activeDot={false} tooltipType="none" />
             ) : null,
           )}
           {points.map((s) => (
@@ -144,7 +144,7 @@ export function MixChart({ rows, xcol }: { rows: FlexRow[]; xcol: GasColumn }) {
             }
           />
           {OUTCOMES.map((o) => (
-            <Bar key={o} dataKey={o} stackId="a" fill={OUTCOME_COLOR[o]} isAnimationActive={false} />
+            <Bar key={o} dataKey={o} stackId="a" fill={OUTCOME_COLOR[o]} />
           ))}
         </BarChart>
       </Chart>
@@ -212,7 +212,7 @@ export function RateChart({ rows, xcol }: { rows: FlexRow[]; xcol: RateColumn })
               key={`${s.fuel}-${s.outcome}`}
               data={s.data}
               fill={FUEL_COLOR[s.fuel]}
-              isAnimationActive={false}
+             
               shape={(props: { cx?: number; cy?: number }) => <Mark cx={props.cx} cy={props.cy} outcome={s.outcome} color={FUEL_COLOR[s.fuel]} />}
             />
           ))}
