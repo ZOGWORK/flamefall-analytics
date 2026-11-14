@@ -75,8 +75,14 @@ VERIFICATION_BADGE = {
 }
 
 
-def verification_badge(level: str) -> Html:
-    text, kind = VERIFICATION_BADGE.get(level, (level or "not verified", "mute"))
+def verification_badge(level: object) -> Html:
+    """Badge for a verification level. Anything missing or unknown reads as "not verified"."""
+    try:
+        missing = level is None or bool(level != level)     # None, or NaN (NaN != NaN)
+    except TypeError:                                         # pd.NA: its comparison has no truth value
+        missing = True
+    key = "" if missing else str(level).strip()
+    text, kind = VERIFICATION_BADGE.get(key, ("not verified", "mute"))
     return badge(text, kind)
 
 

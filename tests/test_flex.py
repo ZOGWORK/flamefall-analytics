@@ -1,6 +1,8 @@
 """The FLEX dataset: totals are recomputed from the CSV, never copied from a document."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -251,8 +253,63 @@ def test_schema_file_is_current(sch):
     assert list(sch.columns) == flex.SCHEMA_COLUMNS + flex.EXTRA_COLUMNS
     assert len(sch) == 276 and sch["test_id"].tolist() == built["test_id"].tolist()
     assert len(flex.SCHEMA_COLUMNS) == 24
-    pd.testing.assert_series_equal(sch["K_hot_mm2_s"], built["K_hot_mm2_s"], check_names=False)
-    assert sch["extinction_mode"].tolist() == built["extinction_mode"].tolist()
+    # every column of the committed file must equal a fresh build, not just a few of them
+    fresh = built.copy()
+    for col in ("support", "notes", "cool_flame_label", "cool_flame_quote", "extinction_wording"):
+        fresh[col] = fresh[col].fillna("")
+    for col in sch.columns:
+        a, b = sch[col], fresh[col]
+        if pd.api.types.is_numeric_dtype(b) and not pd.api.types.is_bool_dtype(b):
+            pd.testing.assert_series_equal(a.astype(float), b.astype(float), check_names=False, rtol=1e-9, obj=col)
+        else:
+            assert a.astype("string").fillna("").tolist() == b.astype("string").fillna("").tolist(), col
+
+
+def test_build_script_refuses_to_write_an_invalid_file(tmp_path, monkeypatch):
+    import sys
+
+    sys.path.insert(0, str(Path(flex.__file__).resolve().parents[1] / "scripts"))
+    import build_flex_droplets as build
+
+    good = flex.build_schema_frame()
+    assert build.problems(good) == []                          # documented source gaps are not problems
+    bad = good.copy()
+    bad.loc[bad.index[0], "extinction_mode"] = "made_up_mode"
+    bad.loc[bad.index[1], "test_id"] = bad.loc[bad.index[2], "test_id"]
+    bad.loc[bad.index[3], "D_rad_ext_mm"] = bad.loc[bad.index[3], "D0_mm"] + 1.0
+    found = build.problems(bad)
+    assert any("made_up_mode" in p for p in found) and any("duplicate" in p for p in found)
+    assert any("rule (c)" in p for p in found)
+    monkeypatch.setattr(flex, "DATA", tmp_path)
+    monkeypatch.setattr(flex, "build_schema_frame", lambda: bad)
+    assert build.main() == 1 and not (tmp_path / "flex_droplets.csv").exists()
+    monkeypatch.setattr(flex, "build_schema_frame", lambda: good)
+    assert build.main() == 0 and (tmp_path / "flex_droplets.csv").exists()
+
+
+def test_charts_accept_an_empty_selection(f):
+    from flamefall import charts
+
+    empty = f.iloc[0:0]
+    assert list(charts.share_by_level(empty, "o2_pct").columns) == charts.SHARE_COLUMNS
+    assert len(charts.extinction_share_figure(empty, "o2_pct").data) == 0
+    assert charts.outcome_mix_figure(empty, "o2_pct") is not None
+    assert charts.burning_rate_figure(empty, "d0_mm") is not None
+
+
+def test_nearest_tests_on_an_empty_filter_never_use_an_imputed_pressure():
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(Path(flex.__file__).resolve().parents[1] / "app.py"), default_timeout=120)
+    at.run()
+    at.switch_page("views/flex_explorer.py")
+    at.run()
+    at.multiselect[0].set_value([])
+    at.run()
+    shown = at.dataframe[0].value
+    assert len(shown) == 8 and shown["pressure_atm"].notna().all() and "FLEX-114" not in set(shown["test_id"])
+    src = (Path(flex.__file__).resolve().parents[1] / "views" / "flex_explorer.py").read_text(encoding="utf-8")
+    assert "fillna(1.0)" not in src
 
 
 def test_vocabulary(sch):
@@ -286,6 +343,18 @@ def test_rule_d_burner_flow_never_on_ambient_axis(sch):
 
 
 def test_rule_e_unverified_rows_excluded_from_models(sch):
-    probe = sch.head(3).copy()
+    probe = sch.head(5).copy()
     probe.loc[probe.index[0], "verification"] = "unverified"
-    assert len(schema.model_rows_only(probe)) == 2
+    probe.loc[probe.index[1], "verification"] = None          # a blank cell
+    probe.loc[probe.index[2], "verification"] = "something else"
+    kept = schema.model_rows_only(probe)
+    assert len(kept) == 2 and set(kept["verification"]) == {"verified_live"}     # fails closed
+
+
+def test_verification_badge_handles_missing_values():
+    from flamefall import ui
+
+    for missing in (None, float("nan"), pd.NA, "", "  ", "unknown level"):
+        html = ui.verification_badge(missing)
+        assert "not verified" in html and "nan" not in html.lower().replace("not verified", "")
+    assert "verified against primary source" in ui.verification_badge("verified_live")

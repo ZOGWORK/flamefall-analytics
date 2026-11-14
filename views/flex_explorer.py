@@ -49,8 +49,9 @@ if d.empty:
         "below so you can see what was actually tried.",
     )
     pool = f[f["fuel"].isin(fuels)] if fuels else f
+    pool = pool[pool["pressure_atm"].notna()]       # FLEX-114 has no pressure in the source: it is not ranked
     target_o2, target_p = sum(o2) / 2, sum(pressure) / 2
-    dist = ((pool["o2_pct"] - target_o2) / 22) ** 2 + ((pool["pressure_atm"].fillna(1.0) - target_p) / 2.4) ** 2
+    dist = ((pool["o2_pct"] - target_o2) / 22) ** 2 + ((pool["pressure_atm"] - target_p) / 2.4) ** 2
     near = pool.assign(_d=dist).nsmallest(8, "_d")
     st.dataframe(near[["test_id", "fuel", "o2_pct", "co2_pct", "he_pct", "pressure_atm", "d0_mm", "outcome", "source"]],
                  hide_index=True, width="stretch")

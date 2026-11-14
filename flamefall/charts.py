@@ -49,6 +49,9 @@ def logistic_trend(x: np.ndarray, y: np.ndarray, grid: np.ndarray) -> np.ndarray
     return 1 / (1 + np.exp(-G @ beta))
 
 
+SHARE_COLUMNS = ["fuel", "level", "n", "k", "share", "lo", "hi", "disruption", "completion"]
+
+
 def share_by_level(df: pd.DataFrame, xcol: str) -> pd.DataFrame:
     """Extinction share at each tested level of xcol, per fuel, with Wilson 95% intervals."""
     rows = []
@@ -58,7 +61,8 @@ def share_by_level(df: pd.DataFrame, xcol: str) -> pd.DataFrame:
         rows.append(dict(fuel=fuel, level=level, n=n, k=k, share=k / n, lo=lo, hi=hi,
                          disruption=int((g["outcome"] == "Disruption").sum()),
                          completion=int((g["outcome"] == "Completion").sum())))
-    return pd.DataFrame(rows)
+    # the columns are fixed so that an empty selection gives an empty table, not a table with no columns
+    return pd.DataFrame(rows, columns=SHARE_COLUMNS)
 
 
 def extinction_share_figure(df: pd.DataFrame, xcol: str = "o2_pct") -> go.Figure:
