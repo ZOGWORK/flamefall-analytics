@@ -110,6 +110,7 @@ code, pre, .ff-mono {{ font-family: {MONO}; }}
 .ff-badge.warn {{ color: {AMBER}; border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.08); }}
 .ff-badge.bad {{ color: {RED}; border-color: rgba(248,113,113,0.5); background: rgba(248,113,113,0.08); }}
 .ff-badge.info {{ color: {CYAN}; border-color: rgba(34,211,238,0.45); background: rgba(34,211,238,0.07); }}
+.ff-badge.violet {{ color: {VIOLET}; border-color: rgba(167,139,250,0.5); background: rgba(167,139,250,0.08); }}
 .ff-badge.mute {{ color: {MUTED}; border-color: {BORDER}; background: rgba(255,255,255,0.03); }}
 .ff-call {{ border: 1px solid {BORDER}; border-left: 3px solid {AMBER}; background: {PANEL}; border-radius: 8px;
   padding: 12px 16px; margin: 0.5rem 0 1rem; }}
