@@ -26,8 +26,8 @@ with their pressures, no ratio derived). The brief told me to correct numbers th
 contradict, so I treated these as corrections (DECISIONS.md C6, C7).
 *If you would rather hold to the brief's wording:* say so and I will remove both. The change is six entries in
 `data/evidence.json` (`luci-sibal`, `luci-pmma`, `luci-method`, `saffire-2026-spread`,
-`saffire-2026-alarm`, `saffire-2026-hrr-differs`), the LUCI catalogue row, and anything the front end
-shows from those entries.
+`saffire-2026-alarm`, `saffire-2026-hrr-differs`), the LUCI catalogue row, the LUCI rows of `data/panels.json`,
+and the chart drawn from them on *What We Don't Know*.
 
 **Q4. The "85% O2" correction is itself corrected.** The brief says the 85% figure is Flame
 Design's, "never CFI-G". PSI's own CFI-G inverse-flame table and the challenge page both put 85%
@@ -59,3 +59,30 @@ verified test points and scores no better than chance on unseen test series (AUC
 says so, and it is not to be used for any estimate: for solids the answer is the nearest real
 tests, with no probability. I think this is the right call for the Validity score; say so if you
 would rather leave the solid model out entirely.
+
+**Q7. Where the console is hosted.** The first brief named Streamlit Community Cloud; you then asked
+for Next.js on Render. It is a Render static site in your workspace, free plan, no server process
+and so no cold start:
+
+- Live: https://flamefall-analytics.onrender.com and https://flamefall-analytics.onrender.com/deck/
+- It builds from the branch `feat/web-app` and redeploys on every push to it. **Once the PRs are
+  merged, change the branch to `main`** (Render dashboard, the service's Settings, Branch). I did
+  not find a way to change it from here.
+- The earlier in-browser Streamlit build on GitHub Pages is no longer the product. It is still
+  online at zogwork.github.io/flamefall-analytics until you say to take it down (Settings, Pages).
+
+**Q8. Human spot-checks.** The Space Apps rules ask what a human verified. `docs/HUMAN_VERIFICATION.md`
+lists 14 numbers with the exact page to open for each. Nothing in it is ticked yet.
+
+**Q9. The name of the research assistant.** `docs/SI_DISCLOSURE.md` describes the tool that wrote
+the research notes as "an SI research assistant (named 'Bruno' in the team's notes)". Replace that
+with the product and model name before pasting the disclosure into the project page.
+
+**Q10. The review bot has stopped, so nothing can be merged under your rule.** Loopy posted on
+14 Nov: "This organization has used all 50 reviews on its Free plan this month. Reviews start
+again on December 1, or as soon as an owner upgrades." Your rule is never to merge below 5/5, and
+no PR had reached 5/5 when it stopped (the last scores were 4/5 with only minor findings open).
+So every PR is still open and `main` is empty. Your options: upgrade Loopy in its Billing page and
+I continue the loop; or tell me to merge on the tests alone; or leave the PRs open, which does not
+stop you submitting, because the live site builds from the branch.
+
