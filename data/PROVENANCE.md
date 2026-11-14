@@ -46,8 +46,8 @@ flags).
 
 The "visible flame extinction diameter" column is not empty for every test that did not
 extinguish: 24 Disruption and 15 Completion rows print a value there (159 Extinction rows do).
-The dashboard calls that value an extinction diameter only when the outcome is Extinction; for the
-other two outcomes it is shown as the diameter printed at the end of the test.
+`flamefall/aggregates.py` names that value an extinction diameter only when the outcome is
+Extinction; for the other two outcomes it is the diameter printed at the end of the test.
 
 ### Recomputed facts (asserted by `tests/test_flex.py`, never hard-coded in the app)
 
@@ -104,8 +104,8 @@ Reading rules, applied by phrase and then read row by row:
   16 by more, including plain slips such as FLEX-185 (caption 0.70/0.52/0.25 O2/N2/CO2,
   which sums to 1.47; table 0.23/0.52/0.25), FLEX-280 (nitrogen and helium swapped) and FLEX-158 to
   160 (the caption repeats the previous series' mixture). Table IX agrees with the repository's own
-  table on these tests, so Table IX is used everywhere and the Explorer shows a note on the 45
-  tests. `flex.caption_atmosphere_conflicts()` lists them.
+  table on these tests, so Table IX is used everywhere and the 45 tests are flagged
+  (`caption_atmosphere_differs`). `flex.caption_atmosphere_conflicts()` lists them.
 
 FLEX-149 and FLEX-240 have no caption in the full-text file and carry no annotation.
 
