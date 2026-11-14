@@ -142,7 +142,7 @@ for _, r in shown.iterrows():
         st.markdown(badges, unsafe_allow_html=True)
         if r["key_result"]:
             st.markdown(f"**Key finding.** {r['key_result']}")
-            ui.source(ui.esc(r["primary_source_ref"]), r["primary_source_url"])
+            ui.source(r["primary_source_ref"], r["primary_source_url"])
         else:
             st.markdown("**Key finding.** *None recorded: no quantitative result for this investigation was checked "
                         "against a primary source during the build.*")
