@@ -1,0 +1,23 @@
+{
+ "psi_id": "PSI-142",
+ "record_version": 2,
+ "file_count": 3,
+ "total_bytes": 748117.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 12158
+  },
+  "Analyzed Data": {
+   "files": 1,
+   "bytes": 735232.0
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 727
+  }
+ },
+ "experimental_tables": [
+  "PSI-142_Experimental table_Data Summary Table.csv"
+ ]
+}
