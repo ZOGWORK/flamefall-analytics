@@ -41,8 +41,13 @@ flags).
 | FLEX-227 | burn time `~6` | `6`, flagged approximate | |
 | FLEX-229 | burn time `~9` | `9`, flagged approximate | |
 | FLEX-070, FLEX-073 | same CIR identifier `193F001`, same date and time | both kept, both flagged | separate FLEX numbers with different diameters and rates |
-| FLEX-212 | every numeric field `-`, outcome Extinction | numeric cells empty | kept as printed |
-| FLEX-039, 043, 051, 052, 063, 069, 093, 135 | extinction diameter `0` | `0` | printed as zero, so kept as zero, not treated as missing |
+| FLEX-212 | D0, extinction diameter, burning rate and burn time all `-`; pressure (759.8 mmHg), gas fractions (0.16 / 0.84 / 0 / 0) and outcome (Extinction) are printed | those four cells empty, the rest as printed | kept as printed |
+| FLEX-039, 043, 051, 052, 063, 069, 093, 135 | extinction diameter `0` | `0` | printed as zero, so kept as zero, not treated as missing. All eight ended in Disruption or Completion, none in Extinction |
+
+The "visible flame extinction diameter" column is not empty for every test that did not
+extinguish: 24 Disruption and 15 Completion rows print a value there (159 Extinction rows do).
+The dashboard calls that value an extinction diameter only when the outcome is Extinction; for the
+other two outcomes it is shown as the diameter printed at the end of the test.
 
 ### Recomputed facts (asserted by `tests/test_flex.py`, never hard-coded in the app)
 
