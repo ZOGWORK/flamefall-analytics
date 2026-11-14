@@ -70,7 +70,7 @@ export function Dial({
           strokeDasharray={`${arc * v} 999`}
           transform="rotate(135 66 66)"
           className="dial-arc"
-          style={{ filter: `drop-shadow(0 0 7px ${color})`, ["--arc" as string]: `${arc * v}` }}
+          
         />
         {tick !== undefined && (
           <line
@@ -110,7 +110,7 @@ export function Meter({
         <span
           key={i}
           className={cn("min-w-0 flex-1 rounded-[1px]", i < lit && "cell")}
-          style={i < lit ? { background: color, boxShadow: `0 0 8px ${color}`, animationDelay: `${i * 22}ms` } : { background: "rgba(255,255,255,0.07)" }}
+          style={i < lit ? { background: color, animationDelay: `${i * 22}ms` } : { background: "rgba(255,255,255,0.07)" }}
         />
       ))}
     </div>
@@ -133,7 +133,7 @@ export function CellMatrix({
   return (
     <div className={cn("grid gap-[3px]", className)} style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${cell}px, 1fr))` }} role="img" aria-label={label}>
       {cells.map((g, i) => (
-        <span key={i} title={g.name} className="cell aspect-square rounded-[2px]" style={{ background: g.color, boxShadow: `0 0 6px ${g.color}`, animationDelay: `${Math.min(i * 9, 900)}ms` }} />
+        <span key={i} title={g.name} className="cell aspect-square rounded-[2px]" style={{ background: g.color, animationDelay: `${Math.min(i * 9, 900)}ms` }} />
       ))}
     </div>
   );
@@ -148,9 +148,8 @@ export function IconChip({ icon: Icon, tone = "amber", className }: { icon: Luci
       className={cn("inline-flex size-8 shrink-0 items-center justify-center rounded-md border", className)}
       style={{
         color,
-        borderColor: `color-mix(in srgb, ${color} 45%, transparent)`,
-        background: `color-mix(in srgb, ${color} 12%, transparent)`,
-        boxShadow: `0 0 18px -4px ${color}, inset 0 1px 0 rgba(255,255,255,0.12)`,
+        borderColor: `color-mix(in srgb, ${color} 32%, transparent)`,
+        background: `color-mix(in srgb, ${color} 10%, transparent)`,
       }}
     >
       <Icon className="size-4" strokeWidth={1.75} />
