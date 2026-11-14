@@ -20,7 +20,7 @@
 <body>
 <div id="boot">
   <b>Flamefall Analytics</b>
-  <p>Loading the dashboard. The first visit downloads the Python runtime and takes about half a minute; after that it opens quickly.</p>
+  <p>Loading the dashboard. The first visit downloads the Python runtime and can take up to a minute; after that it opens quickly.</p>
   <p><a href="deck/">Open the 7-slide summary</a> · <a href="https://github.com/ZOGWORK/flamefall-analytics">Code and data</a></p>
   <noscript><p>This dashboard needs JavaScript. The code and data are in the repository linked above.</p></noscript>
 </div>
@@ -144,7 +144,9 @@ const paths = [
  "data/bass2/table_7_1.csv",
  "data/bass2/table_d_2.csv"
 ];
-const files = Object.fromEntries(paths.map((p) => [p, { url: new URL(p, window.location.href).href }]));
+// The version is a hash of every mounted file, so a browser never mixes a cached file with a new build.
+const version = "8dc0e65f1f36";
+const files = Object.fromEntries(paths.map((p) => [p, { url: new URL(p + "?v=" + version, window.location.href).href }]));
 const root = document.getElementById("root");
 mount({
   entrypoint: "app.py",
