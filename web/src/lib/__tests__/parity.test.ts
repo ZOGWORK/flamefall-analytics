@@ -167,11 +167,20 @@ describe("catalogue", () => {
     expect(index.parseFilters("Which materials did the smoke detector miss?")).toEqual({});
     const got = index.answer("Which materials did the smoke detector miss?");
     expect(got.statements.some((s) => s.doc.doc_id === "same-detector-misses")).toBe(true);
-    const high = index.answer("Which experiments ran above 80% oxygen?");
-    expect(high.investigations).not.toContain("FM2");
-    for (const h of high.hits.filter((x) => x.doc.kind === "investigation")) {
-      expect(searchJson.investigation_o2[h.doc.investigation_id as keyof typeof searchJson.investigation_o2]![1]).toBeGreaterThanOrEqual(80);
-    }
+    // the text match alone lists investigations that never reached 30% oxygen, or state no range
+    const question = "solid materials above 30% oxygen";
+    const o2 = (searchJson as unknown as SearchData).investigation_o2;
+    const unfiltered = index.search(question, 6).filter((h) => h.doc.kind === "investigation").map((h) => h.doc.investigation_id);
+    expect(unfiltered).toEqual(expect.arrayContaining(["LUCI", "Saffire-IV", "FLARE", "Saffire-VI"]));
+    expect(o2.LUCI![1]).toBeLessThan(30);
+    expect(o2["Saffire-IV"]![1]).toBeLessThan(30);
+    expect(o2.FLARE).toBeNull();
+    const high = index.answer(question);
+    const listed = high.hits.filter((h) => h.doc.kind === "investigation").map((h) => h.doc.investigation_id);
+    expect(listed).toContain("Saffire-VI");
+    expect(listed.length).toBeGreaterThan(0);
+    for (const id of listed) expect(o2[id]![1], id).toBeGreaterThanOrEqual(30);
+    for (const id of ["LUCI", "Saffire-IV", "FLARE", "FM2"]) expect(high.investigations, id).not.toContain(id);
   });
 
   it("retrieval: expansion, filters, statements and their order", () => {
