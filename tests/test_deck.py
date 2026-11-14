@@ -113,6 +113,13 @@ def test_web_page_mounts_every_file_the_app_needs():
     assert (ROOT / ".nojekyll").exists()
 
 
+def test_web_page_root_fills_the_viewport():
+    """stlite positions the app absolutely inside #root. With no height the app loads but is invisible."""
+    page = (ROOT / "index.html").read_text(encoding="utf-8")
+    rule = re.search(r"#root\s*\{([^}]*)\}", page).group(1)
+    assert "position: fixed" in rule and "inset: 0" in rule
+
+
 @pytest.mark.parametrize("module", ["flamefall/flex.py", "flamefall/catalogue.py", "flamefall/psi.py",
                                     "flamefall/ranking.py", "flamefall/ui.py", "flamefall/charts.py"])
 def test_app_modules_import_nothing_outside_the_browser_requirements(module):
