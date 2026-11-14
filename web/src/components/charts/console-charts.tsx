@@ -35,34 +35,69 @@ export function FuelBars({ summary }: { summary: FlexSummary }) {
   );
 }
 
-const EXPLORATION_O2 = 30;
-const reaches = (hi: number) => hi >= EXPLORATION_O2;
+const CLASS_ORDER = ["droplet", "gas", "solid", "smoke", "partial_g"];
 
-/** The ambient-oxygen range each investigation actually tested. Unstated ranges are not drawn. */
-export function OxygenRangeChart({ investigations, classLabel }: { investigations: Investigation[]; classLabel: Record<string, string> }) {
-  const rows = useMemo(
-    () =>
-      investigations
-        .map((r) => ({ id: r.investigation_id, cls: r.evidence_class, lo: num(r.o2_min_pct), hi: num(r.o2_max_pct) }))
-        .filter((r): r is { id: string; cls: string; lo: number; hi: number } => r.lo !== null && r.hi !== null)
-        .sort((a, b) => b.hi - a.hi || a.lo - b.lo)
-        .map((r) => ({ ...r, base: r.lo, span: Math.max(r.hi - r.lo, 0.35) })),
-    [investigations],
+interface RangeRow {
+  id: string;
+  cls: string;
+  lo: number;
+  hi: number;
+  base: number;
+  span: number;
+}
+
+/**
+ * The ambient-oxygen range each investigation actually tested. Unstated ranges are not drawn.
+ * One chart per kind of evidence: droplets, gas flames, solids and smoke are never put on one chart.
+ * `exploration` is the oxygen level the challenge brief expects in future cabins.
+ */
+export function OxygenRangeChart({ investigations, classLabel, exploration }: { investigations: Investigation[]; classLabel: Record<string, string>; exploration: number }) {
+  const groups = useMemo(() => {
+    const rows: RangeRow[] = investigations
+      .map((r) => ({ id: r.investigation_id, cls: r.evidence_class, lo: num(r.o2_min_pct), hi: num(r.o2_max_pct) }))
+      .filter((r): r is { id: string; cls: string; lo: number; hi: number } => r.lo !== null && r.hi !== null)
+      .sort((a, b) => b.hi - a.hi || a.lo - b.lo)
+      .map((r) => ({ ...r, base: r.lo, span: Math.max(r.hi - r.lo, 0.35) }));
+    const order = (cls: string) => (CLASS_ORDER.includes(cls) ? CLASS_ORDER.indexOf(cls) : CLASS_ORDER.length);
+    return [...new Set(rows.map((r) => r.cls))]
+      .sort((a, b) => order(a) - order(b))
+      .map((cls) => ({ cls, rows: rows.filter((r) => r.cls === cls) }));
+  }, [investigations]);
+  return (
+    <div className="space-y-6">
+      {groups.map(({ cls, rows }) => (
+        <OxygenRangeGroup key={cls} title={classLabel[cls] ?? cls} rows={rows} exploration={exploration} />
+      ))}
+      <Legend
+        items={[
+          { label: `tested range reaches ${exploration}% O2 or more`, color: "var(--amber)" },
+          { label: `stays below ${exploration}%`, color: "var(--data)" },
+          { label: "air, 21% (grey dashed line)", color: "var(--dim)", shape: "line" },
+        ]}
+      />
+    </div>
   );
+}
+
+function OxygenRangeGroup({ title, rows, exploration }: { title: string; rows: RangeRow[]; exploration: number }) {
+  const reaches = (hi: number) => hi >= exploration;
   return (
     <div>
-      <Chart height={60 + 22 * rows.length} label="Ambient oxygen range tested by each investigation">
+      <p className="kicker mb-1 text-dim">
+        {title} · {rows.length} with a stated range
+      </p>
+      <Chart height={60 + 22 * rows.length} label={`Ambient oxygen range tested by each investigation: ${title}`}>
         <BarChart data={rows} layout="vertical" margin={{ top: 16, right: 16, bottom: 18, left: 8 }} barCategoryGap="30%">
           <CartesianGrid {...GRID} horizontal={false} />
           <XAxis type="number" domain={[10, 42]} ticks={[10, 15, 21, 25, 30, 35, 40]} unit="%" {...AXIS} label={axisLabel("Ambient O2 tested, % by volume", "x")} />
           <YAxis type="category" dataKey="id" width={132} interval={0} {...AXIS} tick={{ fill: "var(--foreground)", fontSize: 11 }} />
-          <ReferenceLine x={21} stroke="var(--dim)" strokeDasharray="3 3" label={{ value: "air 21%", position: "insideBottomRight", fill: "var(--muted-foreground)", fontSize: 11 }} />
-          <ReferenceLine x={30} stroke="var(--amber)" strokeDasharray="3 3" label={{ value: "exploration 30%+", position: "top", fill: "var(--amber)", fontSize: 11 }} />
+          <ReferenceLine x={21} stroke="var(--dim)" strokeDasharray="3 3" />
+          <ReferenceLine x={exploration} stroke="var(--amber)" strokeDasharray="3 3" label={{ value: `exploration ${exploration}%+`, position: "top", fill: "var(--amber)", fontSize: 11 }} />
           <Tooltip
             cursor={{ fill: "var(--accent)" }}
             content={({ active, payload }) => {
               const p = payload?.[0]?.payload;
-              return active && p ? <Tip title={p.id} lines={[p.lo === p.hi ? `${g(p.lo)}% O2` : `${g(p.lo)} to ${g(p.hi)}% O2`, classLabel[p.cls] ?? p.cls]} /> : null;
+              return active && p ? <Tip title={p.id} lines={[p.lo === p.hi ? `${g(p.lo)}% O2` : `${g(p.lo)} to ${g(p.hi)}% O2`, title]} /> : null;
             }}
           />
           <Bar dataKey="base" stackId="r" fill="transparent" />
@@ -73,12 +108,6 @@ export function OxygenRangeChart({ investigations, classLabel }: { investigation
           </Bar>
         </BarChart>
       </Chart>
-      <Legend
-        items={[
-          { label: `tested range reaches ${EXPLORATION_O2}% O2 or more`, color: "var(--amber)" },
-          { label: `stays below ${EXPLORATION_O2}%`, color: "var(--data)" },
-        ]}
-      />
     </div>
   );
 }
