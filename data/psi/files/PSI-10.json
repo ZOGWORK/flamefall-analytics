@@ -1,0 +1,40 @@
+{
+ "psi_id": "PSI-10",
+ "record_version": 1,
+ "file_count": 3807,
+ "total_bytes": 2180435304347,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 17047
+  },
+  "Reports": {
+   "files": 3,
+   "bytes": 4534713
+  },
+  "Science Documents": {
+   "files": 3,
+   "bytes": 2632279
+  },
+  "Engineering Documents": {
+   "files": 1,
+   "bytes": 7496324
+  },
+  "Experimental table": {
+   "files": 2,
+   "bytes": 44247
+  },
+  "Raw Data": {
+   "files": 3792,
+   "bytes": 2180419708029
+  },
+  "Representative Image(s)": {
+   "files": 5,
+   "bytes": 871708
+  }
+ },
+ "experimental_tables": [
+  "PSI-10_Experimental table_Flame Design_Normal Flame.csv",
+  "PSI-10_Experimental table_Flame Design_Inverse Flame.csv"
+ ]
+}
