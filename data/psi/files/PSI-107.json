@@ -1,0 +1,43 @@
+{
+ "psi_id": "PSI-107",
+ "record_version": 4,
+ "file_count": 188,
+ "total_bytes": 6946864573.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 9313
+  },
+  "Reports": {
+   "files": 3,
+   "bytes": 2990401.0
+  },
+  "Science Documents": {
+   "files": 1,
+   "bytes": 1112064.0
+  },
+  "Presentations": {
+   "files": 5,
+   "bytes": 36912183.0
+  },
+  "Raw Data": {
+   "files": 172,
+   "bytes": 6899317356.0
+  },
+  "Engineering Documents": {
+   "files": 4,
+   "bytes": 5431916.0
+  },
+  "Reference Data": {
+   "files": 1,
+   "bytes": 1060135.0
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 31205
+  }
+ },
+ "experimental_tables": [
+  "PSI-107_Experimental table_Spice.csv"
+ ]
+}
