@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Search, X } from "lucide-react";
+import { ArrowUpRight, FlaskConical, Search, Table2, Telescope, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { OxygenRangeChart } from "@/components/charts/console-charts";
@@ -216,12 +216,13 @@ export function Catalogue() {
       <HeroBand
         kicker="Repository search"
         value={N.search_hits}
+        dial={{ value: N.combustion_science / N.search_hits, caption: `${N.combustion_science} combustion` }}
         source={`PSI repository search, retrieved ${N.retrieved.slice(0, 10)}`}
         readouts={
           <>
-            <Readout className="border-0" value={N.combustion_science} tone="data" label="of those are Combustion Science" source="The other two are a solder study (PSI-181) and a fluid-physics experiment (PSI-108)" />
-            <Readout className="border-0" value={N.tables} tone="done" label="per-test experimental tables attached to those records" source={`${N.with_experimental_table} of ${N.search_hits} records attach at least one; all copied into this repository`} />
-            <Readout className="border-0" value={N.outside_psi_search} tone="disrupt" label="related investigations that the search does not return" source="Saffire IV to VI, SoFIE-GEL, FLARE, LUCI, FM2: added from their own papers and marked as such" />
+            <Readout className="border-0" icon={FlaskConical} meter={N.combustion_science / N.search_hits} value={N.combustion_science} tone="data" label="of those are Combustion Science" source="The other two are a solder study (PSI-181) and a fluid-physics experiment (PSI-108)" />
+            <Readout className="border-0" icon={Table2} meter={N.with_experimental_table / N.search_hits} value={N.tables} tone="done" label="per-test experimental tables attached to those records" source={`${N.with_experimental_table} of ${N.search_hits} records attach at least one; all copied into this repository`} />
+            <Readout className="border-0" icon={Telescope} meter={N.outside_psi_search / N.catalogue_rows} value={N.outside_psi_search} tone="disrupt" label="related investigations that the search does not return" source="Saffire IV to VI, SoFIE-GEL, FLARE, LUCI, FM2: added from their own papers and marked as such" />
           </>
         }
       >
