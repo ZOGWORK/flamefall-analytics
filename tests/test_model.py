@@ -149,20 +149,52 @@ def test_cross_validation_never_learns_preprocessing_from_the_rows_it_scores(mon
     monkeypatch.setattr(model, "transform", spy_transform)
     cv = model.nested_cv(df, spec)
 
-    everything = set(df["row_id"])
+    ids = df["row_id"].to_numpy()
+    everything = frozenset(ids)
     assert len(everything) == len(df)
-    assert fitted_on and all(rows < everything for _, rows in fitted_on.values())      # never the whole frame
-    held_out = 0
-    for rows, key in scored:
-        train_rows = fitted_on[key][1]
-        assert rows == train_rows or not (rows & train_rows)       # its own training rows, or rows it never saw
-        held_out += rows != train_rows
-    assert held_out >= cv["k"]
+
+    # The only (fitted on, applied to) pairs the protocol allows, worked out from the fold membership
+    # alone: an outer scaler is fitted on a fold's training rows and applied to those rows and to that
+    # fold's test rows; an inner scaler is fitted on an inner training split of one outer training set
+    # and applied to that split and to its inner test split. A scaler fitted on a test fold, or on
+    # the whole frame, is in neither list.
+    allowed, outer_scoring = set(), []
+    index = {row: i for i, row in enumerate(ids)}
     for fold in cv["folds"]:
-        assert not set(fold["train_rows"]) & set(fold["test_rows"])
-        assert any(rows == set(fold["train_rows"]) for _, rows in fitted_on.values())  # the outer scaler of this fold
+        train, test = frozenset(fold["train_rows"]), frozenset(fold["test_rows"])
+        assert not train & test and train | test == everything
+        allowed |= {(train, train), (train, test)}
+        outer_scoring.append((train, test))
+        tr = np.array(sorted(index[r] for r in train))
+        groups = cv["split_groups"][tr]
+        for inner_train, inner_test in model._splits(groups, min(3, len(np.unique(groups)))):
+            a, b = frozenset(ids[tr[inner_train]]), frozenset(ids[tr[inner_test]])
+            assert not a & b and a | b == train
+            allowed |= {(a, a), (a, b)}
+
+    seen = {(frozenset(fitted_on[key][1]), frozenset(rows)) for rows, key in scored}
+    assert seen <= allowed, "a scaler was fitted on, or applied to, rows the protocol does not allow"
+    assert all(pair in seen for pair in outer_scoring)             # every outer test fold was scored by its own fold's scaler
+    assert all(rows != everything for _, rows in fitted_on.values())
+    assert not any(fitted == test for fitted, _ in seen for _, test in outer_scoring)   # never fitted on a test fold
     whole = real_fit(df, spec)
     assert all(prep["mean"]["o2_pct"] != whole["mean"]["o2_pct"] for prep, _ in fitted_on.values())
+
+
+def test_the_preprocessing_test_catches_a_scaler_fitted_on_the_test_fold(monkeypatch):
+    """The check above must fail for the classic leak, or it proves nothing."""
+    spec = model.SPECS["droplet_extinction"]
+    df = model.frame_for("droplet_extinction").reset_index(drop=True)
+    cv = model.nested_cv(df, spec)
+    ids = df["row_id"].to_numpy()
+    allowed = set()
+    for fold in cv["folds"]:
+        train, test = frozenset(fold["train_rows"]), frozenset(fold["test_rows"])
+        allowed |= {(train, train), (train, test)}
+    for fold in cv["folds"]:
+        test = frozenset(fold["test_rows"])
+        assert (test, test) not in allowed                          # fitted on the test fold, applied to it
+        assert (frozenset(ids), test) not in allowed                # fitted on everything, applied to the test fold
 
 
 def test_cards_state_where_they_depart_from_the_protocol(cards):
@@ -171,6 +203,10 @@ def test_cards_state_where_they_depart_from_the_protocol(cards):
     moved = s[s["o2_initial_pct"] != s["o2_pct"]]
     assert len(s) == 179 and len(moved) == 13 and set(moved["y"]) == {0}
     assert any("moves 13 of the 179 rows, 13 of them not sustained" in note for note in solid["notes"])
+    assert any("oxygen partial pressure and the oxygen-flow interaction" in note for note in solid["notes"])
+    spec = model.SPECS["solid_sustained"]
+    assert "o2_partial_kpa" in spec.continuous and ("o2_pct", "flow_cm_s") in spec.interactions   # the two that carry it
+    assert (s["o2_partial_kpa"] == s["o2_pct"] / 100 * s["pressure_kpa"]).all()
     assert cool["leave_one_material_out"]["pooled_auc"] is None and cool["headline_is"] == "grouped cross-validation"
     assert "alone, not the worse of two" in cool["headline_note"]
     for name in ("droplet_extinction", "solid_sustained"):

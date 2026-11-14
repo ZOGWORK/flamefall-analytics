@@ -98,13 +98,13 @@ sources themselves.
   Extinction; 24 Disruption and 15 Completion rows also print a value in that column.
 - **D14. Environment filter.** Tags are computed from each investigation's own tested ranges by a
   stated rule. Station: tested near 21% O2. Rover: tested at 30% O2 or more, or at 70.3 kPa or
-  less. Lunar: the rover rule, or tested in partial gravity. Spacecraft: vehicle-scale burn or
+  less. Lunar: the rover rule, or tested in, or planned for, partial gravity. Spacecraft: vehicle-scale burn or
   smoke detection. A planned investigation has no tested range, so only its gravity can tag it,
   and it earns no relevance to any scenario: every term reads "planned, not tested".
 - **D14a. Relevance in still gas.** An investigation that ran in still gas only is a full match for
   a still-gas scenario, and the match fades to zero over 20 cm/s of flow, like any other range.
 - **D14b. Nearest tests and missing values.** A test that does not state one of the compared
-  quantities (FLEX-114 has no pressure, 12 FLEX tests no initial diameter, 100 solid points no flow
+  quantities (FLEX-114 has no pressure, 12 FLEX tests no initial diameter, 96 of the solid points that are ranked no flow
   speed) is compared on the quantities it does state, is ranked after every test that states them
   all, and says which quantity was not compared.
 - **D15. Search is retrieval and extraction only.** TF-IDF over catalogue rows and sourced
@@ -155,10 +155,12 @@ sources themselves.
 - **D29. Stress test.** Leave-one-fuel-out for droplets, leave-one-material-out for solids. The
   headline is the worse of that and grouped CV: 0.74 for droplet extinction. Every cool-flame row
   is n-heptane, so that model has no stress test; its card says its headline is grouped CV alone.
-- **D29a. One input is not an initial condition.** For a solid-fuel flame that went out, oxygen is
-  the end-of-test reading (D9). That reading exists only because the flame went out, so the input
-  is chosen with knowledge of the outcome. It moves 13 of the 179 rows, all not sustained. The
-  card states it; the solid model fails either way and gives no estimate.
+- **D29a. Oxygen is not an initial condition for a flame that went out.** For a solid-fuel flame
+  that went out, oxygen is the end-of-test reading (D9). That reading exists only because the
+  flame went out, so it is chosen with knowledge of the outcome, and the two features computed
+  from it (oxygen partial pressure, the oxygen-flow interaction) carry it too. It moves 13 of the
+  179 rows, all not sustained. The card states it; the solid model fails either way and gives no
+  estimate.
 - **D30. Distance to data** is the nearest-neighbour distance in standardised input space, compared
   with the 95th percentile of the training rows' own nearest-neighbour distances, plus a per-input
   range check.
