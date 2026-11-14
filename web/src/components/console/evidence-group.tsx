@@ -13,7 +13,7 @@ export function EvidenceGroup({ ids, entries, label = "sourced statements", lead
   const list = entries ?? (ids ?? []).map(ev);
   if (list.length === 0) return null;
   return (
-    <Accordion className="border border-line bg-surface">
+    <Accordion className="rounded-xl border border-line bg-surface">
       <AccordionItem value="evidence" className="px-4">
         <AccordionTrigger className="rounded-sm py-2.5 hover:no-underline">
           <span className="text-body font-normal text-muted-foreground">
