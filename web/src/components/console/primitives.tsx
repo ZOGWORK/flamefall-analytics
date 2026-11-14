@@ -1,9 +1,10 @@
 // The building blocks every page is made of. Each section follows one order:
 // heading, one-line plain-English explainer, the visual, then the source footnote.
 
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, type LucideIcon } from "lucide-react";
 
 import { Decode } from "@/components/console/decode";
+import { Dial, IconChip, Meter } from "@/components/console/viz";
 import { cn } from "@/lib/utils";
 import type { Outcome, Verification } from "@/lib/types";
 
@@ -206,6 +207,8 @@ export function Readout({
   source,
   tone = "amber",
   className,
+  icon,
+  meter,
 }: {
   value: React.ReactNode;
   unit?: string;
@@ -213,13 +216,21 @@ export function Readout({
   source: string;
   tone?: Tone;
   className?: string;
+  /** An icon for what the number is. */
+  icon?: LucideIcon;
+  /** The same number as a fraction of its scale, drawn as a lit meter. */
+  meter?: number;
 }) {
   return (
     <div className={cn("flex flex-col border border-line bg-surface p-3", className)}>
-      <p className={cn("num text-heading leading-none font-medium", TONE_TEXT[tone])}>
-        {value}
-        {unit && <span className="ml-1.5 text-note text-muted-foreground">{unit}</span>}
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <p className={cn("glow num text-heading leading-none font-medium", TONE_TEXT[tone])}>
+          {value}
+          {unit && <span className="ml-1.5 text-note text-muted-foreground">{unit}</span>}
+        </p>
+        {icon && <IconChip icon={icon} tone={tone} className="size-7" />}
+      </div>
+      {meter !== undefined && <Meter value={meter} tone={tone} segments={20} label={`${label}: ${typeof value === "string" || typeof value === "number" ? value : ""}`} className="mt-2.5" />}
       <p className="mt-2 text-body text-foreground">
         <Prose text={label} />
       </p>
@@ -309,6 +320,7 @@ export function HeroBand({
   children,
   source,
   readouts,
+  dial,
 }: {
   kicker: string;
   value: React.ReactNode;
@@ -316,14 +328,24 @@ export function HeroBand({
   children: React.ReactNode;
   source: string;
   readouts: React.ReactNode;
+  /** The hero value as a fraction of its scale, drawn as a dial beside the number. */
+  dial?: { value: number; tick?: number; caption?: string };
 }) {
   return (
     <section className="beam grid grid-cols-1 gap-px border border-line bg-line xl:grid-cols-12">
       <div className="scan bg-surface p-4 sm:p-5 xl:col-span-5">
         <Kicker className="text-dim">{kicker}</Kicker>
-        <p className={cn("glow num mt-2 text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
-          {typeof value === "string" || typeof value === "number" ? <Decode text={String(value)} /> : value}
-        </p>
+        <div className="mt-2 flex items-center justify-between gap-4">
+          <p className={cn("glow num text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
+            {typeof value === "string" || typeof value === "number" ? <Decode text={String(value)} /> : value}
+          </p>
+          {dial && (
+            <div className="hidden shrink-0 flex-col items-center gap-1 sm:flex">
+              <Dial value={dial.value} tick={dial.tick} tone={tone} size={104} label={`${kicker}: ${dial.caption ?? ""}`} />
+              {dial.caption && <span className="kicker text-dim">{dial.caption}</span>}
+            </div>
+          )}
+        </div>
         <p className="mt-3 text-body text-foreground">{children}</p>
         <p className="mt-1 text-note text-muted-foreground">
           <span className="text-dim">Source: </span>
@@ -344,6 +366,8 @@ export function Tile({
   tone = "amber",
   tag,
   className,
+  icon,
+  meter,
 }: {
   value: React.ReactNode;
   unit?: string;
@@ -352,15 +376,19 @@ export function Tile({
   tone?: Tone;
   tag?: React.ReactNode;
   className?: string;
+  icon?: LucideIcon;
+  meter?: number;
 }) {
   return (
-    <div className={cn("flex flex-col bg-surface p-4", className)}>
+    <div className={cn("relative flex flex-col bg-surface p-4", className)}>
+      {icon && <IconChip icon={icon} tone={tone} className="absolute top-4 right-4" />}
       {tag && <p className="mb-2">{tag}</p>}
       <p className={cn("glow num text-[clamp(1.875rem,3.4vw,2.75rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
         {typeof value === "string" || typeof value === "number" ? <Decode text={String(value)} /> : value}
         {unit && <span className="ml-1.5 text-panel font-medium text-muted-foreground">{unit}</span>}
       </p>
-      <p className="mt-2 text-body text-foreground">
+      {meter !== undefined && <Meter value={meter} tone={tone} label={label} className="mt-3" />}
+      <p className="mt-2 pr-10 text-body text-foreground">
         <Prose text={label} />
       </p>
       <p className="mt-auto pt-2 text-note text-muted-foreground">
