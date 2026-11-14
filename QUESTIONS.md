@@ -50,3 +50,10 @@ BASS-II summary memo states the same quantity, the memo is cited instead.
 Flame Design journal paper (burn times 28 to 336 s) and the FLEX limiting-oxygen abstract (0.12
 methanol, 0.15 n-heptane). Both are shown with an "index-level" badge. The FLARE conference paper
 was unreachable, so FLARE has no numbers in the catalogue.
+
+## Decisions I made that you may want to change
+
+**Q6. The solid-material model is shown as a failure.** The specified model was built on 179
+verified test points and scores no better than chance on unseen test series (AUC 0.48). The
+Scenario Lab therefore gives nearest real tests and no probability for solids. I think this is the
+right call for the Validity score; say so if you would rather hide the solid model entirely.
