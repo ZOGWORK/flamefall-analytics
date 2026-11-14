@@ -5,12 +5,13 @@ from pathlib import Path
 
 import streamlit as st
 
-from flamefall import flex, ui
+from flamefall import catalogue, flex, ui
 
 ROOT = Path(__file__).resolve().parents[1]
 s = flex.summary()
 meth, hept = s["by_fuel"]["Methanol"], s["by_fuel"]["Heptane"]
 cool = s["cool_flame"]
+n = catalogue.counts()
 
 ui.kicker("Space Apps 2026 · Flame in Freefall")
 st.markdown(
@@ -27,6 +28,9 @@ ui.stat_cards([
     dict(value=s["n"], label="FLEX droplet-burn tests in Table IX",
          source=f"{src_ix} · {s['first_test']} to {s['last_test']}, {len(s['absent_numbers'])} numbers absent",
          tone="amber"),
+    dict(value=n["search_hits"], label=f"PSI records for “combustion”, {n['combustion_science']} of them combustion science",
+         source=f"PSI Data Repository search, retrieved {n['retrieved'][:10]} · {n['tables']} per-test tables copied",
+         tone="green"),
     dict(value=ui.pct(s["extinction_share"]), label="ended with the visible flame going out",
          source=f"{src_ix} · {s['outcomes']['Extinction']} of {s['n']}; Disruption "
                 f"{s['outcomes']['Disruption']} and Completion {s['outcomes']['Completion']} counted separately",
@@ -35,11 +39,6 @@ ui.stat_cards([
          label="extinction share, methanol vs n-heptane",
          source=f"{src_ix} · {meth['Extinction']}/{meth['n']} vs {hept['Extinction']}/{hept['n']}",
          tone="cyan"),
-    dict(value=f"{cool['indicated']} of {s['heptane_extinctions']}",
-         label="“extinguished” heptane droplets with cool-flame evidence afterwards",
-         source=f"{flex.REPORT}, Appendix B figure captions · {cool['not_indicated']} no evidence, "
-                f"{cool['unclear']} unclear, {cool['']} caption silent",
-         tone="violet"),
 ])
 
 ui.rule()
