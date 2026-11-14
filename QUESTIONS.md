@@ -20,6 +20,6 @@ assumption for each one.
    *What a human can do:* open the link in a browser and save the PDF; the numbers taken only from
    this paper can then be checked and upgraded.
 
-   *Assumption while building:* any value that appears only in this paper is shown as
-   "not re-verified" and greyed. Where the BASS-II summary memo (NASA/TM-20210011385) states the
+   *Assumption while building:* any value that appears only in this paper carries the
+   verification level `unverified`. Where the BASS-II summary memo (NASA/TM-20210011385) states the
    same quantity, the memo is cited instead.
