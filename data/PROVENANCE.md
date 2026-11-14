@@ -49,7 +49,7 @@ extinguish: 24 Disruption and 15 Completion rows print a value there (159 Extinc
 `flamefall/aggregates.py` names that value an extinction diameter only when the outcome is
 Extinction; for the other two outcomes it is the diameter printed at the end of the test.
 
-### Recomputed facts (asserted by `tests/test_flex.py`, never hard-coded in the app)
+### Recomputed facts (asserted by `tests/test_flex.py`, never hard-coded)
 
 - 276 rows, FLEX-001 to FLEX-280; numbers 156, 205, 213 and 228 do not appear in Table IX.
 - Outcomes: Extinction 186, Disruption 62, Completion 28.
