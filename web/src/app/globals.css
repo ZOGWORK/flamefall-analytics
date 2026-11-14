@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  A glass console lit in orange.
+  A clear-glass console with restrained light.
 
   One palette, one meaning per colour, on every page:
     amber   primary accent and light (interface, n-heptane, a sustained flame)
@@ -14,8 +14,11 @@
     green   completion
     violet  disruption (never grey: grey is "not verified" and "no data")
 
-  Panels are translucent glass over a dark backdrop with an orange glow. The glow and the motion
-  are decoration; the meaning colours above are never used for decoration.
+  Panels are clear glass over a dark backdrop: blurred, with a bright rim, and no tint. Light is
+  used in two places only: faintly behind the one main number of a page, and on position markers.
+  Data marks and ordinary numbers never get a halo, because a halo blurs what a reader came to read.
+  Liquid glass (components/ui/liquid-glass.tsx) is used in one place only: the hero card of the
+  Overview. Data panels, stat cards and charts use the plain `.bg-surface` rule below.
 */
 @theme inline {
   --color-background: var(--background);
@@ -90,13 +93,13 @@
   --done: #22c55e;
   --disrupt: #a78bfa;
   --dim: #6b7887;
-  --surface: rgba(16, 21, 29, 0.56);
-  --line: rgba(255, 170, 92, 0.17);
+  --surface: rgba(20, 27, 36, 0.5);
+  --line: rgba(148, 163, 184, 0.16);
   --glow: 255, 140, 26;
 
   --background: #0b0f14;
   --foreground: #eef2f6;
-  --card: rgba(16, 21, 29, 0.56);
+  --card: rgba(20, 27, 36, 0.5);
   --card-foreground: #eef2f6;
   --popover: #111820;
   --popover-foreground: #eef2f6;
@@ -106,11 +109,11 @@
   --secondary-foreground: #eef2f6;
   --muted: rgba(255, 255, 255, 0.06);
   --muted-foreground: #97a3b2;
-  --accent: rgba(245, 158, 11, 0.12);
+  --accent: rgba(245, 158, 11, 0.08);
   --accent-foreground: #eef2f6;
   --destructive: #ef4444;
-  --border: rgba(255, 170, 92, 0.17);
-  --input: rgba(255, 190, 130, 0.3);
+  --border: rgba(148, 163, 184, 0.16);
+  --input: rgba(148, 163, 184, 0.34);
   --ring: #f59e0b;
   --chart-1: #f59e0b;
   --chart-2: #22d3ee;
@@ -122,9 +125,9 @@
   --sidebar-foreground: #eef2f6;
   --sidebar-primary: #f59e0b;
   --sidebar-primary-foreground: #0b0f14;
-  --sidebar-accent: rgba(245, 158, 11, 0.12);
+  --sidebar-accent: rgba(245, 158, 11, 0.08);
   --sidebar-accent-foreground: #eef2f6;
-  --sidebar-border: rgba(255, 170, 92, 0.17);
+  --sidebar-border: rgba(148, 163, 184, 0.16);
   --sidebar-ring: #f59e0b;
 }
 
@@ -184,15 +187,15 @@ body::after {
 body::before {
   z-index: -2;
   background:
-    radial-gradient(62rem 40rem at 88% -12%, rgba(var(--glow), 0.26), transparent 62%),
-    radial-gradient(52rem 38rem at -12% 108%, rgba(var(--glow), 0.2), transparent 62%),
-    radial-gradient(36rem 26rem at 46% 44%, rgba(34, 211, 238, 0.05), transparent 70%);
+    radial-gradient(62rem 40rem at 88% -12%, rgba(var(--glow), 0.11), transparent 62%),
+    radial-gradient(52rem 38rem at -12% 108%, rgba(var(--glow), 0.08), transparent 62%),
+    radial-gradient(36rem 26rem at 46% 44%, rgba(34, 211, 238, 0.03), transparent 70%);
 }
 body::after {
   z-index: -1;
   background-image:
-    linear-gradient(rgba(var(--glow), 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--glow), 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
   background-size: 56px 56px;
   mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, #000 10%, transparent 78%);
   animation: grid-drift 36s linear infinite;
@@ -216,8 +219,8 @@ body::after {
   width: 34rem;
   height: 34rem;
   border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.5;
+  filter: blur(110px);
+  opacity: 0.2;
   background: radial-gradient(circle, rgba(var(--glow), 0.5), transparent 65%);
   animation: ember 26s ease-in-out infinite alternate;
 }
@@ -246,24 +249,23 @@ body::after {
 
 /* Every panel, tile and readout: translucent, blurred, lit along its top edge. */
 .bg-surface {
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015) 42%, rgba(var(--glow), 0.035));
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  backdrop-filter: blur(18px) saturate(160%);
+  /* clear glass, with the same rim light as the liquid-glass surfaces: a bright thin edge,
+     a soft inner sheen, and what is behind it blurred */
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015) 40%, rgba(255, 255, 255, 0.03));
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 220, 180, 0.13),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
-    0 26px 60px -34px rgba(var(--glow), 0.55);
+    0 0 1.5px 0.5px color-mix(in oklch, white, transparent 72%) inset,
+    0 0 10px 3px color-mix(in oklch, white, transparent 92%) inset,
+    0 24px 50px -36px rgba(0, 0, 0, 0.9);
 }
 
 /* The navigation rail and the top bars. */
 .glass-rail {
-  background: linear-gradient(180deg, rgba(20, 26, 35, 0.72), rgba(11, 15, 20, 0.62));
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
-  backdrop-filter: blur(22px) saturate(160%);
-  box-shadow:
-    inset -1px 0 0 rgba(var(--glow), 0.22),
-    inset 0 -1px 0 rgba(var(--glow), 0.12),
-    12px 0 50px -30px rgba(var(--glow), 0.5);
+  background: linear-gradient(180deg, rgba(22, 29, 38, 0.62), rgba(12, 16, 22, 0.58));
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  backdrop-filter: blur(26px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* A beam of light that travels around the border of a page's main readout. */
@@ -282,9 +284,9 @@ body::after {
   position: absolute;
   inset: 0;
   z-index: 1;
-  padding: 1.5px;
+  padding: 1px;
   border-radius: inherit;
-  background: conic-gradient(from var(--beam), transparent 0 62%, rgba(var(--glow), 0.95) 76%, #ffe9cf 80%, rgba(var(--glow), 0.6) 84%, transparent 94%);
+  background: conic-gradient(from var(--beam), transparent 0 80%, rgba(var(--glow), 0.5) 89%, transparent 97%);
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -293,7 +295,7 @@ body::after {
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  animation: beam 7s linear infinite;
+  animation: beam 14s linear infinite;
   pointer-events: none;
 }
 @keyframes beam {
@@ -302,58 +304,29 @@ body::after {
   }
 }
 
-/* A line of light that sweeps down a readout. */
-.scan {
-  position: relative;
-  overflow: hidden;
-}
-.scan::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  height: 38%;
-  background: linear-gradient(180deg, transparent, rgba(var(--glow), 0.09) 70%, rgba(255, 220, 180, 0.16) 99%, transparent);
-  transform: translateY(-110%);
-  animation: scan 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  pointer-events: none;
-}
-@keyframes scan {
-  0%,
-  12% {
-    transform: translateY(-110%);
-  }
-  70%,
-  100% {
-    transform: translateY(290%);
-  }
-}
-
-/* The biggest numbers glow in their own colour. */
+/* Numbers are plain. */
 .glow {
-  text-shadow:
-    0 0 34px color-mix(in srgb, currentColor 55%, transparent),
-    0 0 10px color-mix(in srgb, currentColor 35%, transparent);
+  text-shadow: none;
+}
+/* Only the main number of a page carries light, and only faintly. */
+.scan > .glow,
+.scan > div > .glow {
+  text-shadow: 0 0 26px color-mix(in srgb, currentColor 24%, transparent);
 }
 
 /* A small light that breathes. */
 .led {
   display: inline-block;
-  width: 0.5rem;
-  height: 0.5rem;
+  width: 0.4rem;
+  height: 0.4rem;
   border-radius: 50%;
   background: var(--amber);
-  box-shadow:
-    0 0 0 3px rgba(var(--glow), 0.18),
-    0 0 14px 2px rgba(var(--glow), 0.9);
-  animation: breathe 2.4s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(var(--glow), 0.6);
+  animation: breathe 2.8s ease-in-out infinite;
 }
 @keyframes breathe {
   50% {
-    opacity: 0.45;
-    box-shadow:
-      0 0 0 5px rgba(var(--glow), 0.06),
-      0 0 6px 1px rgba(var(--glow), 0.5);
+    opacity: 0.5;
   }
 }
 
@@ -364,16 +337,11 @@ body::after {
 @keyframes light-up {
   from {
     opacity: 0;
-    transform: scale(0.3);
-  }
-  60% {
-    opacity: 1;
-    filter: brightness(2.2);
+    transform: scale(0.4);
   }
   to {
-    opacity: 0.92;
+    opacity: 1;
     transform: none;
-    filter: none;
   }
 }
 
@@ -430,9 +398,7 @@ body::after {
     transform 0.15s;
 }
 [data-slot="button"]:hover {
-  box-shadow:
-    0 0 0 1px rgba(var(--glow), 0.45),
-    0 0 22px -4px rgba(var(--glow), 0.75);
+  border-color: rgba(var(--glow), 0.55);
 }
 [data-slot="button"]:active {
   transform: translateY(1px);
@@ -446,23 +412,12 @@ body::after {
 }
 [data-slot="toggle-group-item"][data-pressed],
 [data-slot="toggle-group-item"][aria-pressed="true"] {
-  background: rgba(var(--glow), 0.12);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 220, 180, 0.18),
-    0 0 20px -5px rgba(var(--glow), 0.85);
-}
-[data-slot="slider-range"] {
-  box-shadow: 0 0 12px rgba(var(--glow), 0.9);
+  background: rgba(var(--glow), 0.1);
 }
 [data-slot="slider-thumb"] {
   border-color: #ffe0b8;
   background: var(--amber);
-  box-shadow:
-    0 0 0 4px rgba(var(--glow), 0.16),
-    0 0 16px rgba(var(--glow), 0.95);
-}
-[data-slot="tabs-trigger"][data-active] {
-  box-shadow: 0 0 18px -6px rgba(var(--glow), 0.9);
+  box-shadow: 0 0 0 3px rgba(var(--glow), 0.18);
 }
 thead.bg-secondary {
   background: #141b24;
@@ -485,15 +440,11 @@ thead.bg-secondary {
   body::after,
   .ambient span,
   .beam::before,
-  .scan::after,
   .led,
   .cell,
   .dial-arc,
   .stagger > * {
     animation: none;
-  }
-  .scan::after {
-    display: none;
   }
 }
 
