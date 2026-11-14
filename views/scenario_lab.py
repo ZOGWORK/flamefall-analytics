@@ -227,13 +227,23 @@ elif kind == "droplet":
         fc = fitted("droplet_cool_flame")
         oc = fc.predict(dict(o2_pct=o2, pressure_kpa=pressure, o2_partial_kpa=po2, co2_pct=co2, he_pct=he, d0_mm=d0))
         s = flex.summary()
+        cool_demo = oc["extrapolating"] or bool(gaps)
+        if cool_demo:
+            reasons = [f"{o['feature']} = {o['value']:g} is outside the {o['tested_min']:.3g} to {o['tested_max']:.3g} "
+                       "covered by the labelled tests" for o in oc["outside_envelope"]]
+            if oc["far_from_data"]:
+                reasons.append("the scenario is far from every labelled test")
+            estimate = ("This scenario is outside what the exploratory cool-flame model has seen ("
+                        + "; ".join(reasons + gaps) + f"), so its output, {oc['p']:.0%}, is a DEMO value and not an estimate.")
+        else:
+            estimate = (f"An exploratory model on the {fc.r['n_rows']} labelled tests puts the chance of cool-flame "
+                        f"evidence for this scenario at {oc['p']:.0%} (95% interval {oc['lo']:.0%} to {oc['hi']:.0%}; "
+                        f"grouped-CV AUC {fc.r['metrics']['roc_auc']:.2f} with an interval of "
+                        f"{fc.r['metrics']['roc_auc_ci'][0]:.2f} to {fc.r['metrics']['roc_auc_ci'][1]:.2f}, so treat it as a sketch).")
         ui.callout(
             "If the visible flame goes out, is the fire out?",
             f"Not necessarily. In {s['cool_flame']['indicated']} of the {s['heptane_extinctions']} n-heptane tests logged "
-            "as Extinction, the report describes evidence of cool-flame burning afterwards. An exploratory model on the "
-            f"{fc.r['n_rows']} labelled tests puts the chance of cool-flame evidence for this scenario at {oc['p']:.0%} "
-            f"(95% interval {oc['lo']:.0%} to {oc['hi']:.0%}; grouped-CV AUC {fc.r['metrics']['roc_auc']:.2f} with an "
-            f"interval of {fc.r['metrics']['roc_auc_ci'][0]:.2f} to {fc.r['metrics']['roc_auc_ci'][1]:.2f}, so treat it as a sketch).",
+            "as Extinction, the report describes evidence of cool-flame burning afterwards. " + estimate,
             "danger", f"{flex.REPORT}, Appendix B captions; model card in the Model Lab.")
     ui.source("Logistic model trained on FLEX Table IX initial conditions only; full metrics in the Model Lab", flex.PDF_URL)
 else:
