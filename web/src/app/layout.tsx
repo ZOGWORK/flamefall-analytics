@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 
+import { Ambient } from "@/components/console/fx";
 import { Motion } from "@/components/shell/motion";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`dark ${grotesk.variable} ${plex.variable} ${jetbrains.variable} h-full antialiased`}>
       <body className="min-h-full">
+        <Ambient />
         <Motion>
           <TooltipProvider>{children}</TooltipProvider>
         </Motion>
