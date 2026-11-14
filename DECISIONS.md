@@ -173,11 +173,17 @@ sources themselves.
 - **D36. First build replaced.** The first build was a Streamlit app. It was replaced, at the team
   lead's request, by this React app; the Python that fed it is unchanged and now feeds the export.
 - **D37. Design rules.** Space Grotesk for headings, IBM Plex Sans for text, JetBrains Mono for
-  every number; four text sizes; flat colour with one meaning per colour (amber accent, cyan data,
-  red extinction, green completion, violet disruption, grey for not verified and no data); no
-  gradients, no emoji, Lucide icons. The biggest type on each page is that page's most important
-  number, and each page leads with numbers and charts; long evidence text is folded behind its
-  count and opens in place.
+  every number; four text sizes; one meaning per colour (amber accent and light, cyan data, red
+  extinction, green completion, violet disruption, grey for not verified and no data); no emoji,
+  Lucide icons. The biggest type on each page is that page's most important number, and each page
+  leads with numbers and charts; long evidence text is folded behind its count and opens in place.
+  The first version of this app was flat and unlit. At the team lead's request it is now a glass
+  console lit in orange: translucent blurred panels, an orange glow along their edges, a beam of
+  light around each page's main readout, a drifting grid behind, numbers that decode into place,
+  one lit cell per FLEX test on the Overview, and charts that draw themselves in. The glow and
+  the motion are decoration only and never use a meaning colour. Entrance animations are plain
+  CSS, so content never waits on a script, and all of it stops for readers who ask for reduced
+  motion.
 - **D38. Solid-fuel outcome colours.** Amber is a sustained flame, red is a flame that went out
   (quenched, or blown off, drawn as a cross), grey is no ignition. Red means "the flame went out"
   for droplets and for solids alike.
