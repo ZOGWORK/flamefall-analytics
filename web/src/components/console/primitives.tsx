@@ -225,7 +225,7 @@ export function Readout({
   return (
     <div className={cn("flex flex-col border border-line bg-surface p-3", className)}>
       <div className="flex items-start justify-between gap-2">
-        <p className={cn("glow num text-heading leading-none font-medium", TONE_TEXT[tone])}>
+        <p className={cn("num text-heading leading-none font-medium", TONE_TEXT[tone])}>
           {value}
           {unit && <span className="ml-1.5 text-note text-muted-foreground">{unit}</span>}
         </p>
@@ -337,7 +337,7 @@ export function HeroBand({
       <div className="scan bg-surface p-4 sm:p-5 xl:col-span-5">
         <Kicker className="text-dim">{kicker}</Kicker>
         <div className="mt-2 flex items-center justify-between gap-4">
-          <p className={cn("glow num text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
+          <p className={cn("num text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
             {typeof value === "string" || typeof value === "number" ? <Count text={String(value)} /> : value}
           </p>
           {dial && (
@@ -384,7 +384,7 @@ export function Tile({
     <div className={cn("relative flex flex-col bg-surface p-4", className)}>
       {icon && <IconChip icon={icon} tone={tone} className="absolute top-4 right-4" />}
       {tag && <p className="mb-2">{tag}</p>}
-      <p className={cn("glow num text-[clamp(1.875rem,3.4vw,2.75rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
+      <p className={cn("num text-[clamp(1.875rem,3.4vw,2.75rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
         {typeof value === "string" || typeof value === "number" ? <Count text={String(value)} /> : value}
         {unit && <span className="ml-1.5 text-panel font-medium text-muted-foreground">{unit}</span>}
       </p>
