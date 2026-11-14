@@ -202,7 +202,7 @@ export function Explorer() {
         <div className="scan bg-surface p-4 sm:p-5 xl:col-span-5">
           <Kicker className="text-dim">Ended in extinction</Kicker>
           <div className="mt-2 flex items-center justify-between gap-4">
-            <p className="glow num text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight text-ext">
+            <p className="num text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight text-ext">
               <Count text={pct(k / total)} />
             </p>
             <Dial value={k / total} tone="ext" size={116} label={`${k} of ${total} matching tests ended in Extinction`} className="hidden sm:block">
