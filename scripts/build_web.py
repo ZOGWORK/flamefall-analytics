@@ -39,7 +39,8 @@ PAGE = """<!doctype html>
   #boot b {{ font: 700 0.8rem ui-monospace, Menlo, Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; color: #F59E0B; }}
   #boot p {{ margin: 0; color: #9AA7B6; max-width: 46ch; line-height: 1.5; }}
   #boot a {{ color: #22D3EE; }}
-  #root {{ position: relative; z-index: 1; }}
+  /* stlite positions the app absolutely inside this element, so it must fill the viewport */
+  #root {{ position: fixed; inset: 0; z-index: 1; }}
 </style>
 </head>
 <body>
