@@ -184,6 +184,11 @@ sources themselves.
   the motion are decoration only and never use a meaning colour. Entrance animations are plain
   CSS, so content never waits on a script, and all of it stops for readers who ask for reduced
   motion.
+- **D40. Instruments instead of sentences.** A share or a score is drawn as well as printed: a dial
+  beside each page's main number, a segmented meter under a readout, and a matrix with one lit
+  cell per item (per test, per test point, per statement). Each is drawn from the same exported
+  value as the number next to it, carries that value as its text alternative, and keeps its
+  source line. No instrument shows a value that is not also printed.
 - **D38. Solid-fuel outcome colours.** Amber is a sustained flame, red is a flame that went out
   (quenched, or blown off, drawn as a cross), grey is no ignition. Red means "the flame went out"
   for droplets and for solids alike.
