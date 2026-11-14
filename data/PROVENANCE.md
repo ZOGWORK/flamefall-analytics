@@ -164,7 +164,12 @@ sustained / quenched / blowoff / no_ignition / ambiguous, each label carrying th
 
 The memo is a primary source found by the builder; it is not a link on the challenge's Resources tab.
 
-## `solid_test_points.csv` — every solid-fuel test point with a stated outcome (313 rows)
+## `solid_test_points.csv` — every solid-fuel test point transcribed (313 rows)
+
+38 of the 313 have an outcome the source leaves ambiguous; they keep that label and are left out of
+every calculation. `pressure_stated` is true for the 70 points whose source prints a pressure for
+that test and false for the 243 where it is assumed (242 BASS-II tests outside the fabric table,
+taken as 1 atm, and the Saffire VI Nomex sample, given its campaign's initial pressure).
 
 Built by `scripts/build_solid_points.py` from `bass2/bass2_test_points.csv` plus 23 rows typed from
 five sources, each named per row: the PSI-99 experimental table (Saffire-II, 10 rows), Olson et al.
