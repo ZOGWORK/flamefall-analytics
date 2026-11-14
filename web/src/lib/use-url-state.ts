@@ -46,5 +46,4 @@ export function useUrlState<T extends Record<string, string>>(defaults: T): [T, 
   return [state, patch, reset];
 }
 
-export const list = (value: string): string[] => (value ? value.split(",") : []);
-export const range = (value: string): [number, number] => value.split("~").map(Number) as [number, number];
+export { list, numberIn, oneOf, range } from "./url-values";
