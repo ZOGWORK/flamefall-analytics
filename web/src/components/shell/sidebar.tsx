@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -32,8 +32,8 @@ function NavLink({ item, active, onNavigate, marker }: { item: NavItem; active: 
         active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
       )}
     >
-      {active && <motion.span layoutId={marker} className="absolute inset-y-1 left-0 w-0.5 bg-amber shadow-[0_0_14px_2px_rgba(255,140,26,0.9)]" />}
-      {active && <span aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,140,26,0.14),transparent_70%)]" />}
+      {active && <motion.span layoutId={marker} className="absolute inset-y-1 left-0 w-0.5 bg-amber" />}
+      {active && <span aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,140,26,0.07),transparent_60%)]" />}
       <Icon aria-hidden className={cn("relative size-4 shrink-0", active ? "text-amber" : "text-dim")} strokeWidth={1.75} />
       <span className={cn("relative", active && "font-medium")}>{item.label}</span>
     </Link>
