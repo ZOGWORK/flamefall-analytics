@@ -76,5 +76,6 @@ SI tools were used throughout, and are disclosed in full in the repository
 The checks above were run by the SI coding agent, with scripts that anyone can re-run. They are
 machine checks against primary sources, not independent human review. The same holds for the code
 review after the bot stopped: it was done by SI reviewer agents of the same model as the coding
-agent, not by a person and not by the review bot. The team's own spot-checks
-are recorded separately in `docs/HUMAN_VERIFICATION.md`.
+agent, not by a person and not by the review bot. The spot-checks for a team
+member to do are listed in `docs/HUMAN_VERIFICATION.md`; that file says which of them, if any,
+have been done.
