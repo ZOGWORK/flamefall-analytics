@@ -93,6 +93,28 @@ def test_deck_is_self_contained_and_unbranded():
     assert "not affiliated with or endorsed by NASA" in TEXT
 
 
+def test_deck_keyboard_navigation_leaves_links_and_buttons_alone():
+    """Enter and Space on a focused link or button must activate it, not change the slide."""
+    handler = re.search(r"addEventListener\('keydown',function\(e\)\{(.*?)\}\);", DECK, re.S).group(1)
+    assert "e.target.closest('a,button,input,textarea,select')" in handler and "return;" in handler
+    assert "e.ctrlKey||e.metaKey||e.altKey" in handler           # browser shortcuts pass through
+    assert "'Enter'" not in handler                               # Enter is never a slide key
+
+
+def test_docs_agree_with_the_data():
+    disclosure = (ROOT / "docs" / "SI_DISCLOSURE.md").read_text(encoding="utf-8")
+    submission = (ROOT / "docs" / "SUBMISSION.md").read_text(encoding="utf-8")
+    human = (ROOT / "docs" / "HUMAN_VERIFICATION.md").read_text(encoding="utf-8")
+    n = cat.counts()
+    # the summary must not claim more verification than the evidence table records
+    assert f"{n['evidence_verified']} were verified in full text" in " ".join(submission.split())
+    assert "each checked against the primary source" not in submission
+    assert not re.search(r"\|\s*\d+ tests\s*\|", disclosure)      # no hard-coded test count to go stale
+    # spot-check 4 must name the figure that actually belongs to FLEX-196
+    figure = int(flex.load_flex().set_index("test_id").loc["FLEX-196", "caption_figure"])
+    assert f"Figure {figure} " in human and "Figure 196 caption" not in human
+
+
 # ------------------------------------------------------------------ the in-browser page
 
 def test_web_page_mounts_every_file_the_app_needs():
