@@ -24,9 +24,10 @@ add a second participant before submitting?
 flight, simulated gravity, not a PSI dataset, no oxygen limit claimed; Saffire: the three numbers
 with their pressures, no ratio derived). The brief told me to correct numbers that primary sources
 contradict, so I treated these as corrections (DECISIONS.md C6, C7).
-*If you would rather hold to the brief's wording:* say so and I will remove the two LUCI charts
-and the 2026 Saffire rows. It is a small change: three entries in `data/evidence.json` plus one
-chart in `views/unknowns.py`.
+*If you would rather hold to the brief's wording:* say so and I will remove both. The change is six entries in
+`data/evidence.json` (`luci-sibal`, `luci-pmma`, `luci-method`, `saffire-2026-spread`,
+`saffire-2026-alarm`, `saffire-2026-hrr-differs`), the LUCI catalogue row, and the LUCI chart and
+the statements shown from those entries in `views/unknowns.py`.
 
 **Q4. The "85% O2" correction is itself corrected.** The brief says the 85% figure is Flame
 Design's, "never CFI-G". PSI's own CFI-G inverse-flame table and the challenge page both put 85%
