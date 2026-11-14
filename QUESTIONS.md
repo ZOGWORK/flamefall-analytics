@@ -57,3 +57,25 @@ was unreachable, so FLARE has no numbers in the catalogue.
 verified test points and scores no better than chance on unseen test series (AUC 0.48). The
 Scenario Lab therefore gives nearest real tests and no probability for solids. I think this is the
 right call for the Validity score; say so if you would rather hide the solid model entirely.
+
+**Q7. Where the dashboard is hosted.** The brief names Streamlit Community Cloud. Your browser is
+not signed in there, and signing in means accepting Streamlit's terms and granting it access to
+GitHub, which is yours to do. So that a public link exists now, the same app is published on
+GitHub Pages, where it runs in the visitor's browser through stlite: no account, no server and no
+cold start, and the first visit takes up to a minute to load.
+
+- Live now: https://zogwork.github.io/flamefall-analytics/ and
+  https://zogwork.github.io/flamefall-analytics/deck/
+- *If you also want the Streamlit Cloud link* (about two minutes): sign in at
+  https://share.streamlit.io with GitHub, choose "Create app", repository
+  `ZOGWORK/flamefall-analytics`, branch `main`, main file `app.py`. Nothing in the code needs to
+  change; `requirements.txt` is already pinned.
+- Pages is served from the `gh-pages` branch, which is a copy of the newest reviewed branch. Once
+  everything is merged, point Pages at `main` (Settings, Pages) or keep `gh-pages` in step.
+
+**Q8. Human spot-checks.** The Space Apps rules ask what a human verified. `docs/HUMAN_VERIFICATION.md`
+lists 14 numbers with the exact page to open for each. Nothing in it is ticked yet.
+
+**Q9. The name of the research assistant.** `docs/SI_DISCLOSURE.md` describes the tool that wrote
+the research notes as "an SI research assistant (named 'Bruno' in the team's notes)". Replace that
+with the product and model name before pasting the disclosure into the project page.
