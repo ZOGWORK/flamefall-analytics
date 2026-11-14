@@ -118,9 +118,35 @@ sources themselves.
   slower spread in simulated lunar gravity for both samples, with a longer burn for the fabric. The
   term is a design choice, not a finding.
 
+### Models
+- **D22. Three models, never pooled:** droplet extinction, droplet cool-flame evidence, solid
+  sustained burning.
+- **D23. Droplet target.** The specification names "cool flame" as the droplet target. Table IX has
+  no such column, and caption labels exist for 47 tests only. So the well-powered model predicts
+  visible-flame extinction (275 rows), and the cool-flame model is fitted on the 47 labelled tests
+  and marked exploratory.
+- **D24. Grouping.** FLEX is one investigation, so its groups are the 46 tested atmospheres
+  (composition plus nominal pressure). Solid groups are investigations, with BASS-II split into its
+  six investigator test series. Groups under 5 rows are merged for splitting, for solids only.
+- **D25. Features.** For droplets, flow, flow direction, gravity and their interactions are constant
+  and dropped; CO2 and helium fractions are added, with the reason written in the model card.
+- **D26. C is chosen on pooled inner out-of-fold log-loss,** which stays defined when a fold holds
+  one class.
+- **D27. Disruption** is never the positive class. A sensitivity run without Disruption rows is
+  reported.
+- **D28. The solid model fails and is shown failing.** Grouped-CV AUC 0.48 (95% interval 0.38 to
+  0.65). It is not used for any estimate. One pre-declared variant (flow also entered squared, for
+  the two-branch boundary) was run once and did not help (0.50); it was not adopted.
+- **D29. Stress test.** Leave-one-fuel-out for droplets, leave-one-material-out for solids. The
+  headline is the worse of that and grouped CV: 0.74 for droplet extinction.
+- **D30. Distance to data** is the nearest-neighbour distance in standardised input space, compared
+  with the 95th percentile of the training rows' own nearest-neighbour distances, plus a per-input
+  range check.
+
 ### Process
 - **D31. Stack.** Streamlit 1.67 (`st.navigation`), Plotly, pandas, scikit-learn; versions pinned
-  to the ones the tests ran on.
+  to the ones the tests ran on. Models are trained offline and stored as JSON; the app predicts
+  with numpy.
 - **D32. Research agents.** Four background agents read sources in parallel and reported verbatim
   quotes with page and read level. LUCI, the 2026 Saffire table, the SoFIE-GEL table, the BASS-II
   poster and the lunar-gravity ignition paper were then re-read directly before use. Statements
