@@ -74,9 +74,15 @@ def ambient_o2_only(df: pd.DataFrame, o2_col: str = "o2_mol_pct") -> pd.DataFram
     return df[flag & df[o2_col].notna()]
 
 
+MODEL_VERIFICATION = {"verified_live", "index"}
+
+
 def model_rows_only(df: pd.DataFrame) -> pd.DataFrame:
-    """(e) Rows marked unverified never reach a model."""
-    return df[df["verification"] != "unverified"]
+    """(e) Only rows with a stated, acceptable verification level reach a model.
+
+    Fails closed: `unverified`, a blank cell and any unknown value are all kept out.
+    """
+    return df[df["verification"].isin(MODEL_VERIFICATION)]
 
 
 def check_vocabulary(df: pd.DataFrame) -> list[str]:
