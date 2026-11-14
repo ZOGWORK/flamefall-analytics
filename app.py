@@ -13,7 +13,7 @@ st.set_page_config(
     page_title="Flamefall Analytics",
     page_icon=":material/local_fire_department:",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",      # open on a desktop, collapsed on a phone so it never covers the page
 )
 ui.setup_page()
 
