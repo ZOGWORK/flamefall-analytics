@@ -33,14 +33,26 @@ export interface ScenarioConditions {
   gravity_g: number;
 }
 
+const PLANNED = "planned, not tested";
+
+/** An investigation that ran in still gas only: a full match there, fading over 20 cm/s like any other range. */
+function flowMatch(row: Investigation, flow: number): Match {
+  if (row.flow_regime !== "quiescent") return rangeMatch(flow, row.flow_min_cm_s, row.flow_max_cm_s, 20);
+  if (flow === 0) return [1, "still gas, as tested"];
+  return [Math.max(0, 1 - flow / 20), `tested in still gas only; the scenario has ${g(flow)} cm/s of flow`];
+}
+
 export function relevance(row: Investigation, s: ScenarioConditions, weights: Record<string, number>): Relevance {
+  if (row.status === "planned") {
+    // a planned investigation has tested nothing, so it matches nothing
+    const zero = Object.fromEntries(RELEVANCE_KEYS.map((k) => [k, 0])) as Record<RelevanceKey, number>;
+    const why = Object.fromEntries(RELEVANCE_KEYS.map((k) => [k, PLANNED])) as Record<RelevanceKey, string>;
+    return { score: 0, terms: zero, why };
+  }
   const t = {} as Record<RelevanceKey, Match>;
   t.oxygen = rangeMatch(s.o2_pct, row.o2_min_pct, row.o2_max_pct, 10);
   t.pressure = rangeMatch(s.pressure_kpa, row.pressure_min_kPa, row.pressure_max_kPa, 40);
-  t.flow =
-    row.flow_regime === "quiescent" && s.flow_cm_s === 0
-      ? [1, "still gas, as tested"]
-      : rangeMatch(s.flow_cm_s, row.flow_min_cm_s, row.flow_max_cm_s, 20);
+  t.flow = flowMatch(row, s.flow_cm_s);
   const cls = row.evidence_class;
   if (cls === s.evidence_class || (cls === "partial_g" && s.evidence_class === "solid")) {
     t["fuel type"] = [1, "same kind of fuel"];
@@ -63,6 +75,18 @@ export function relevance(row: Investigation, s: ScenarioConditions, weights: Re
     score += weights[k] * t[k][0];
   }
   return { score, terms, why };
+}
+
+/**
+ * Repository records of a combustion test in lunar or Martian gravity. `gravity_g` arrives as text
+ * ("0.16"), so it is parsed: a type check on a number would never match and the count could never
+ * leave zero.
+ */
+export function partialGravityRecords(investigations: Investigation[]): Investigation[] {
+  return investigations.filter((r) => {
+    const gravity = num(r.gravity_g);
+    return r.in_psi_search && r.is_combustion && r.status !== "planned" && gravity !== null && gravity > 0.05 && gravity < 0.5;
+  });
 }
 
 export interface RankedInvestigation {
