@@ -1,0 +1,31 @@
+{
+ "psi_id": "PSI-98",
+ "record_version": 4,
+ "file_count": 76,
+ "total_bytes": 12250600201.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 10031
+  },
+  "Engineering Documents": {
+   "files": 2,
+   "bytes": 1710886.0
+  },
+  "Raw Data": {
+   "files": 68,
+   "bytes": 12236039093.0
+  },
+  "Science Documents": {
+   "files": 4,
+   "bytes": 12839722.0
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 469
+  }
+ },
+ "experimental_tables": [
+  "PSI-98_Experimental table_SAFFIRE-1.csv"
+ ]
+}
