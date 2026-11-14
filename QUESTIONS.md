@@ -9,7 +9,7 @@ assumption for each one.
 Universal Event teams need at least two participants to be eligible for global judging. The team
 is registered as a solo team. Is that still the rule on the 2026 FAQ page, and if so do you want to
 add a second participant before submitting?
-*Assumption while building:* none needed; this does not change the dashboard.
+*Assumption while building:* none needed; this does not change anything built here.
 
 **Q3. Two hard rules in the brief were overturned by primary sources. Keep the corrections?**
 
@@ -26,12 +26,12 @@ with their pressures, no ratio derived). The brief told me to correct numbers th
 contradict, so I treated these as corrections (DECISIONS.md C6, C7).
 *If you would rather hold to the brief's wording:* say so and I will remove both. The change is six entries in
 `data/evidence.json` (`luci-sibal`, `luci-pmma`, `luci-method`, `saffire-2026-spread`,
-`saffire-2026-alarm`, `saffire-2026-hrr-differs`), the LUCI catalogue row, and the LUCI chart and
-the statements shown from those entries in `views/unknowns.py`.
+`saffire-2026-alarm`, `saffire-2026-hrr-differs`), the LUCI catalogue row, and anything the front end
+shows from those entries.
 
 **Q4. The "85% O2" correction is itself corrected.** The brief says the 85% figure is Flame
 Design's, "never CFI-G". PSI's own CFI-G inverse-flame table and the challenge page both put 85%
-burner-feed oxygen in CFI-G as well. The dashboard keeps the point that matters (a burner feed,
+burner-feed oxygen in CFI-G as well. The data keeps the point that matters (a burner feed,
 never an ambient) and attributes it to the inverse flames of both investigations. No action needed
 unless you disagree.
 
@@ -44,7 +44,7 @@ Link: https://ttu-ir.tdl.org/server/api/core/bitstreams/2024efac-4733-4352-826e-
 *What a human can do:* open the link in a browser and save the PDF; I can then check the four
 statements that rest on it alone (thin-film blowoff speeds, CO yield, "flames went out when the
 flow was turned off", buoyant velocities 24 / 10 / 15 cm/s).
-*Assumption while building:* those four statements are shown greyed as "not verified". Wherever the
+*Assumption while building:* those four statements carry the level `unverified`. Wherever the
 BASS-II summary memo states the same quantity, the memo is cited instead.
 
 **Q5. Sources that only an abstract could be read for** (publisher blocks automated access): the
