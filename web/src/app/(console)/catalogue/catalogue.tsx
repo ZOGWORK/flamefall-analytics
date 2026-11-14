@@ -18,7 +18,7 @@ import { capitalise, g } from "@/lib/format";
 import { R } from "@/lib/ranking";
 import { SearchIndex } from "@/lib/search";
 import type { Investigation, SearchData } from "@/lib/types";
-import { list, useUrlState } from "@/lib/use-url-state";
+import { list, oneOf, useUrlState } from "@/lib/use-url-state";
 
 const INDEX = new SearchIndex(searchJson as unknown as SearchData);
 const INV = catalogue.investigations;
@@ -188,7 +188,9 @@ export function Catalogue() {
   const hardware = list(q.hw);
   const fuel = list(q.fuel);
   const env = list(q.env);
-  const preset = q.rank === NO_RANK ? null : R.presets[Number(q.rank)];
+  // the address bar is checked: anything that is not one of the picker's options means no ranking
+  const rankChoice = oneOf(q.rank, RANK_OPTIONS.map((o) => o.value), NO_RANK);
+  const preset = rankChoice === NO_RANK ? null : R.presets[Number(rankChoice)];
 
   const answer = useMemo(() => (q.q.trim() ? INDEX.answer(q.q) : null), [q.q]);
   const shown = useMemo(() => {
@@ -326,7 +328,7 @@ export function Catalogue() {
             </Field>
             <Field label="Rank by closeness to a scenario" className="lg:col-span-2">
               <div className="max-w-xl">
-                <Pick label="Rank by closeness to a scenario" value={q.rank} onChange={(v) => set({ rank: v })} options={RANK_OPTIONS} />
+                <Pick label="Rank by closeness to a scenario" value={rankChoice} onChange={(v) => set({ rank: v })} options={RANK_OPTIONS} />
               </div>
             </Field>
           </div>
