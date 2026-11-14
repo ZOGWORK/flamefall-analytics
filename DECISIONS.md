@@ -222,12 +222,15 @@ sources themselves.
 - **D38. Solid-fuel outcome colours.** Amber is a sustained flame, red is a flame that went out
   (quenched, or blown off, drawn as a cross), grey is no ignition. Red means "the flame went out"
   for droplets and for solids alike.
-- **D42. Self-review of the final code (14 Nov).** The review bot stopped before any pull request
-  reached its top score (QUESTIONS.md Q10), so the team lead asked for the pull requests to be
-  merged on their tests after a self-review. For each of the five pull requests, four fresh
-  reviewer agents were given the code and the project's rules and nothing about how the code was
-  written: two audited it against the rules, two looked for bugs. Every finding was fixed, with a
-  test where it changed behaviour, except these, which are kept on purpose:
+- **D42. Self-review after the review bot stopped (14 Nov).** The review bot stopped before any
+  pull request reached its top score (QUESTIONS.md Q10), so the team lead asked for the pull
+  requests to be merged on their tests after a self-review. It ran in passes. First, for each of
+  the five pull requests, four fresh reviewer agents were given the code as first written and the
+  project's rules, and nothing about how the code was written: two audited it against the rules,
+  two looked for bugs. Then fresh agents read each round of corrections, until a pass on the
+  latest corrections found nothing above a minor point. The reviewer agents are the same model as
+  the coding agent. Every finding was fixed, with a test where it changed behaviour, except these,
+  which are kept on purpose; the list is complete:
   - one early commit replaces `charts.py` with `aggregates.py` and so touches two files; changing
     it would mean rewriting published history;
   - BASS-II pressure stays at 1 atm for tests where the memo does not print it (D8); each such
@@ -238,7 +241,15 @@ sources themselves.
     worked example requires the lunar score; the page now says beside the number that the gravity
     term is a design choice and that no test exists at that gravity;
   - the web-app pull request contains visual steps that were added and then removed, each at the
-    team lead's request during the build.
+    team lead's request during the build;
+  - red stays on a failed model's score, a false-positive rate, the DEMO label and warnings: those
+    are the "danger" half of red's meaning, and only the coefficient bars and one heading were
+    recoloured;
+  - a few numbers stay typed in the pages, each beside its source line, because no data file holds
+    them as values: the detector's "half" and "two-thirds" (a quoted sentence), the 3,864 cells
+    and 274 rows of the two verification checks (printed by the scripts named beside them), the
+    atmospheres quoted from the challenge brief, the control ranges of the sliders, and unit
+    conversions.
   What the self-review changed is in the commit history of each pull request. It is SI reviewing
   SI-written code, not a human review.
 - **D39. Review fixes carried over from the first build.** A featured scenario sets every input
