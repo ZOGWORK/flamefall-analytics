@@ -24,7 +24,6 @@ export function OutcomeStrip({ counts, height = 28 }: { counts: Record<Outcome, 
           counts[o] ? (
             <motion.div
               key={o}
-              layout
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ delay: 0.08 * i, duration: 0.45 }}
