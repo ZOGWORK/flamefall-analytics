@@ -28,7 +28,7 @@ to differ from its primary source. Newest entries at the bottom of each section.
   Extinction, 39 have cool-flame evidence, 8 have none, 6 are unclear and 7 captions are silent.
   No methanol caption mentions a cool flame.
 - **Droplet support and extinction wording** come from the same captions (free-floating 210,
-  fiber-supported 64; radiative 46, diffusive 38, both mentioned 5).
+  fiber-supported 64; radiative 46, diffusive 39, undetermined between the two 4).
 
 ## Design and modelling decisions
 
