@@ -1,0 +1,400 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  A clear-glass console with restrained light.
+
+  One palette, one meaning per colour, on every page:
+    amber   primary accent and light (interface, n-heptane, a sustained flame)
+    cyan    data only (methanol, model curves, measured values)
+    red     extinction / danger
+    green   completion
+    violet  disruption (never grey: grey is "not verified" and "no data")
+
+  Panels, stat cards, tables and charts sit on a plain solid surface. Nothing carries a halo:
+  no number, data mark, cell or control, because a halo blurs what a reader came to read.
+  Liquid glass (components/ui/liquid-glass.tsx) is used in one place only: the hero card of the
+  Overview.
+*/
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-plex);
+  --font-mono: var(--font-jetbrains);
+  --font-heading: var(--font-grotesk);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --color-amber: var(--amber);
+  --color-flame: var(--flame);
+  --color-data: var(--data);
+  --color-ext: var(--ext);
+  --color-done: var(--done);
+  --color-disrupt: var(--disrupt);
+  --color-dim: var(--dim);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+
+  /* Four text sizes, no more: section heading, panel title, body, footnote. */
+  --text-heading: 1.375rem;
+  --text-heading--line-height: 1.2;
+  --text-panel: 0.9375rem;
+  --text-panel--line-height: 1.3;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.55;
+  --text-note: 0.75rem;
+  --text-note--line-height: 1.5;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 14px;
+  --radius-3xl: 14px;
+  --radius-4xl: 14px;
+}
+
+:root {
+  --amber: #f59e0b;
+  --flame: #ff8c1a;
+  --data: #22d3ee;
+  --ext: #ef4444;
+  --done: #22c55e;
+  --disrupt: #a78bfa;
+  --dim: #6b7887;
+  --surface: #141b24;
+  --line: rgba(148, 163, 184, 0.16);
+  --glow: 255, 140, 26;
+
+  --background: #0b0f14;
+  --foreground: #eef2f6;
+  --card: rgba(20, 27, 36, 0.5);
+  --card-foreground: #eef2f6;
+  --popover: #111820;
+  --popover-foreground: #eef2f6;
+  --primary: #f59e0b;
+  --primary-foreground: #0b0f14;
+  --secondary: rgba(255, 255, 255, 0.06);
+  --secondary-foreground: #eef2f6;
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: #97a3b2;
+  --accent: rgba(245, 158, 11, 0.08);
+  --accent-foreground: #eef2f6;
+  --destructive: #ef4444;
+  --border: rgba(148, 163, 184, 0.16);
+  --input: rgba(148, 163, 184, 0.34);
+  --ring: #f59e0b;
+  --chart-1: #f59e0b;
+  --chart-2: #22d3ee;
+  --chart-3: #ef4444;
+  --chart-4: #22c55e;
+  --chart-5: #a78bfa;
+  --radius: 10px;
+  --sidebar: #0b0f14;
+  --sidebar-foreground: #eef2f6;
+  --sidebar-primary: #f59e0b;
+  --sidebar-primary-foreground: #0b0f14;
+  --sidebar-accent: rgba(245, 158, 11, 0.08);
+  --sidebar-accent-foreground: #eef2f6;
+  --sidebar-border: rgba(148, 163, 184, 0.16);
+  --sidebar-ring: #f59e0b;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-body text-foreground;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-grotesk), sans-serif;
+    letter-spacing: -0.02em;
+  }
+  ::selection {
+    background: #f59e0b;
+    color: #0b0f14;
+  }
+  a {
+    text-underline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  /* Every number, test identifier and unit. */
+  .num {
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "zero" 1;
+  }
+  /* Uppercase section label. */
+  .kicker {
+    font-family: var(--font-grotesk), sans-serif;
+    font-size: var(--text-note);
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+}
+
+/* ------------------------------------------------------------------ backdrop */
+
+/* Orange light from two corners and a faint drifting grid, fixed behind every page. */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+body::before {
+  z-index: -2;
+  background:
+    radial-gradient(62rem 40rem at 88% -12%, rgba(var(--glow), 0.11), transparent 62%),
+    radial-gradient(52rem 38rem at -12% 108%, rgba(var(--glow), 0.08), transparent 62%),
+    radial-gradient(36rem 26rem at 46% 44%, rgba(34, 211, 238, 0.03), transparent 70%);
+}
+body::after {
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, #000 10%, transparent 78%);
+  animation: grid-drift 36s linear infinite;
+}
+@keyframes grid-drift {
+  to {
+    background-position: 56px 56px;
+  }
+}
+
+/* Two slow embers of light drifting in the page backdrop, behind every panel. */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ambient span {
+  position: absolute;
+  width: 34rem;
+  height: 34rem;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: 0.2;
+  background: radial-gradient(circle, rgba(var(--glow), 0.5), transparent 65%);
+  animation: ember 26s ease-in-out infinite alternate;
+}
+.ambient span:nth-child(1) {
+  top: 12%;
+  left: 38%;
+}
+.ambient span:nth-child(2) {
+  bottom: -8%;
+  right: 6%;
+  width: 26rem;
+  height: 26rem;
+  animation-duration: 34s;
+  animation-direction: alternate-reverse;
+}
+@keyframes ember {
+  from {
+    transform: translate3d(-8rem, -3rem, 0) scale(0.9);
+  }
+  to {
+    transform: translate3d(9rem, 5rem, 0) scale(1.15);
+  }
+}
+
+/* ------------------------------------------------------------------ surfaces */
+
+/* Panels, tiles, readouts and tables use the solid `bg-surface` colour: no blur, no rim light. */
+
+/* The navigation rail and the top bars: solid, so text never shows through while scrolling. */
+.glass-rail {
+  background: #0e131a;
+}
+
+/* The main readout of a page: a rounded frame, nothing more. */
+.beam {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+/* A small status dot that breathes. No halo. */
+.led {
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: breathe 2.8s ease-in-out infinite;
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* One cell per test, lit in turn. */
+.cell {
+  animation: light-up 0.5s ease-out both;
+}
+@keyframes light-up {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A dial's arc sweeps up to its value, and follows it when the value changes. */
+.dial-arc {
+  animation: dial 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  transition: stroke-dasharray 0.35s ease-out;
+}
+@keyframes dial {
+  from {
+    stroke-dasharray: 0 999;
+  }
+}
+
+/* Sections settle in one after another. Plain CSS, so the content never waits on a script. */
+.stagger > * {
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 0.07s;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 0.14s;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 0.21s;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 0.28s;
+}
+.stagger > *:nth-child(n + 6) {
+  animation-delay: 0.35s;
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* ------------------------------------------------------------------ controls */
+
+[data-slot="button"] {
+  transition:
+    box-shadow 0.25s,
+    background-color 0.2s,
+    border-color 0.2s,
+    transform 0.15s;
+}
+[data-slot="button"]:hover {
+  border-color: rgba(var(--glow), 0.55);
+}
+[data-slot="button"]:active {
+  transform: translateY(1px);
+}
+[data-slot="toggle-group-item"] {
+  transition:
+    box-shadow 0.25s,
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+[data-slot="toggle-group-item"][data-pressed],
+[data-slot="toggle-group-item"][aria-pressed="true"] {
+  background: rgba(var(--glow), 0.1);
+}
+[data-slot="slider-thumb"] {
+  border-color: #ffe0b8;
+  background: var(--amber);
+}
+thead.bg-secondary {
+  background: #141b24;
+}
+[data-slot="table"] tbody tr {
+  transition: background-color 0.15s;
+}
+
+/* Recharts: axis text in the footnote size, monospace, like every other number. */
+.recharts-text {
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.recharts-label {
+  font-family: var(--font-plex), sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after,
+  .ambient span,
+  .led,
+  .cell,
+  .dial-arc,
+  .stagger > * {
+    animation: none;
+  }
+}
+
+@media print {
+  body::before,
+  body::after,
+  .ambient {
+    display: none;
+  }
+}

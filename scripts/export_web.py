@@ -151,6 +151,10 @@ def search_export() -> dict:
         "vectors": vectors, "stop_words": sorted(vec.get_stop_words()), "synonyms": cat.SYNONYMS,
         "class_words": cat.CLASS_WORDS, "min_score": 0.04,
         "investigation_class": dict(zip(inv["investigation_id"], inv["evidence_class"])),
+        # tested ambient-oxygen range per investigation; null where none is stated (a plan has none)
+        "investigation_o2": {r["investigation_id"]: (None if cat._num(r["o2_max_pct"]) is None
+                                                     else [cat._num(r["o2_min_pct"]), cat._num(r["o2_max_pct"])])
+                             for _, r in inv.iterrows()},
     }
 
 

@@ -79,6 +79,8 @@ def test_search_index_never_offers_a_burner_feed_as_ambient():
     s = load("search.json")
     docs = {d["doc_id"]: d for d in s["docs"]}
     assert docs["inverse-flame-85"]["o2_is_ambient"] is False
+    assert s["investigation_o2"]["FM2"] is None                    # a plan has no tested range to match a limit
+    assert max(hi for lo, hi in filter(None, s["investigation_o2"].values())) <= 40   # chamber oxygen, never a burner feed
     assert len(s["docs"]) == len(s["vectors"]) == len(cat.corpus())
     assert len(s["vocab"]) == len(s["idf"])
     assert s["min_score"] == 0.04 and "co2" in s["synonyms"]
