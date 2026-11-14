@@ -43,6 +43,10 @@ def badge(text: str, kind: str = "mute") -> str:
     return f'<span class="ff-badge {kind}">{esc(text)}</span>'
 
 
+# Badge style per outcome: the same colours as the charts. Disruption is violet, never the grey
+# used for "not verified" or "no data".
+OUTCOME_BADGE = {"Extinction": "bad", "Disruption": "violet", "Completion": "ok"}
+
 VERIFICATION_BADGE = {
     "verified_live": ("verified against primary source", "ok"),
     "index": ("index-level: abstract or summary only", "warn"),
