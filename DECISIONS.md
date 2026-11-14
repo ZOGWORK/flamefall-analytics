@@ -193,14 +193,15 @@ sources themselves.
 - **D36. First build replaced.** The first build was a Streamlit app. It was replaced, at the team
   lead's request, by this React app; the Python that fed it is unchanged and now feeds the export.
 - **D37. Design rules.** Space Grotesk for headings, IBM Plex Sans for text, JetBrains Mono for
-  every number; four text sizes; one meaning per colour (amber accent and light, cyan data, red
-  extinction, green completion, violet disruption, grey for not verified and no data); no emoji,
+  every number; four text sizes; one meaning per colour (amber accent, cyan data and verified
+  status, red extinction and danger, green completion and nothing else, violet disruption and
+  nothing else, grey for not verified and no data); no emoji,
   Lucide icons. The biggest type on each page is that page's most important number, and each page
   leads with numbers and charts; long evidence text is folded behind its count and opens in place.
-  Panels are clear glass: blurred, with a bright rim and no tint. A first glass version put an
-  orange halo on every number, cell and control; the team lead judged, rightly, that it competed
-  with the data, so light is now used in two places only: faintly behind the one main number of
-  a page, and on position markers. Data marks and ordinary numbers never get a halo. Motion is
+  Panels, stat cards, tables and charts sit on a plain solid surface. A first glass version put
+  an orange halo on every number, cell and control, and a later one made every panel blurred
+  glass; the team lead judged, rightly, that the light competed with the data. Nothing now carries
+  a halo: no number, data mark, cell or control. Glass is used in one place only (D41). Motion is
   decoration only: big numbers count up, cells light in turn, charts draw in, sections settle. Entrance animations are plain CSS, so content never waits on a script, and all of it
   stops for readers who ask for reduced motion.
 - **D40. Instruments instead of sentences.** A share or a score is drawn as well as printed: a dial
@@ -219,6 +220,25 @@ sources themselves.
 - **D38. Solid-fuel outcome colours.** Amber is a sustained flame, red is a flame that went out
   (quenched, or blown off, drawn as a cross), grey is no ignition. Red means "the flame went out"
   for droplets and for solids alike.
+- **D42. Self-review of the final code (14 Nov).** The review bot stopped before any pull request
+  reached its top score (QUESTIONS.md Q10), so the team lead asked for the pull requests to be
+  merged on their tests after a self-review. For each of the five pull requests, four fresh
+  reviewer agents were given the code and the project's rules and nothing about how the code was
+  written: two audited it against the rules, two looked for bugs. Every finding was fixed, with a
+  test where it changed behaviour, except these, which are kept on purpose:
+  - one early commit replaces `charts.py` with `aggregates.py` and so touches two files; changing
+    it would mean rewriting published history;
+  - BASS-II pressure stays at 1 atm for tests where the memo does not print it (D8); each such
+    point is now marked as assumed wherever it is shown;
+  - the small-scale heat release of 50 W in the triage formula comes from a paper that could not
+    be re-read (QUESTIONS.md Q2); the brief's worked example needs it, and its label says so;
+  - the triage score still prints a number at lunar and Martian gravity, because the brief's
+    worked example requires the lunar score; the page now says beside the number that the gravity
+    term is a design choice and that no test exists at that gravity;
+  - the web-app pull request contains visual steps that were added and then removed, each at the
+    team lead's request during the build.
+  What the self-review changed is in the commit history of each pull request. It is SI reviewing
+  SI-written code, not a human review.
 - **D39. Review fixes carried over from the first build.** A featured scenario sets every input
   the triage score reads, including the size of the burning item and the free volume, so it scores
   exactly as the same preset in the ranking table. A solid scenario's flow is checked against the
