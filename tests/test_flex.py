@@ -138,6 +138,56 @@ def test_outcome_badges_use_the_chart_colours():
     assert ui.OUTCOME_BADGE["Disruption"] != "mute"          # grey is reserved for unverified / no data
 
 
+def test_caption_atmosphere_is_recorded_but_never_used(f):
+    """45 captions word the atmosphere differently from Table IX; the table's values are the data."""
+    conflicts = flex.caption_atmosphere_conflicts()
+    assert len(conflicts) == 45 and int((f["caption_atmosphere"] != "").sum()) == 268
+    by_id = conflicts.set_index("test_id")
+    assert by_id.loc["FLEX-185", "caption_atmosphere"] == "0.70/0.52/0.25 O2/N2/CO2"      # sums to 1.47
+    assert by_id.loc["FLEX-185", "table_ix"] == "0.23/0.52/0.25 O2/N2/CO2"
+    assert by_id.loc["FLEX-280", "caption_atmosphere"] == "0.21/0.15/0.64 O2/N2/He"       # N2 and He swapped
+    assert by_id.loc["FLEX-280", "table_ix"] == "0.21/0.64/0.15 O2/N2/He"
+    row = f.set_index("test_id").loc["FLEX-185"]
+    assert (row["o2"], row["n2"], row["co2"]) == (0.23, 0.52, 0.25)                        # Table IX wins
+    # the support quote is only the opening words, with no atmosphere in it
+    quotes = set(f.loc[f["support"] != "", "support_quote"])
+    assert quotes == {"Free-floating methanol droplet", "Free-floating heptane droplet",
+                      "Fiber-supported methanol droplet", "Fiber-supported heptane droplet",
+                      "Fiber-supported methanol"}       # FLEX-127 reads "methanol with no translation"
+    assert not any(ch.isdigit() for q in quotes for ch in q)
+
+
+def test_ui_helpers_escape_text_unless_marked_as_markup():
+    from flamefall import ui
+
+    cards = ui.stat_cards_html([dict(value="<1>", label="<b>bold</b>", source="a & <i>b</i>", tone="amber")])
+    assert "<b>" not in cards and "<i>" not in cards and "&lt;b&gt;bold&lt;/b&gt;" in cards and "&lt;1&gt;" in cards
+    call = ui.callout_html("<script>x</script>", "body <u>u</u>", "info", "m <a href='#'>l</a>")
+    assert "<script>" not in call and "<u>" not in call and "<a href" not in call
+    trusted = ui.callout_html(ui.Html("<em>ok</em>"), "plain")
+    assert "<em>ok</em>" in trusted
+    assert isinstance(ui.badge("x<y", "info"), ui.Html) and "x&lt;y" in ui.badge("x<y", "info")
+
+
+def test_disclaimer_is_rendered_before_any_page_runs():
+    """A page may call st.stop(); the note in the sidebar must already be on screen by then."""
+    from pathlib import Path
+
+    from streamlit.testing.v1 import AppTest
+
+    app = Path(flex.__file__).resolve().parents[1] / "app.py"
+    src = app.read_text(encoding="utf-8")
+    assert src.index("ui.DISCLAIMER") < src.index("nav.run()")
+    at = AppTest.from_file(str(app), default_timeout=120)
+    at.run()
+    at.switch_page("views/flex_explorer.py")
+    at.run()
+    at.multiselect[0].set_value([])                 # empty filter: the page stops early
+    at.run()
+    side = " ".join(m.value for m in at.sidebar.markdown)
+    assert "never rates a material" in side and not at.exception
+
+
 def test_disruption_is_never_extinction(f):
     assert f.loc[f["outcome"] == "Disruption", "extinguished"].sum() == 0
     sch = flex.build_schema_frame()

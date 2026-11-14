@@ -18,8 +18,25 @@ def setup_page() -> None:
     st.markdown(theme.CSS, unsafe_allow_html=True)
 
 
+DISCLAIMER = ("Estimates only. This dashboard reports what experiments measured and where no data exists. "
+              "It never rates a material, atmosphere or design as acceptable for flight.")
+
+
+class Html(str):
+    """Markup written in this codebase and meant to be rendered as HTML.
+
+    Every helper below escapes plain strings. Pass `Html(...)` only for markup built here from
+    escaped parts (a badge, a link). Text that comes from a data file is never wrapped in Html.
+    """
+
+
 def esc(text: object) -> str:
     return html.escape(str(text), quote=True)
+
+
+def _t(text: object) -> str:
+    """Escape unless the caller marked the value as trusted markup."""
+    return str(text) if isinstance(text, Html) else esc(text)
 
 
 def kicker(text: str) -> None:
@@ -29,18 +46,18 @@ def kicker(text: str) -> None:
 def section(title: str, explainer: str, level: int = 2) -> None:
     """Heading + one-line explainer."""
     st.markdown(f"{'#' * level} {title}")
-    st.markdown(f'<p class="ff-explain">{explainer}</p>', unsafe_allow_html=True)
+    st.markdown(f'<p class="ff-explain">{_t(explainer)}</p>', unsafe_allow_html=True)
 
 
 def source(text: str, url: str | None = None, extra: str = "") -> None:
     """Provenance footnote. No number goes on screen without one of these under it."""
     link = f' · <a href="{esc(url)}" target="_blank" rel="noopener">open source</a>' if url else ""
-    tail = f" · {extra}" if extra else ""
-    st.markdown(f'<div class="ff-src">Source: {text}{link}{tail}</div>', unsafe_allow_html=True)
+    tail = f" · {_t(extra)}" if extra else ""
+    st.markdown(f'<div class="ff-src">Source: {_t(text)}{link}{tail}</div>', unsafe_allow_html=True)
 
 
-def badge(text: str, kind: str = "mute") -> str:
-    return f'<span class="ff-badge {kind}">{esc(text)}</span>'
+def badge(text: str, kind: str = "mute") -> Html:
+    return Html(f'<span class="ff-badge {esc(kind)}">{esc(text)}</span>')
 
 
 # Badge style per outcome: the same colours as the charts. Disruption is violet, never the grey
@@ -54,33 +71,43 @@ VERIFICATION_BADGE = {
 }
 
 
-def verification_badge(level: str) -> str:
+def verification_badge(level: str) -> Html:
     text, kind = VERIFICATION_BADGE.get(level, (level or "not verified", "mute"))
     return badge(text, kind)
 
 
-def stat_cards(cards: list[dict]) -> None:
-    """cards: [{value, unit?, label, source, tone?}] rendered as a responsive grid of real text."""
+def stat_cards_html(cards: list[dict]) -> str:
+    """Markup for a responsive grid of stat cards. Every field is escaped unless passed as Html."""
     parts = ['<div class="ff-grid">']
     for c in cards:
         unit = f" <small>{esc(c['unit'])}</small>" if c.get("unit") else ""
         parts.append(
             f'<div class="ff-card {esc(c.get("tone", "amber"))}">'
             f'<div class="v">{esc(c["value"])}{unit}</div>'
-            f'<div class="l">{c["label"]}</div>'
-            f'<div class="s">{c["source"]}</div></div>')
+            f'<div class="l">{_t(c["label"])}</div>'
+            f'<div class="s">{_t(c["source"])}</div></div>')
     parts.append("</div>")
-    st.markdown("".join(parts), unsafe_allow_html=True)
+    return "".join(parts)
+
+
+def stat_cards(cards: list[dict]) -> None:
+    """cards: [{value, unit?, label, source, tone?}] rendered as real text, not an image."""
+    st.markdown(stat_cards_html(cards), unsafe_allow_html=True)
+
+
+def callout_html(title: str, body: str, kind: str = "", muted: str = "") -> str:
+    m = f'<p class="m">{_t(muted)}</p>' if muted else ""
+    return f'<div class="ff-call {esc(kind)}"><h4>{_t(title)}</h4><p>{_t(body)}</p>{m}</div>'
 
 
 def callout(title: str, body: str, kind: str = "", muted: str = "") -> None:
-    m = f'<p class="m">{muted}</p>' if muted else ""
-    st.markdown(f'<div class="ff-call {kind}"><h4>{title}</h4><p>{body}</p>{m}</div>', unsafe_allow_html=True)
+    st.markdown(callout_html(title, body, kind, muted), unsafe_allow_html=True)
 
 
 def no_data(title: str, body: str, muted: str = "") -> None:
     """The explicit NO DATA panel. 'No data' is an answer, not an error."""
-    callout(f'<span class="ff-nodata-tag">NO DATA</span>{title}', body, "nodata", muted)
+    tagged = Html(f'<span class="ff-nodata-tag">NO DATA</span>{_t(title)}')   # the one deliberate markup path
+    callout(tagged, body, "nodata", muted)
 
 
 def rule() -> None:

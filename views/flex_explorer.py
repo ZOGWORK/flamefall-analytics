@@ -167,6 +167,9 @@ with b:
         st.caption(f"{flex.REPORT}, Appendix B, Figure {int(row['caption_figure'])} caption.")
     if row["notes"]:
         st.caption(f"Cleaning note: {row['notes']}")
+    if row["caption_atmosphere_differs"]:
+        st.caption(f"The report's figure caption words this atmosphere as {row['caption_atmosphere']}; "
+                   f"Table IX prints {flex.table_atmosphere(row)}. Table IX is used.")
 fig_ref = f"; measured trace: Appendix B, Figure {int(row['caption_figure'])}" if pd.notna(row["caption_figure"]) else ""
 ui.source(f"{row['source']}{fig_ref}. Line = D0² − K·t over the printed burn time (d²-law reconstruction)", flex.PDF_URL)
 
