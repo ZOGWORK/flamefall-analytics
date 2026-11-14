@@ -12,6 +12,8 @@ READER_FACING = (
     + sorted((ROOT / "data" / "models").glob("*.json"))
     + [ROOT / "data" / "panels.json"]
     + sorted((ROOT / "web" / "src" / "data").glob("*.json"))          # what the web app reads
+    + sorted(p for ext in ("*.ts", "*.tsx") for p in (ROOT / "web" / "src").rglob(ext))
+    + sorted((ROOT / "docs").glob("*.md"))
 )
 VERDICT = re.compile(r"\b(safe|unsafe|certified|certification|certify)\b", re.I)
 EIGHTY_FIVE = re.compile(r"\b85\s?%|\b0\.85\b|\b85 percent")
