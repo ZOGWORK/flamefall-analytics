@@ -89,6 +89,8 @@ def test_deck_is_self_contained_and_unbranded():
     assert not re.search(r"<img\b", DECK)                         # charts are inline SVG and CSS only
     scripts = re.findall(r'<script[^>]*src="([^"]+)"', DECK)
     assert scripts == []                                         # no external script
+    assert not re.search(r'<link[^>]+href="https?://', DECK)     # no external stylesheet or font
+    assert "fonts.googleapis.com" not in DECK and "fonts.gstatic.com" not in DECK
     assert "prefers-reduced-motion" in DECK                      # animations can be turned off
     assert "not affiliated with or endorsed by NASA" in TEXT
 
@@ -99,6 +101,21 @@ def test_deck_keyboard_navigation_leaves_links_and_buttons_alone():
     assert "e.target.closest('a,button,input,textarea,select')" in handler and "return;" in handler
     assert "e.ctrlKey||e.metaKey||e.altKey" in handler           # browser shortcuts pass through
     assert "'Enter'" not in handler                               # Enter is never a slide key
+
+
+def test_deck_prints_and_swipes_correctly():
+    print_block = DECK[DECK.index("@media print"):DECK.index("</style>")]
+    for cls in ("cool", "none", "unclear"):
+        assert f".dots i.{cls}{{background:" in print_block      # the dot grid keeps its colours on paper
+    assert "Math.abs(dx)>1.5*Math.abs(dy)" in DECK                # a vertical scroll never changes slide
+
+
+def test_loading_note_sits_above_the_app_container():
+    page = (ROOT / "index.html").read_text(encoding="utf-8")
+    boot = re.search(r"#boot\s*\{([^}]*)\}", page).group(1)
+    root = re.search(r"#root\s*\{([^}]*)\}", page).group(1)
+    z = lambda rule: int(re.search(r"z-index:\s*(\d+)", rule).group(1))   # noqa: E731
+    assert z(boot) > z(root)                                      # otherwise its links cannot be clicked
 
 
 def test_docs_agree_with_the_data():
