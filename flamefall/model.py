@@ -12,8 +12,8 @@ Protocol (research specification section 7.3):
   * a separate leave-one-material-out stress test; the headline is the WORSE of the two AUCs;
   * every preprocessing statistic (median, mean, SD) is learned on the training fold only.
 
-Training lives here and is run by scripts/train_models.py, which writes plain JSON. The
-dashboard reads that JSON and predicts with numpy alone (see `Fitted`).
+Training lives here and is run by scripts/train_models.py, which writes plain JSON. An estimate
+needs only that JSON and arithmetic: `Fitted` is the reference implementation.
 """
 from __future__ import annotations
 
