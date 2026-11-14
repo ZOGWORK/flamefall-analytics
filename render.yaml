@@ -1,0 +1,11 @@
+# How the site is built and published on Render (https://flamefall-analytics.onrender.com).
+# A static site: no server process, so there is no cold start. The build runs in web/ and
+# publishes the exported files. Python is not needed at build time on Render, because the JSON
+# the app reads is committed (scripts/export_web.py writes it; tests fail if it is stale).
+services:
+  - type: web
+    runtime: static
+    name: flamefall-analytics
+    buildCommand: cd web && npm ci && npm run build
+    staticPublishPath: web/out
+    autoDeployTrigger: commit
