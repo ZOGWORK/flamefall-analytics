@@ -135,7 +135,7 @@ function Query({ card, failed }: { card: ModelCard; failed: boolean }) {
 
 export function ModelLab() {
   const [q, set] = useUrlState({ model: "droplet_extinction" });
-  const name = q.model in CARDS ? q.model : "droplet_extinction";
+  const name = Object.hasOwn(CARDS, q.model) ? q.model : "droplet_extinction";
   const r = CARDS[name];
   const m = r.metrics;
   const lomo = r.leave_one_material_out;
@@ -163,7 +163,7 @@ export function ModelLab() {
         <Callout
           title="This model failed validation and is not used anywhere in the console"
           tone="ext"
-          note="Why: each test series has its own oxygen limit (13.5% for a rod in concurrent flow, about 17% for fabric, 17.5% for a rod in opposed flow), extinction happens at both low and high flow, and most recorded extinctions are given as fan settings with no velocity. A single straight boundary cannot carry over from one series to another."
+          note="Why: each test series has its own oxygen limit, extinction happens at both low and high flow, and most recorded extinctions are given as fan settings with no velocity. A single straight boundary cannot carry over from one series to another."
         >
           {`On test series it had not seen, it ranks a sustained flame above an extinguished one only ${pc(m.roc_auc)} of the time: no better than a coin. The Scenario Lab therefore shows the nearest real tests for solid materials and no probability.`}
         </Callout>
@@ -173,19 +173,27 @@ export function ModelLab() {
         key={name}
         kicker={`Headline AUC · ${r.headline_is === "leave-one-material-out" ? stress : r.headline_is}`}
         value={f2(r.headline_auc)}
-        dial={{ value: r.headline_auc ?? 0, tick: 0.5, caption: "mark: coin flip" }}
+        dial={r.headline_auc === null ? undefined : { value: r.headline_auc, tick: 0.5, caption: "mark: coin flip" }}
         tone={failed ? "ext" : "amber"}
         source={`scripts/train_models.py → data/models/${name}.json; fold membership in data/cv_splits.json`}
         readouts={
           <>
-            <Readout className="border-0" icon={Activity} meter={m.roc_auc ?? 0} tone="data" value={f2(m.roc_auc)} label="grouped-CV ROC-AUC" source={`95% interval ${f2(m.roc_auc_ci[0])} to ${f2(m.roc_auc_ci[1])} · cluster bootstrap over ${r.n_split_groups} groups`} />
-            <Readout className="border-0" icon={ShieldAlert} meter={cy.false_positive_rate ?? 0} tone="ext" value={pc(cy.false_positive_rate)} label="false-positive rate at the working threshold" source={`${cy.fp} of ${cy.fp + cy.tn} negatives called positive at threshold ${cy.threshold.toFixed(2)} (Youden's J)`} />
-            <Readout className="border-0" icon={Database} meter={r.positive_share} tone="done" value={r.n_rows} label="rows after exclusions" source={`${r.n_positive} positive (${pc(r.positive_share)}) · ${r.n_groups} groups · class weights ${r.class_weight_balanced ? "balanced" : "not needed"}`} />
+            <Readout className="border-0" icon={Activity} meter={m.roc_auc ?? undefined} tone="data" value={f2(m.roc_auc)} label="grouped-CV ROC-AUC" source={`95% interval ${f2(m.roc_auc_ci[0])} to ${f2(m.roc_auc_ci[1])} · cluster bootstrap over ${r.n_split_groups} groups`} />
+            <Readout className="border-0" icon={ShieldAlert} meter={cy.false_positive_rate ?? undefined} tone="ext" value={pc(cy.false_positive_rate)} label="false-positive rate at the working threshold" source={`${cy.fp} of ${cy.fp + cy.tn} negatives called positive at threshold ${cy.threshold.toFixed(2)} (Youden's J)`} />
+            <Readout className="border-0" icon={Database} tone="data" value={r.n_rows} label="rows after exclusions" source={`${r.n_positive} positive (${pc(r.positive_share)}) · ${r.n_groups} groups · class weights ${r.class_weight_balanced ? "balanced" : "not needed"}`} />
           </>
         }
       >
-        is the worse of grouped cross-validation (<Num>{f2(m.roc_auc)}</Num>) and the {stress} stress test (<Num>{f2(lomo.pooled_auc)}</Num>). 0.5 is a
-        coin flip; 1 is perfect.
+        {lomo.pooled_auc === null ? (
+          <>
+            is grouped cross-validation alone (<Num>{f2(m.roc_auc)}</Num>), not the worse of two: <Prose text={r.headline_note} />
+          </>
+        ) : (
+          <>
+            is the worse of grouped cross-validation (<Num>{f2(m.roc_auc)}</Num>) and the {stress} stress test (<Num>{f2(lomo.pooled_auc)}</Num>).
+          </>
+        )}{" "}
+        0.5 is a coin flip; 1 is perfect.
       </HeroBand>
 
       <Section title="Can it tell the two outcomes apart, and what does it get wrong?" explainer="Every point was scored by a model that never saw its group.">
