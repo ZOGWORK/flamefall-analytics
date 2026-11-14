@@ -41,12 +41,12 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-st.navigation(pages, position="sidebar").run()
+nav = st.navigation(pages, position="sidebar")
 
+# Rendered BEFORE the page runs: a page may call st.stop() (the Explorer does on an empty filter),
+# and this note has to be on screen in every state of every page.
 with st.sidebar:
-    st.markdown(
-        '<div class="ff-src" style="margin-top:1.4rem">Estimates only. This dashboard reports what '
-        "experiments measured and where no data exists. It never rates a material, atmosphere or "
-        "design as acceptable for flight.</div>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(f'<div class="ff-src" style="margin-top:0.4rem">{ui.esc(ui.DISCLAIMER)}</div>',
+                unsafe_allow_html=True)
+
+nav.run()
