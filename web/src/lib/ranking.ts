@@ -56,15 +56,16 @@ function mFlow(s: ScenarioInput): [number, string] {
 
 function hTerm(s: ScenarioInput): [number, string] {
   const { watts, why } = R.hrr_scale_w[s.hrr_scale];
-  return [clamp01(Math.log10(watts / 10) / Math.log10(3200 / 10)), why];
+  const [lo, hi] = R.hrr_log_range_w;
+  return [clamp01(Math.log10(watts / lo) / Math.log10(hi / lo)), why];
 }
 
 function dTerm(s: ScenarioInput): [number, string] {
   const base = R.detection[s.material] ?? R.detection_default;
   if (s.free_volume_m3 > R.large_volume_m3) {
     return [
-      Math.min(1, base.score + 0.1),
-      `${base.why}; +0.1 for a free volume above 15 m3 (far-field alarm took 981 s in Saffire VI)`,
+      Math.min(1, base.score + R.large_volume_bonus),
+      `${base.why}; +${g(R.large_volume_bonus)} for a free volume above ${g(R.large_volume_m3)} m3 (far-field alarm took 981 s in Saffire VI)`,
     ];
   }
   return [base.score, base.why];
@@ -80,7 +81,7 @@ function gTerm(s: ScenarioInput): [number, string] {
 }
 
 function cTerm(s: ScenarioInput): [number, string] {
-  if (s.is_droplet && s.n_alkane && s.droplet_d0_mm >= 2.0) {
+  if (s.is_droplet && s.n_alkane && s.droplet_d0_mm >= R.cool_flame_min_d0_mm) {
     return [1, "large n-alkane droplet: can keep burning as a cool flame after the visible flame goes out"];
   }
   return [0, "solid fuel, or a droplet outside the cool-flame regime"];
