@@ -1,0 +1,23 @@
+{
+ "psi_id": "PSI-106",
+ "record_version": 3,
+ "file_count": 23463,
+ "total_bytes": 72914185571.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 8743
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 734
+  },
+  "Raw Data": {
+   "files": 23461,
+   "bytes": 72914176094.0
+  }
+ },
+ "experimental_tables": [
+  "PSI-106_Experimental table_Slice.csv"
+ ]
+}
