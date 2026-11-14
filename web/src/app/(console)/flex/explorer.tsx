@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { AXIS_LABEL, D2Chart, MixChart, RateChart, ShareChart, type RateColumn } from "@/components/charts/flex-charts";
 import { OutcomeStrip } from "@/components/charts/outcome-strip";
 import { Chips, Field, Pick, RangeField, Segments } from "@/components/console/controls";
-import { Decode } from "@/components/console/decode";
+import { Count } from "@/components/console/count";
 import { Dial } from "@/components/console/viz";
 import { DataTable, n, type Column } from "@/components/console/data-table";
 import { Callout, KV, Kicker, NoData, Num, OutcomeBadge, Panel, Quote, Readout, Section, Source, Tag } from "@/components/console/primitives";
@@ -198,7 +198,7 @@ export function Explorer() {
           <Kicker className="text-dim">Ended in extinction</Kicker>
           <div className="mt-2 flex items-center justify-between gap-4">
             <p className="glow num text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight text-ext">
-              <Decode text={pct(k / total)} />
+              <Count text={pct(k / total)} />
             </p>
             <Dial value={k / total} tone="ext" size={116} label={`${k} of ${total} matching tests ended in Extinction`} className="hidden sm:block">
               <span className="num text-note text-muted-foreground">{k}/{total}</span>
