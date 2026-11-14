@@ -1,0 +1,47 @@
+{
+ "psi_id": "PSI-101",
+ "record_version": 4,
+ "file_count": 344,
+ "total_bytes": 6308124750.0,
+ "by_category": {
+  "Engineering Documents": {
+   "files": 24,
+   "bytes": 55122338.0
+  },
+  "Reports": {
+   "files": 1,
+   "bytes": 4578437.0
+  },
+  "Presentations": {
+   "files": 4,
+   "bytes": 33297074.0
+  },
+  "Analyzed Data": {
+   "files": 86,
+   "bytes": 495127960.0
+  },
+  "Raw Data": {
+   "files": 223,
+   "bytes": 5718363731.0
+  },
+  "Science Documents": {
+   "files": 2,
+   "bytes": 947126.0
+  },
+  "Reference Data": {
+   "files": 2,
+   "bytes": 671373.0
+  },
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 11037
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 5674
+  }
+ },
+ "experimental_tables": [
+  "PSI-101_Experimental table_SAME-R.csv"
+ ]
+}
