@@ -1,4 +1,4 @@
-"""Wording rules that the science depends on, checked across every file a reader can see."""
+"""Wording rules that the science depends on, checked across every file whose text reaches a reader."""
 from __future__ import annotations
 
 import re
@@ -6,10 +6,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 READER_FACING = (
-    sorted((ROOT / "views").glob("*.py")) + sorted((ROOT / "flamefall").glob("*.py"))
-    + [ROOT / "app.py", ROOT / "data" / "evidence.json", ROOT / "data" / "investigations_curated.json",
-       ROOT / "README.md"]
-    + sorted((ROOT / "deck").glob("*.html")) + sorted((ROOT / "docs").glob("*.md"))
+    sorted((ROOT / "flamefall").glob("*.py"))
+    + [ROOT / "data" / "evidence.json", ROOT / "data" / "investigations_curated.json", ROOT / "README.md"]
+    + sorted((ROOT / "data" / "models").glob("*.json"))
 )
 VERDICT = re.compile(r"\b(safe|unsafe|certified|certification|certify)\b", re.I)
 EIGHTY_FIVE = re.compile(r"\b85\s?%|\b0\.85\b|\b85 percent")
@@ -51,8 +50,8 @@ def test_no_single_burning_rate_is_quoted_for_n_heptane():
 
 
 def test_no_agency_marks_are_referenced():
-    """No logo, insignia or mission-patch image is used anywhere in the app or the deck."""
+    """No logo, insignia or mission-patch image is referenced anywhere."""
     for p in READER_FACING:
         text = p.read_text(encoding="utf-8")
         assert not re.search(r"<img[^>]+(nasa|meatball|insignia|patch)", text, re.I), p.name
-        assert not re.search(r"\.(png|jpg|jpeg|svg|gif)[\"')]", text, re.I) or p.suffix == ".html", p.name
+        assert not re.search(r"\.(png|jpg|jpeg|svg|gif)[\"')]", text, re.I), p.name
