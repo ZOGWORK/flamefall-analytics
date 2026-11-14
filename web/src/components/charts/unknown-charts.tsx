@@ -39,7 +39,7 @@ export function LuciChart({ rows, unit }: { rows: PanelsData["luci"]["rows"]; un
 }
 
 /** Every solid-fuel test point with a stated outcome, and the region no test reaches. */
-export function SolidEnvelopeChart({ points }: { points: SolidPoint[] }) {
+export function SolidEnvelopeChart({ points, limit }: { points: SolidPoint[]; limit: number }) {
   const series = Object.keys(SOLID_STYLE).map((outcome) => ({
     outcome,
     data: points.filter((p) => p.outcome === outcome && p.o2_at_outcome_pct !== null && p.pressure_kPa !== null).map((p) => ({ ...p, x: p.o2_at_outcome_pct, y: p.pressure_kPa })),
@@ -49,9 +49,9 @@ export function SolidEnvelopeChart({ points }: { points: SolidPoint[] }) {
       <Chart height={400} label="Solid-fuel test points by ambient oxygen and pressure, with the untested region marked">
         <ScatterChart margin={{ top: 8, right: 12, bottom: 18, left: 4 }}>
           <CartesianGrid {...GRID} />
-          <XAxis type="number" dataKey="x" domain={[12, 42]} ticks={[15, 20, 25, 30, 34, 40]} {...AXIS} label={axisLabel("Ambient O2 at the outcome, % by volume", "x")} />
+          <XAxis type="number" dataKey="x" domain={[12, 42]} ticks={[...new Set([15, 20, 25, 30, limit, 40])].sort((a, b) => a - b)} {...AXIS} label={axisLabel("Ambient O2 at the outcome, % by volume", "x")} />
           <YAxis type="number" dataKey="y" domain={[40, 115]} {...AXIS} label={axisLabel("Pressure, kPa", "y")} />
-          <ReferenceArea x1={34} x2={42} fill="var(--foreground)" fillOpacity={0.06} stroke="var(--dim)" strokeDasharray="4 3" label={{ value: "NO DATA above 34% O2", position: "insideTop", fill: "var(--foreground)", fontSize: 11, fontFamily: "var(--font-jetbrains)" }} />
+          <ReferenceArea x1={limit} x2={42} fill="var(--foreground)" fillOpacity={0.06} stroke="var(--dim)" strokeDasharray="4 3" label={{ value: `NO DATA above ${limit}% O2`, position: "insideTop", fill: "var(--foreground)", fontSize: 11, fontFamily: "var(--font-jetbrains)" }} />
           <ReferenceArea x1={30} x2={42} y1={40} y2={70.3} fill="none" stroke="var(--amber)" strokeDasharray="2 3" label={{ value: "expected Moon-base and rover atmospheres", position: "insideBottom", fill: "var(--amber)", fontSize: 11 }} />
           <Tooltip
             cursor={{ stroke: "var(--input)" }}
@@ -100,7 +100,7 @@ export function DiluentChart({ rows, both }: { rows: FlexRow[]; both: number }) 
   );
 }
 
-/** Geometric mean smoke particle diameter, fresh and aged, against the 500 nm mark. */
+/** Geometric mean smoke particle diameter, fresh and aged, against the mark the smoke panel states. */
 export function SmokeChart({ rows, threshold, unit }: { rows: { material: string; fresh: number; aged: number }[]; threshold: number; unit: string }) {
   return (
     <div>
