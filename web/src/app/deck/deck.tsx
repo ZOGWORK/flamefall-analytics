@@ -40,7 +40,7 @@ function Foot({ children }: { children: string }) {
 function Stat({ value, label, source, tone = "text-amber" }: { value: React.ReactNode; label: string; source: string; tone?: string }) {
   return (
     <div className="border-t border-line pt-3">
-      <p className={`glow num text-[clamp(1.75rem,4vw,2.75rem)] leading-none font-bold ${tone}`}>{value}</p>
+      <p className={`num text-[clamp(1.75rem,4vw,2.75rem)] leading-none font-bold ${tone}`}>{value}</p>
       <p className="mt-2 text-body text-foreground">
         <Prose text={label} />
       </p>
@@ -246,7 +246,7 @@ function SlideMethod() {
           <p className="mt-2 text-note text-muted-foreground">Every weight moved by ±0.10 to see whether the order survives. It orders scenarios; it is not a risk rating.</p>
         </div>
         <div className="flex flex-col bg-surface p-4">
-          <p className="kicker text-ext">3 · Estimate</p>
+          <p className="kicker text-foreground">3 · Estimate</p>
           <p className="mt-2 text-panel font-semibold text-foreground">Small models, scored on groups they never saw</p>
           <dl className="mt-2 space-y-1 text-body">
             <div className="flex justify-between gap-3 border-b border-line py-1">
@@ -317,7 +317,7 @@ function SlideClose() {
           <p className="kicker text-dim">Use of SI tools</p>
           <ul className="mt-2 list-disc space-y-1.5 pl-5 text-body text-muted-foreground marker:text-dim">
             <li>Research notes were compiled by an SI research assistant, then checked against primary sources; every correction is logged.</li>
-            <li>Code, data pipeline, console and this deck were written with an SI coding agent directed by the team. An SI code-review bot reviewed the early rounds until its monthly limit ran out; the final code was self-reviewed by the coding agent using independent reviewer agents.</li>
+            <li>Code, data pipeline, console and this deck were written with an SI coding agent directed by the team. An SI code-review bot reviewed the early rounds until its monthly limit ran out. After that the coding agent self-reviewed the code with separate reviewer agents of the same model, in passes, until a pass on the latest corrections found nothing above a minor point. No person has reviewed the code.</li>
             <li>Inside the console there is no generative model: retrieval, a stated formula, and small validated classifiers.</li>
             <li>No SI-generated images, video or audio. Every chart is drawn from the data by code.</li>
           </ul>
