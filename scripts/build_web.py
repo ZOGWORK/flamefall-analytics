@@ -9,6 +9,7 @@ Run from the repo root:  python scripts/build_web.py
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -46,7 +47,7 @@ PAGE = """<!doctype html>
 <body>
 <div id="boot">
   <b>Flamefall Analytics</b>
-  <p>Loading the dashboard. The first visit downloads the Python runtime and takes about half a minute; after that it opens quickly.</p>
+  <p>Loading the dashboard. The first visit downloads the Python runtime and can take up to a minute; after that it opens quickly.</p>
   <p><a href="deck/">Open the 7-slide summary</a> · <a href="https://github.com/ZOGWORK/flamefall-analytics">Code and data</a></p>
   <noscript><p>This dashboard needs JavaScript. The code and data are in the repository linked above.</p></noscript>
 </div>
@@ -54,7 +55,9 @@ PAGE = """<!doctype html>
 <script type="module">
 import {{ mount }} from "https://cdn.jsdelivr.net/npm/@stlite/browser@__STLITE__/build/stlite.js";
 const paths = __PATHS__;
-const files = Object.fromEntries(paths.map((p) => [p, {{ url: new URL(p, window.location.href).href }}]));
+// The version is a hash of every mounted file, so a browser never mixes a cached file with a new build.
+const version = "__VERSION__";
+const files = Object.fromEntries(paths.map((p) => [p, {{ url: new URL(p + "?v=" + version, window.location.href).href }}]));
 const root = document.getElementById("root");
 mount({{
   entrypoint: "app.py",
@@ -75,6 +78,23 @@ new MutationObserver((_, observer) => {{
 """
 
 
+# The app changes the address bar as you move between pages (/scenario, /model, ...). On a static
+# host those addresses do not exist, so a reload or a shared deep link lands here and is sent home.
+NOT_FOUND = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flamefall Analytics</title>
+<meta http-equiv="refresh" content="0; url=/flamefall-analytics/">
+<script>location.replace("/flamefall-analytics/");</script>
+</head>
+<body style="background:#0B0F14;color:#E6EDF3;font-family:system-ui,sans-serif;padding:2rem">
+<p>Opening the dashboard at <a style="color:#22D3EE" href="/flamefall-analytics/">zogwork.github.io/flamefall-analytics</a>.</p>
+</body>
+</html>
+"""
+
+
 def collect() -> list[str]:
     paths: list[str] = []
     for pattern in INCLUDE:
@@ -82,15 +102,26 @@ def collect() -> list[str]:
     return paths
 
 
+def content_version(paths: list[str]) -> str:
+    """Short hash of the mounted files' contents (line endings normalised so it is the same on every OS)."""
+    digest = hashlib.sha256()
+    for p in paths:
+        digest.update(p.encode())
+        digest.update((ROOT / p).read_bytes().replace(b"\r\n", b"\n"))
+    return digest.hexdigest()[:12]
+
+
 def main() -> int:
     paths = collect()
     html = (PAGE.replace("{{", "{").replace("}}", "}")
             .replace("__STLITE__", STLITE)
+            .replace("__VERSION__", content_version(paths))
             .replace("__PATHS__", json.dumps(paths, indent=1))
             .replace("__REQUIREMENTS__", json.dumps(REQUIREMENTS))
             .replace("__CONFIG__", json.dumps(CONFIG)))
     (ROOT / "index.html").write_text(html, encoding="utf-8", newline="\n")
     (ROOT / ".nojekyll").write_text("", encoding="utf-8")     # GitHub Pages: serve files as they are
+    (ROOT / "404.html").write_text(NOT_FOUND, encoding="utf-8", newline="\n")
     size = sum((ROOT / p).stat().st_size for p in paths)
     print(f"wrote index.html: {len(paths)} files mounted, {size / 1e6:.1f} MB, stlite {STLITE}")
     return 0
