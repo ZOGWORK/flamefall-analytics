@@ -33,7 +33,7 @@ EXPLORATION_P_KPA = 70.3           # ... at 10.2 psi (70.3 kPa) or less
 ENV_RULES = {
     "Station": "tested at about 21% O2 (range includes 20.5 to 21.5%)",
     "Spacecraft": "vehicle-scale burn in a cargo spacecraft, or smoke detection",
-    "Lunar": f"tested in partial gravity, or at O2 of {EXPLORATION_O2_PCT:g}% or more, or at {EXPLORATION_P_KPA:g} kPa or less",
+    "Lunar": f"tested in, or planned for, partial gravity, or tested at O2 of {EXPLORATION_O2_PCT:g}% or more, or at {EXPLORATION_P_KPA:g} kPa or less",
     "Rover": f"tested at O2 of {EXPLORATION_O2_PCT:g}% or more, or at {EXPLORATION_P_KPA:g} kPa (10.2 psi) or less",
 }
 
@@ -90,6 +90,7 @@ def ambient_evidence() -> pd.DataFrame:
 def load_solid_points() -> pd.DataFrame:
     df = pd.read_csv(DATA / "solid_test_points.csv")
     df["usable_for_model"] = df["usable_for_model"].astype(str).str.lower() == "true"
+    df["pressure_stated"] = df["pressure_stated"].astype(str).str.lower() == "true"
     for col in ("notes", "outcome_quote", "flow_direction", "geometry"):
         df[col] = df[col].fillna("")
     return df
@@ -119,15 +120,31 @@ def _range_match(value: float, lo, hi, fade: float) -> tuple[float, str]:
     return max(0.0, 1 - gap / fade), f"{gap:.1f} outside the tested range {lo:g} to {hi:g}"
 
 
+def _flow_match(row: pd.Series, flow_cm_s: float) -> tuple[float, str]:
+    if row["flow_regime"] != "quiescent":
+        return _range_match(flow_cm_s, row["flow_min_cm_s"], row["flow_max_cm_s"], fade=20.0)
+    # tested in still gas only: a full match there, fading over 20 cm/s like any other range
+    if flow_cm_s == 0:
+        return 1.0, "still gas, as tested"
+    return max(0.0, 1 - flow_cm_s / 20.0), f"tested in still gas only; the scenario has {flow_cm_s:g} cm/s of flow"
+
+
+PLANNED = "planned, not tested"
+
+
 def relevance(row: pd.Series, o2_pct: float, pressure_kpa: float, flow_cm_s: float, evidence_class: str,
               gravity_g: float, weights: dict | None = None) -> dict:
-    """How closely one investigation's tested conditions match a scenario. Terms are in [0, 1]."""
+    """How closely one investigation's tested conditions match a scenario. Terms are in [0, 1].
+
+    A planned investigation has tested nothing, so it matches nothing: every term is zero.
+    """
     w = weights or RELEVANCE_WEIGHTS
+    if row["status"] == "planned":
+        return {"score": 0.0, "terms": {k: 0.0 for k in RELEVANCE_WEIGHTS}, "why": {k: PLANNED for k in RELEVANCE_WEIGHTS}}
     t = {
         "oxygen": _range_match(o2_pct, row["o2_min_pct"], row["o2_max_pct"], fade=10.0),
         "pressure": _range_match(pressure_kpa, row["pressure_min_kPa"], row["pressure_max_kPa"], fade=40.0),
-        "flow": ((1.0, "still gas, as tested") if row["flow_regime"] == "quiescent" and flow_cm_s == 0
-                 else _range_match(flow_cm_s, row["flow_min_cm_s"], row["flow_max_cm_s"], fade=20.0)),
+        "flow": _flow_match(row, flow_cm_s),
     }
     cls = row["evidence_class"]
     if cls == evidence_class or (cls == "partial_g" and evidence_class == "solid"):
@@ -189,7 +206,7 @@ def flex_documents() -> list[dict]:
         ("flex-cool", f"Cool flames, invisible burning: of {s['heptane_extinctions']} n-heptane tests logged as Extinction, "
          f"{c['indicated']} show evidence of cool-flame burning after the visible flame went out, {c['not_indicated']} "
          f"show none, {c['unclear']} are unclear.", f"{flex.REPORT}, Appendix B figure captions"),
-        ("flex-dilution", f"Suppression by dilution: carbon dioxide was present in {s['co2_tests']} FLEX tests (up to "
+        ("flex-dilution", f"Dilution of the atmosphere: carbon dioxide was present in {s['co2_tests']} FLEX tests (up to "
          f"{s['ranges']['co2'][1]:.2f} mole fraction) and helium in {s['he_tests']} (up to {s['ranges']['he'][1]:.2f}). "
          "CO2 and helium were never combined in one test.", src),
         ("flex-envelope", f"FLEX tested ambient oxygen from {s['ranges']['o2'][0]:.0%} to {s['ranges']['o2'][1]:.0%} and "
@@ -268,10 +285,9 @@ def parse_filters(query: str) -> dict:
             out["o2_at_least"] = float(m.group(2))
         if m := BELOW.search(q):
             out["o2_at_most"] = float(m.group(2))
-    for word, cls in CLASS_WORDS.items():
-        if re.search(rf"\b{word}s?\b", q):
-            out["evidence_class"] = cls
-            break
+    classes = {cls for word, cls in CLASS_WORDS.items() if re.search(rf"\b{word}s?\b", q)}
+    if len(classes) == 1:          # words of two classes ("materials ... smoke detector") name no single class
+        out["evidence_class"] = classes.pop()
     return out
 
 
@@ -280,6 +296,7 @@ def answer(query: str, k: int = 6) -> dict:
 
     If the question states an oxygen limit ("above 25% oxygen") the evidence is first filtered on its
     recorded ambient-oxygen range, and the filter is reported back so the user can see what was applied.
+    The same limit is applied to the investigations listed with the answer, on their tested ranges.
     """
     filters = parse_filters(query)
     hits = search(query, k=k)
@@ -303,6 +320,18 @@ def answer(query: str, k: int = 6) -> dict:
             docs = docs[docs["evidence_class"].isin(wanted)]
         statements = docs.sort_values("score", ascending=False).head(k)[
             ["doc_id", "kind", "investigation_id", "title", "text", "source_ref", "source_url", "verification", "score"]]
+        if has_o2:
+            inv = load_investigations()
+            lo, hi = pd.to_numeric(inv["o2_min_pct"], errors="coerce"), pd.to_numeric(inv["o2_max_pct"], errors="coerce")
+            tested = hi.notna()                                                   # no tested range: cannot match a limit
+            if "o2_at_least" in filters:
+                tested &= hi >= filters["o2_at_least"]
+            if "o2_at_most" in filters:
+                tested &= lo <= filters["o2_at_most"]
+            in_range = set(inv.loc[tested, "investigation_id"])
+            is_statement = hits["kind"] == "evidence"
+            hits = hits[(is_statement & hits["doc_id"].isin(docs["doc_id"]))
+                        | (~is_statement & hits["investigation_id"].isin(in_range))]
         if "evidence_class" in filters:
             keep = set(statements["investigation_id"]) | set(
                 load_investigations().loc[load_investigations()["evidence_class"].isin(wanted), "investigation_id"])
@@ -329,20 +358,38 @@ def _evidence_facets() -> pd.DataFrame:
 
 def nearest_flex(fuel: str, o2_pct: float, pressure_kpa: float, co2_pct: float, he_pct: float, d0_mm: float | None,
                  k: int = 8) -> pd.DataFrame:
-    """Nearest FLEX tests to a droplet scenario, by distance over the stated initial conditions."""
+    """Nearest FLEX tests to a droplet scenario, by distance over the stated initial conditions.
+
+    A test that does not state its pressure or initial diameter is compared on what it does state.
+    That is not a match on the missing quantity, so such a test is ranked after every test that
+    states them all, and `not_compared` names what was left out.
+    """
     f = flex.load_flex()
     f = f[f["fuel"] == fuel].copy()
     scale = {"o2_pct": 5.0, "pressure_kpa": 50.0, "co2_pct": 15.0, "he_pct": 10.0, "d0_mm": 0.8}
     d2 = ((f["o2_pct"] - o2_pct) / scale["o2_pct"]) ** 2 + ((f["co2_pct"] - co2_pct) / scale["co2_pct"]) ** 2 \
         + ((f["he_pct"] - he_pct) / scale["he_pct"]) ** 2
-    d2 = d2 + ((f["pressure_kpa"].fillna(pressure_kpa) - pressure_kpa) / scale["pressure_kpa"]) ** 2
+    d2 = d2 + (((f["pressure_kpa"] - pressure_kpa) / scale["pressure_kpa"]) ** 2).fillna(0.0)
+    left_out = pd.Series(np.where(f["pressure_kpa"].isna(), "pressure", ""), index=f.index)
     if d0_mm is not None:
-        d2 = d2 + ((f["d0_mm"].fillna(d0_mm) - d0_mm) / scale["d0_mm"]) ** 2
-    return f.assign(distance=np.sqrt(d2)).nsmallest(k, "distance")
+        d2 = d2 + (((f["d0_mm"] - d0_mm) / scale["d0_mm"]) ** 2).fillna(0.0)
+        no_d0 = f["d0_mm"].isna()
+        left_out = left_out.where(~no_d0, left_out.map(lambda s: f"{s}, initial diameter" if s else "initial diameter"))
+    return _stated_first(f.assign(distance=np.sqrt(d2), not_compared=left_out), k)
+
+
+def _stated_first(frame: pd.DataFrame, k: int) -> pd.DataFrame:
+    """The k nearest rows: those that state every compared quantity first, then by distance."""
+    order = frame.assign(_partial=frame["not_compared"] != "").sort_values(["_partial", "distance"], kind="stable")
+    return order.drop(columns="_partial").head(k)
 
 
 def nearest_solid(material_class: str, o2_pct: float, pressure_kpa: float, flow_cm_s: float, k: int = 8) -> pd.DataFrame:
-    """Nearest solid-fuel test points. Same material first; other materials only if there are too few."""
+    """Nearest solid-fuel test points. Same material first; other materials only if there are too few.
+
+    A point with no flow speed (the source gives a fan setting, not cm/s) is compared on oxygen and
+    pressure only, is ranked after every point that states its flow, and says so in `not_compared`.
+    """
     s = load_solid_points()
     s = s[s["outcome"] != "ambiguous"].copy()
     same = s[s["material_class"] == material_class]
@@ -350,9 +397,10 @@ def nearest_solid(material_class: str, o2_pct: float, pressure_kpa: float, flow_
     pool = pool.copy()
     flow = pool["flow_cm_s"]
     d2 = ((pool["o2_at_outcome_pct"] - o2_pct) / 2.0) ** 2 + ((pool["pressure_kPa"] - pressure_kpa) / 30.0) ** 2
-    d2 = d2 + ((np.log1p(flow.fillna(flow_cm_s)) - np.log1p(flow_cm_s)) / 1.0) ** 2
-    out = pool.assign(distance=np.sqrt(d2), same_material=pool["material_class"] == material_class)
-    return out.nsmallest(k, "distance")
+    d2 = d2 + (((np.log1p(flow) - np.log1p(flow_cm_s)) / 1.0) ** 2).fillna(0.0)
+    out = pool.assign(distance=np.sqrt(d2), same_material=pool["material_class"] == material_class,
+                      not_compared=np.where(flow.isna(), "flow", ""))
+    return _stated_first(out, k)
 
 
 def solid_envelope(material_class: str | None = None) -> dict:
