@@ -100,7 +100,8 @@ def test_droplet_model_generalises_and_solid_model_does_not(cards):
     assert d["metrics"]["roc_auc"] > 0.8 and d["metrics"]["roc_auc_ci"][0] > 0.7
     assert d["headline_auc"] < d["metrics"]["roc_auc"]         # an unseen fuel is harder than an unseen atmosphere
     assert s["headline_auc"] < 0.6                             # reported as a failure, not hidden
-    # row-wise CV flatters both models: that is why it is not the headline
+    # row-wise CV is never the headline: it flatters the solid model by more than 0.1, and for the
+    # droplet model it is no more than 0.02 below grouped CV
     assert d["metrics"]["rowwise_cv_auc_for_comparison_only"] >= d["metrics"]["roc_auc"] - 0.02
     assert s["metrics"]["rowwise_cv_auc_for_comparison_only"] > s["metrics"]["roc_auc"] + 0.1
 
@@ -126,6 +127,54 @@ def test_preprocessing_statistics_come_from_the_training_rows_only():
     X = model.transform(df.iloc[:100], spec, prep_a)
     assert np.allclose(X[:, 0].mean(), 0, atol=1e-9) and np.allclose(X[:, 0].std(), 1, atol=1e-9)
     assert not np.isnan(model.transform(df, spec, prep_a)).any()   # missing diameters are imputed, not dropped
+
+
+def test_cross_validation_never_learns_preprocessing_from_the_rows_it_scores(monkeypatch):
+    """Inside nested CV every scaler is fitted on training rows only, and never on the whole frame."""
+    spec = model.SPECS["droplet_extinction"]
+    df = model.frame_for("droplet_extinction").reset_index(drop=True)
+    fitted_on, scored = {}, []
+    real_fit, real_transform = model.fit_prep, model.transform
+
+    def spy_fit(frame, s):
+        prep = real_fit(frame, s)
+        fitted_on[id(prep)] = (prep, set(frame["row_id"]))
+        return prep
+
+    def spy_transform(frame, s, prep):
+        scored.append((set(frame["row_id"]), id(prep)))
+        return real_transform(frame, s, prep)
+
+    monkeypatch.setattr(model, "fit_prep", spy_fit)
+    monkeypatch.setattr(model, "transform", spy_transform)
+    cv = model.nested_cv(df, spec)
+
+    everything = set(df["row_id"])
+    assert len(everything) == len(df)
+    assert fitted_on and all(rows < everything for _, rows in fitted_on.values())      # never the whole frame
+    held_out = 0
+    for rows, key in scored:
+        train_rows = fitted_on[key][1]
+        assert rows == train_rows or not (rows & train_rows)       # its own training rows, or rows it never saw
+        held_out += rows != train_rows
+    assert held_out >= cv["k"]
+    for fold in cv["folds"]:
+        assert not set(fold["train_rows"]) & set(fold["test_rows"])
+        assert any(rows == set(fold["train_rows"]) for _, rows in fitted_on.values())  # the outer scaler of this fold
+    whole = real_fit(df, spec)
+    assert all(prep["mean"]["o2_pct"] != whole["mean"]["o2_pct"] for prep, _ in fitted_on.values())
+
+
+def test_cards_state_where_they_depart_from_the_protocol(cards):
+    solid, cool = cards["solid_sustained"], cards["droplet_cool_flame"]
+    s = model.solid_frame()
+    moved = s[s["o2_initial_pct"] != s["o2_pct"]]
+    assert len(s) == 179 and len(moved) == 13 and set(moved["y"]) == {0}
+    assert any("moves 13 of the 179 rows, 13 of them not sustained" in note for note in solid["notes"])
+    assert cool["leave_one_material_out"]["pooled_auc"] is None and cool["headline_is"] == "grouped cross-validation"
+    assert "alone, not the worse of two" in cool["headline_note"]
+    for name in ("droplet_extinction", "solid_sustained"):
+        assert cards[name]["headline_note"].startswith("The worse of")
 
 
 def test_prediction_inside_the_envelope():
