@@ -143,7 +143,7 @@ with a:
 with b:
     cool = {"indicated": ("cool-flame evidence reported", "warn"), "not_indicated": ("no cool-flame evidence", "info"),
             "unclear": ("cool flame unclear", "mute")}.get(row["cool_flame_label"])
-    badges = ui.badge(row["outcome"], {"Extinction": "bad", "Disruption": "mute", "Completion": "ok"}[row["outcome"]])
+    badges = ui.badge(row["outcome"], ui.OUTCOME_BADGE[row["outcome"]])
     if cool:
         badges += ui.badge(*cool)
     if row["support"]:
