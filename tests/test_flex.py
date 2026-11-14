@@ -113,16 +113,21 @@ def test_caption_annotations(f):
 
 def test_extinction_wording_takes_the_stated_mode(f):
     by_no = f.set_index("test_no")
-    assert f["extinction_wording"].value_counts().to_dict() == {"": 187, "radiative": 46, "diffusive": 39,
+    assert f["extinction_wording"].value_counts().to_dict() == {"": 189, "radiative": 44, "diffusive": 39,
                                                                 "both_mentioned": 4}
     # stated diffusive, with radiative loss named only as a contribution
     assert by_no.loc[225, "extinction_wording"] == "diffusive"
     # captions that say they cannot tell which
     assert set(by_no.loc[[247, 251, 255, 264], "extinction_wording"]) == {"both_mentioned"}
+    # "either radiative or outside the flammability boundary" states no mode: left empty, nothing imputed
+    assert set(by_no.loc[[140, 141], "extinction_wording"]) == {""}
     sch = flex.build_schema_frame().set_index("flex_no")
     assert sch.loc[225, "extinction_mode"] == "diffusive_only"
     assert sch.loc[225, "D_diff_ext_mm"] == by_no.loc[225, "extinction_diameter_mm"]
     assert pd.isna(sch.loc[247, "D_diff_ext_mm"]) and pd.isna(sch.loc[247, "D_rad_ext_mm"])
+    for n in (140, 141):
+        assert sch.loc[n, "extinction_mode"] == "visible_extinction_mode_not_stated"
+        assert pd.isna(sch.loc[n, "D_rad_ext_mm"]) and sch.loc[n, "visible_ext_diameter_mm"] > 0
 
 
 def test_outcome_badges_use_the_chart_colours():
