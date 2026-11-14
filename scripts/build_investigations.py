@@ -89,7 +89,11 @@ def computed(inv_id: str) -> dict:
                     src="PSI-39 experimental table, columns Oxygen and Pressure (atm converted to kPa)")
     if inv_id == "BASS":
         d = t("PSI-26_Experimental table_BASS.csv")
-        return dict(n=len(d), n_src="rows of the PSI-26 experimental table",
+        tests = d[d["Test #"].str.strip() != ""]             # one row is a "SOOT Cleaning" entry, not a test
+        return dict(n=len(tests),
+                    n_src="as-run rows with a test number in the PSI-26 experimental table, repeats included "
+                          f"({len(d) - len(tests)} row without a test number is not counted). The agency fact "
+                          "sheet counts 89 test points",
                     src="PSI-26 experimental table lists samples only; it has no oxygen, pressure or flow column")
     if inv_id == "BASS-II":
         d = t("PSI-25_Experimental table_BASS-II.csv")
@@ -106,8 +110,9 @@ def computed(inv_id: str) -> dict:
                         "in the table are not shown as a minimum)")
     if inv_id == "SLICE":
         d = t("PSI-106_Experimental table_Slice.csv")
-        return dict(n=len(d), n_src="test days in the PSI-106 experimental table",
-                    src="PSI-106 experimental table lists test dates and fuel only")
+        return dict(src=f"The PSI-106 experimental table lists {len(d)} test days with the fuel used, not "
+                        "individual tests, and one of those days is labelled as SPICE testing. No test count "
+                        "is stated, so none is shown")
     if inv_id == "SAME":
         d = t("PSI-102_Experimental table_SAME.csv")
         return dict(flow=rng(d["Air Flow (cm/s)"]), src="PSI-102 experimental table, column 'Air Flow (cm/s)'")
@@ -246,8 +251,14 @@ def main() -> int:
             row.update({"key_result": e["statement"], "key_result_value": "" if e["value"] is None else e["value"],
                         "key_result_unit": e["unit"], "primary_source_url": e["source_url"],
                         "primary_source_ref": e["source_ref"]})
+            if "key_value" in c:      # the statement covers several flights: use this flight's own number
+                row["key_result_value"], row["key_result_unit"] = c["key_value"], c["key_unit"]
             if not psi_id:
                 row["verification"] = e["verification"] if c.get("verification") != "index" else "index"
+        if row["status"] == "planned":
+            for col in ("o2_min_pct", "o2_max_pct", "pressure_min_kPa", "pressure_max_kPa", "flow_min_cm_s",
+                        "flow_max_cm_s", "n_tests"):
+                assert row[col] == "", f"{inv_id} is planned and cannot carry a tested {col}"
         if not row["primary_source_url"]:
             row["primary_source_url"] = row["psi_url"]
         if not row["primary_source_ref"] and psi_id:
