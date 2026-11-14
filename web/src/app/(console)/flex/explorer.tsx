@@ -16,13 +16,16 @@ import { flex, TABLE_SOURCE } from "@/lib/data";
 import { fmt, fuelName, pct } from "@/lib/format";
 import { d2Line, nearestTests, wilson, type GasColumn } from "@/lib/stats";
 import type { FlexRow, Outcome } from "@/lib/types";
-import { list, range, useUrlState } from "@/lib/use-url-state";
+import { list, oneOf, range, useUrlState } from "@/lib/use-url-state";
 
 const ROWS = flex.rows;
 const S = flex.summary;
 const REPORT = flex.meta.report;
 const O2: [number, number] = [Math.floor(S.ranges.o2[0] * 100), Math.ceil(S.ranges.o2[1] * 100)];
-const P: [number, number] = [0.65, 3.1];
+// the tested pressure range, in atm, widened to the slider's 0.05 step
+const P: [number, number] = [Math.floor((S.ranges.pressure_mmhg[0] / 760) * 20) / 20, Math.ceil((S.ranges.pressure_mmhg[1] / 760) * 20) / 20];
+const GAS_COLUMNS = ["o2_pct", "co2_pct", "he_pct"] as const satisfies readonly GasColumn[];
+const RATE_COLUMNS = ["d0_mm", "o2_pct", "co2_pct", "he_pct", "pressure_atm"] as const satisfies readonly RateColumn[];
 const FAMILY: Record<string, string> = Object.fromEntries(
   flex.families.map((f) => [f.startsWith("Air") ? "air" : f.startsWith("CO2") ? "co2" : f.startsWith("He") ? "he" : "n2", f]),
 );
@@ -99,12 +102,14 @@ function download(rows: FlexRow[]) {
 export function Explorer() {
   const [q, set, reset] = useUrlState(DEFAULTS);
   const fuels = list(q.fuel);
-  const o2 = range(q.o2);
-  const pressure = range(q.p);
+  // values typed into the address bar are checked: anything else falls back to the full range or the default
+  const o2 = range(q.o2, O2);
+  const pressure = range(q.p, P);
   const atm = list(q.atm);
   const outcomes = list(q.out);
-  const xcol = q.x as GasColumn;
-  const kx = q.kx as RateColumn;
+  const xcol = oneOf(q.x, GAS_COLUMNS, "o2_pct");
+  const kx = oneOf(q.kx, RATE_COLUMNS, "d0_mm");
+  const view = oneOf(q.view, ["share", "mix"] as const, "share");
   const fullPressure = pressure[0] <= P[0] && pressure[1] >= P[1];
 
   const d = useMemo(() => {
@@ -223,7 +228,7 @@ export function Explorer() {
         explainer="Share of tests that ended in Extinction at each tested gas level. Bigger dots mean more tests; bars are 95% intervals."
       >
         <Panel>
-          <Tabs value={q.view} onValueChange={(v) => set({ view: v as string })}>
+          <Tabs value={view} onValueChange={(v) => set({ view: v as string })}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <TabsList className="h-8 max-w-full rounded-sm">
                 <TabsTrigger value="share" className="rounded-sm px-3">Share + trend</TabsTrigger>
