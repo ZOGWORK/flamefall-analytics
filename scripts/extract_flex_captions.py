@@ -8,6 +8,7 @@ exact sentence each label rests on:
   support            free-floating / fiber-supported   (first sentence of the caption)
   cool_flame         indicated / not_indicated / unclear / "" (caption silent)
   extinction_wording radiative / diffusive / both_mentioned / "" (caption silent)
+                     both_mentioned = the caption says it cannot tell which of the two it was
 
 Labels are assigned by the phrase rules below and were then read one by one
 against the captions (see data/PROVENANCE.md). A silent caption stays empty:
@@ -37,6 +38,11 @@ UNCLEAR = re.compile(
     r"|not possible to determine|may or may not", re.I)
 
 
+# "diffusively or radiatively", "radiative or diffusive": the caption does not choose
+EITHER_MODE = re.compile(r"(radiativ\w*|diffusiv\w*) or (radiativ\w*|diffusiv\w*)|difficult to (say|tell)", re.I)
+STATED_MODE = re.compile(r"extinguish\w*,? (?:\w+ )?(radiatively|diffusively)|(?:to|near) (radiative|diffusive)", re.I)
+
+
 def normalise(text: str) -> str:
     for ch in "\u2010\u2011\u2012\u2013\u2014\u2212":
         text = text.replace(ch, "-")
@@ -62,12 +68,20 @@ def classify_cool(sents: list[str]) -> tuple[str, str]:
 def classify_ext(sents: list[str]) -> tuple[str, str]:
     rad = [s for s in sents if re.search(r"radiativ", s, re.I)]
     dif = [s for s in sents if re.search(r"diffusiv", s, re.I)]
-    hedged = any(UNCLEAR.search(s) or re.search(r"radiative or diffusive|diffusive or radiative", s, re.I)
+    hedged = any(UNCLEAR.search(s) or EITHER_MODE.search(s)
                  for s in rad + dif)
     quote = " ".join(dict.fromkeys(rad + dif))
     if not rad and not dif:
         return "", ""
-    if hedged or (rad and dif):
+    if hedged:
+        return "both_mentioned", quote              # the caption says it cannot tell which
+    if rad and dif:
+        # Both words appear but one mode is stated, e.g. "extinguished diffusively with a
+        # significant contribution from radiative loss": take the mode the flame is said to have.
+        stated = STATED_MODE.search(quote)
+        if stated:
+            mode = (stated.group(1) or stated.group(2)).lower()
+            return ("radiative" if mode.startswith("radiat") else "diffusive"), quote
         return "both_mentioned", quote
     return ("radiative" if rad else "diffusive"), quote
 
