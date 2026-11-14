@@ -180,7 +180,7 @@ export function Block({
   return (
     <div className={cn("flex flex-col bg-surface p-4", className)}>
       <div className="flex items-start justify-between gap-3">
-        <p className="glow num text-[clamp(1.5rem,2.6vw,2.125rem)] leading-none font-bold tracking-tight" style={{ color: TONE_VAR[tone] }}>
+        <p className="num text-[clamp(1.5rem,2.6vw,2.125rem)] leading-none font-bold tracking-tight" style={{ color: TONE_VAR[tone] }}>
           {value}
           {unit && <span className="ml-1.5 text-note font-medium text-muted-foreground">{unit}</span>}
         </p>
