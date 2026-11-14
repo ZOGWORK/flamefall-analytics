@@ -45,7 +45,7 @@ export default function Overview() {
             <Kicker className="text-dim">The quantitative core — FLEX droplet experiment</Kicker>
             <IconChip icon={Droplets} tone="amber" />
           </div>
-          <p className="glow num mt-3 text-[clamp(5rem,15vw,10rem)] leading-[0.85] font-bold tracking-tight text-amber">
+          <p className="num mt-3 text-[clamp(5rem,15vw,10rem)] leading-[0.85] font-bold tracking-tight text-amber">
             <Count text={String(s.n)} />
           </p>
           <p className="mt-3 text-body text-foreground">droplet burns on the space station, one row each in Table IX.</p>
