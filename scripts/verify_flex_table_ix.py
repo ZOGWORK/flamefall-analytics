@@ -3,7 +3,9 @@
 The CSV was extracted with pdfplumber (table mode). This script re-reads
 Table IX of NASA/TP-2015-216046 with a different library and method
 (PyMuPDF word positions, PDF pages 26-34), rebuilds every row, applies the
-same documented cleaning rules, and compares all 276 x 15 cells.
+same documented cleaning rules, and compares all 276 x 14 cells (3,864). The test
+number is the row key, and the CSV-only `notes` column has no counterpart in the PDF,
+so neither is among the compared cells.
 
 Usage:
     python scripts/verify_flex_table_ix.py path/to/20150023456.pdf
