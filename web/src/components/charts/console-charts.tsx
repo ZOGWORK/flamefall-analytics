@@ -65,7 +65,7 @@ export function OxygenRangeChart({ investigations, classLabel }: { investigation
               return active && p ? <Tip title={p.id} lines={[p.lo === p.hi ? `${g(p.lo)}% O2` : `${g(p.lo)} to ${g(p.hi)}% O2`, classLabel[p.cls] ?? p.cls]} /> : null;
             }}
           />
-          <Bar dataKey="base" stackId="r" fill="transparent" isAnimationActive={false} />
+          <Bar dataKey="base" stackId="r" fill="transparent" />
           <Bar dataKey="span" stackId="r" animationDuration={500}>
             {rows.map((r) => (
               <Cell key={r.id} fill={reaches(r.hi) ? "var(--amber)" : "var(--data)"} />
@@ -161,12 +161,12 @@ export function ScenarioMap({
           />
           {series.map((s) =>
             s.solid ? (
-              <Scatter key={s.key} data={s.data} fill={s.color} isAnimationActive={false} shape={(props: { cx?: number; cy?: number }) => <SolidMark cx={props.cx} cy={props.cy} outcome={s.key} />} />
+              <Scatter key={s.key} data={s.data} fill={s.color} shape={(props: { cx?: number; cy?: number }) => <SolidMark cx={props.cx} cy={props.cy} outcome={s.key} />} />
             ) : (
-              <Scatter key={s.key} data={s.data} fill={s.color} fillOpacity={0.6} isAnimationActive={false} />
+              <Scatter key={s.key} data={s.data} fill={s.color} fillOpacity={0.6} />
             ),
           )}
-          <Scatter data={[{ x: o2, y: pressure, id: "Your scenario", what: "not a test" }]} shape={(props: { cx?: number; cy?: number }) => <Crosshair cx={props.cx} cy={props.cy} />} isAnimationActive={false} />
+          <Scatter data={[{ x: o2, y: pressure, id: "Your scenario", what: "not a test" }]} shape={(props: { cx?: number; cy?: number }) => <Crosshair cx={props.cx} cy={props.cy} />} />
         </ScatterChart>
       </Chart>
       <Legend items={[...series.map((s) => ({ label: s.name, color: s.color, shape: s.shape })), { label: "your scenario (not a test)", color: "var(--foreground)", shape: "ring" as const }]} />
