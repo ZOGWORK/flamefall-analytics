@@ -1,0 +1,40 @@
+{
+ "psi_id": "PSI-108",
+ "record_version": 4,
+ "file_count": 56,
+ "total_bytes": 24237145031.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 16192
+  },
+  "Reports": {
+   "files": 9,
+   "bytes": 23923782.0
+  },
+  "Engineering Documents": {
+   "files": 2,
+   "bytes": 1585585.0
+  },
+  "Raw Data": {
+   "files": 37,
+   "bytes": 24198407072.0
+  },
+  "Analyzed Data": {
+   "files": 4,
+   "bytes": 195782.0
+  },
+  "Science Documents": {
+   "files": 1,
+   "bytes": 13002906.0
+  },
+  "Experimental table": {
+   "files": 2,
+   "bytes": 13712
+  }
+ },
+ "experimental_tables": [
+  "PSI-108_Experimental table_STDCE-1.csv",
+  "PSI-108_Experimental table_STDCE-1(1).csv"
+ ]
+}
