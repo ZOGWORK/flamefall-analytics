@@ -39,7 +39,7 @@ function Foot({ children }: { children: string }) {
 function Stat({ value, label, source, tone = "text-amber" }: { value: React.ReactNode; label: string; source: string; tone?: string }) {
   return (
     <div className="border-t border-line pt-3">
-      <p className={`num text-[clamp(1.75rem,4vw,2.75rem)] leading-none font-bold ${tone}`}>{value}</p>
+      <p className={`glow num text-[clamp(1.75rem,4vw,2.75rem)] leading-none font-bold ${tone}`}>{value}</p>
       <p className="mt-2 text-body text-foreground">
         <Prose text={label} />
       </p>
@@ -220,7 +220,7 @@ function SlideMethod() {
     <>
       <Kicker>How the intelligence layer works</Kicker>
       <Title>Three auditable steps. None of them can invent a number.</Title>
-      <div className="mt-6 grid grid-cols-1 gap-px border border-line bg-line lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-3">
         <div className="flex flex-col bg-surface p-4">
           <p className="kicker text-data">1 · Retrieve</p>
           <p className="mt-2 text-panel font-semibold text-foreground">Search returns the measured statements themselves</p>
@@ -428,7 +428,7 @@ export function Deck() {
           if (Math.abs(dx) > 60) go(index + (dx < 0 ? 1 : -1)); // swipe left for the next slide
         }}
       >
-        <header className="flex h-12 shrink-0 items-center justify-between border-b border-line px-4 sm:px-8">
+        <header className="glass-rail flex h-12 shrink-0 items-center justify-between border-b border-line px-4 sm:px-8">
           <Link href="/" className="font-heading text-panel font-bold tracking-[0.18em] text-foreground">
             FLAMEFALL
           </Link>
@@ -460,7 +460,7 @@ export function Deck() {
           </AnimatePresence>
         </main>
 
-        <footer className="flex h-14 shrink-0 items-center justify-between gap-3 border-t border-line px-4 sm:px-8">
+        <footer className="glass-rail flex h-14 shrink-0 items-center justify-between gap-3 border-t border-line px-4 sm:px-8">
           <Button variant="outline" size="sm" className="rounded-sm" onClick={() => go(index - 1)} disabled={index === 0}>
             <ChevronLeft aria-hidden /> <span className="hidden sm:inline">Previous</span>
           </Button>
@@ -474,7 +474,7 @@ export function Deck() {
                   onClick={() => go(i)}
                   className="flex h-8 w-5 items-center justify-center outline-none focus-visible:ring-1 focus-visible:ring-amber sm:w-7"
                 >
-                  <span className={`block h-0.5 w-full transition-colors ${i === index ? "bg-amber" : "bg-input"}`} />
+                  <span className={`block h-0.5 w-full transition-all ${i === index ? "bg-amber shadow-[0_0_12px_1px_rgba(255,140,26,0.9)]" : "bg-input"}`} />
                 </button>
               </li>
             ))}
