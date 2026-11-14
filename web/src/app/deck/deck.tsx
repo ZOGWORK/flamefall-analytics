@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -474,7 +474,7 @@ export function Deck() {
                   onClick={() => go(i)}
                   className="flex h-8 w-5 items-center justify-center outline-none focus-visible:ring-1 focus-visible:ring-amber sm:w-7"
                 >
-                  <span className={`block h-0.5 w-full transition-all ${i === index ? "bg-amber shadow-[0_0_12px_1px_rgba(255,140,26,0.9)]" : "bg-input"}`} />
+                  <span className={`block h-0.5 w-full transition-all ${i === index ? "bg-amber" : "bg-input"}`} />
                 </button>
               </li>
             ))}
