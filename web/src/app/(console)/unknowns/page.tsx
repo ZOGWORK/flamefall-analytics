@@ -1,3 +1,4 @@
+import { EyeOff, Flame, FlaskConical, Moon, Orbit, Radar, Siren, Thermometer, Wind } from "lucide-react";
 import type { Metadata } from "next";
 
 import { CountBars, DiluentChart, LuciChart, SolidEnvelopeChart } from "@/components/charts/unknown-charts";
@@ -33,9 +34,9 @@ export default function Page() {
         source="official challenge brief, Flame in Freefall; PSI Data Repository search “combustion”"
         readouts={
           <>
-            <Readout className="border-0" tone="amber" value={`${env.o2?.[1].toFixed(1)}%`} label="highest oxygen of any solid-fuel test point" source={`${decided.length} test points with a stated outcome`} />
-            <Readout className="border-0" tone="data" value={`${s.co2_and_he} of ${s.n}`} label="droplet tests with both CO2 and helium" source={`${flex.meta.report}, Table IX`} />
-            <Readout className="border-0" tone="ext" value={`${c.indicated} of ${s.heptane_extinctions}`} label="n-heptane “extinctions” that kept burning" source={`${flex.meta.report}, Appendix B captions`} />
+            <Readout className="border-0" icon={Thermometer} meter={(env.o2?.[1] ?? 0) / 100} tone="amber" value={`${env.o2?.[1].toFixed(1)}%`} label="highest oxygen of any solid-fuel test point" source={`${decided.length} test points with a stated outcome`} />
+            <Readout className="border-0" icon={FlaskConical} meter={s.co2_and_he / s.n} tone="data" value={`${s.co2_and_he} of ${s.n}`} label="droplet tests with both CO2 and helium" source={`${flex.meta.report}, Table IX`} />
+            <Readout className="border-0" icon={EyeOff} meter={c.indicated / s.heptane_extinctions} tone="ext" value={`${c.indicated} of ${s.heptane_extinctions}`} label="n-heptane “extinctions” that kept burning" source={`${flex.meta.report}, Appendix B captions`} />
           </>
         }
       >
@@ -51,9 +52,9 @@ export default function Page() {
             </Source>
           </Panel>
           <div className="grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-3 xl:col-span-2 xl:grid-cols-1">
-            <Tile value={partialG} tone="dim" tag={<NoDataTag />} label="lunar- or Martian-gravity combustion datasets in the repository" source="official challenge brief, Flame in Freefall" />
-            <Tile value={luci[0].lunar} unit={panels.luci.unit} tone="amber" label={`fabric flame-base spread in simulated lunar gravity, against ${luci[0].earth} mm/s in normal gravity`} source={`ASGSR 2025 presentation, slides ${luci[0].slides} (NTRS 20250010653)`} />
-            <Tile value={delta.value} unit="% O2" tone="data" label="worst-case shift in flammability limit between normal and lunar gravity, five materials at 8.2 psia" source={delta.source_ref} />
+            <Tile icon={Moon} value={partialG} tone="dim" tag={<NoDataTag />} label="lunar- or Martian-gravity combustion datasets in the repository" source="official challenge brief, Flame in Freefall" />
+            <Tile icon={Orbit} meter={luci[0].lunar / luci[0].earth} value={luci[0].lunar} unit={panels.luci.unit} tone="amber" label={`fabric flame-base spread in simulated lunar gravity, against ${luci[0].earth} mm/s in normal gravity`} source={`ASGSR 2025 presentation, slides ${luci[0].slides} (NTRS 20250010653)`} />
+            <Tile icon={Radar} value={delta.value} unit="% O2" tone="data" label="worst-case shift in flammability limit between normal and lunar gravity, five materials at 8.2 psia" source={delta.source_ref} />
           </div>
         </div>
         <div className="mt-4">
@@ -74,7 +75,7 @@ export default function Page() {
           </Source>
         </Panel>
         <TileRow className="mt-4 xl:grid-cols-3">
-          <Tile value="0" tone="dim" tag={<NoDataTag />} label="solid-material test points above 34% oxygen, at any pressure" source={`${decided.length} solid-fuel test points`} />
+          <Tile icon={Flame} value="0" tone="dim" tag={<NoDataTag />} label="solid-material test points above 34% oxygen, at any pressure" source={`${decided.length} solid-fuel test points`} />
           <Tile value={`${top.o2_at_outcome_pct?.toFixed(1)}%`} tone="data" label={`highest oxygen with a recorded outcome: ${top.investigation_id} ${top.material_class}, ${top.outcome.replace("_", " ")}`} source={top.source_ref} />
           <Tile value={`${topSustained.o2_at_outcome_pct?.toFixed(1)}%`} tone="amber" label={`highest oxygen with a sustained flame: ${topSustained.investigation_id} ${topSustained.material_class} at ${topSustained.pressure_kPa?.toFixed(1)} kPa`} source={topSustained.source_ref} />
         </TileRow>
@@ -90,9 +91,9 @@ export default function Page() {
             <Source href={flex.meta.pdf_url}>{`${flex.meta.report}, Table IX.`}</Source>
           </Panel>
           <div className="grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-3 xl:col-span-2 xl:grid-cols-1">
-            <Tile value={s.co2_and_he} tone="dim" tag={<NoDataTag />} label={`of ${s.n} tests contain both gases`} source={`${flex.meta.report}, Table IX`} />
-            <Tile value={s.co2_tests} tone="data" label="tests with carbon dioxide" source={`${flex.meta.report}, Table IX`} />
-            <Tile value={s.he_tests} tone="data" label="tests with helium, at their own oxygen levels and pressures: its effect is unclear" source={`${flex.meta.report}, Table IX`} />
+            <Tile icon={FlaskConical} value={s.co2_and_he} tone="dim" tag={<NoDataTag />} label={`of ${s.n} tests contain both gases`} source={`${flex.meta.report}, Table IX`} />
+            <Tile icon={Wind} meter={s.co2_tests / s.n} value={s.co2_tests} tone="data" label="tests with carbon dioxide" source={`${flex.meta.report}, Table IX`} />
+            <Tile icon={Wind} meter={s.he_tests / s.n} value={s.he_tests} tone="data" label="tests with helium, at their own oxygen levels and pressures: its effect is unclear" source={`${flex.meta.report}, Table IX`} />
           </div>
         </div>
       </Section>
@@ -114,7 +115,7 @@ export default function Page() {
             </Source>
           </Panel>
           <div className="border border-line xl:col-span-2">
-            <Tile value={`${c.indicated} of ${s.heptane_extinctions}`} tone="ext" label="kept vaporising after the flame disappeared. “No visible flame” is not “fire out”" source={`${flex.meta.report}, Appendix B captions`} className="h-full" />
+            <Tile icon={EyeOff} meter={c.indicated / s.heptane_extinctions} value={`${c.indicated} of ${s.heptane_extinctions}`} tone="ext" label="kept vaporising after the flame disappeared. “No visible flame” is not “fire out”" source={`${flex.meta.report}, Appendix B captions`} className="h-full" />
           </div>
         </div>
         <div className="mt-4">
@@ -129,9 +130,9 @@ export default function Page() {
             <p className="mt-3 text-note text-muted-foreground">{panels.smoke.note}</p>
           </Panel>
           <div className="grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-3 xl:col-span-2 xl:grid-cols-1">
-            <Tile value="½ · ⅔" tone="ext" label="of Kapton and of Teflon smoke tests in which the station-type detector did not alarm" source={ev("same-detector-misses").source_ref} />
-            <Tile value={kapton.fresh} unit={panels.smoke.unit} tone="data" label={`fresh Kapton smoke, against a ${panels.smoke.threshold_nm} nm mark`} source={ev("same1-table1").source_ref} />
-            <Tile value={alarm.value} unit="s" tone="amber" label="for a far-field detector to reach its alarm threshold in a vehicle-scale burn" source={alarm.source_ref} />
+            <Tile icon={Siren} value="½ · ⅔" tone="ext" label="of Kapton and of Teflon smoke tests in which the station-type detector did not alarm" source={ev("same-detector-misses").source_ref} />
+            <Tile icon={Radar} meter={kapton.fresh / panels.smoke.threshold_nm} value={kapton.fresh} unit={panels.smoke.unit} tone="data" label={`fresh Kapton smoke, against a ${panels.smoke.threshold_nm} nm mark`} source={ev("same1-table1").source_ref} />
+            <Tile icon={Siren} value={alarm.value} unit="s" tone="amber" label="for a far-field detector to reach its alarm threshold in a vehicle-scale burn" source={alarm.source_ref} />
           </div>
         </div>
         <div className="mt-4">
