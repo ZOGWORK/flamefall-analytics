@@ -89,7 +89,8 @@
  "notes": [
   "Groups are investigations; BASS-II is split into its six investigator test series, which used different sample geometries. Groups with fewer than 5 rows are merged for splitting only.",
   "BASS-II pressure is taken as 1 atm (stated for the fabric tests; same glovebox for the rest).",
-  "Most extinction points in the BASS-II appendix are given as fan settings with no cm/s value and cannot be used, so sustained points are over-represented."
+  "Most extinction points in the BASS-II appendix are given as fan settings with no cm/s value and cannot be used, so sustained points are over-represented.",
+  "Oxygen is the initial reading, except for a flame that quenched or blew off: there it is the end-of-test reading, the oxygen the flame went out at. This moves 13 of the 179 rows, 13 of them not sustained, so this one input is chosen with knowledge of the outcome. It is the only input that is not an initial condition."
  ],
  "prep": {
   "median": {
@@ -19176,6 +19177,7 @@
  },
  "headline_auc": 0.48055555555555557,
  "headline_is": "grouped cross-validation",
+ "headline_note": "The worse of grouped cross-validation and the leave-one-material-out stress test.",
  "envelope": {
   "o2_pct": [
    13.54,
