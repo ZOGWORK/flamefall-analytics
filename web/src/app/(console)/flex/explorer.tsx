@@ -1,12 +1,13 @@
 "use client";
 
-import { Download, RotateCcw } from "lucide-react";
+import { Database, Download, Flame, RotateCcw, Zap } from "lucide-react";
 import { useMemo } from "react";
 
 import { AXIS_LABEL, D2Chart, MixChart, RateChart, ShareChart, type RateColumn } from "@/components/charts/flex-charts";
 import { OutcomeStrip } from "@/components/charts/outcome-strip";
 import { Chips, Field, Pick, RangeField, Segments } from "@/components/console/controls";
 import { Decode } from "@/components/console/decode";
+import { Dial } from "@/components/console/viz";
 import { DataTable, n, type Column } from "@/components/console/data-table";
 import { Callout, KV, Kicker, NoData, Num, OutcomeBadge, Panel, Quote, Readout, Section, Source, Tag } from "@/components/console/primitives";
 import { Button } from "@/components/ui/button";
@@ -195,9 +196,14 @@ export function Explorer() {
       <section className="beam grid grid-cols-1 gap-px border border-line bg-line xl:grid-cols-12">
         <div className="scan bg-surface p-4 sm:p-5 xl:col-span-5">
           <Kicker className="text-dim">Ended in extinction</Kicker>
-          <p className="glow num mt-2 text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight text-ext">
-            <Decode text={pct(k / total)} />
-          </p>
+          <div className="mt-2 flex items-center justify-between gap-4">
+            <p className="glow num text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight text-ext">
+              <Decode text={pct(k / total)} />
+            </p>
+            <Dial value={k / total} tone="ext" size={116} label={`${k} of ${total} matching tests ended in Extinction`} className="hidden sm:block">
+              <span className="num text-note text-muted-foreground">{k}/{total}</span>
+            </Dial>
+          </div>
           <p className="mt-3 text-body text-foreground">
             <Num>{k}</Num> of <Num>{total}</Num> matching tests ended with the visible flame going out.
           </p>
@@ -206,9 +212,9 @@ export function Explorer() {
           </p>
         </div>
         <div className="grid grid-cols-1 gap-px bg-line sm:grid-cols-3 xl:col-span-7">
-          <Readout className="border-0" value={total} unit={`of ${ROWS.length}`} label="tests match the filters" source={TABLE_SOURCE} tone="amber" />
-          <Readout className="border-0" value={counts.Disruption} label="ended in Disruption (not an extinction)" source={`${REPORT} §5.2: may reflect needle contamination`} tone="disrupt" />
-          <Readout className="border-0" value={counts.Completion} label="burned to Completion" source={TABLE_SOURCE} tone="done" />
+          <Readout className="border-0" icon={Database} meter={total / ROWS.length} value={total} unit={`of ${ROWS.length}`} label="tests match the filters" source={TABLE_SOURCE} tone="amber" />
+          <Readout className="border-0" icon={Zap} meter={counts.Disruption / total} value={counts.Disruption} label="ended in Disruption (not an extinction)" source={`${REPORT} §5.2: may reflect needle contamination`} tone="disrupt" />
+          <Readout className="border-0" icon={Flame} meter={counts.Completion / total} value={counts.Completion} label="burned to Completion" source={TABLE_SOURCE} tone="done" />
         </div>
       </section>
 
