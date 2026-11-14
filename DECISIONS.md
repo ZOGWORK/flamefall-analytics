@@ -16,13 +16,13 @@ sources themselves.
 | C3 | "26 PSI combustion investigations" | The PSI search for "combustion" returns 26 records, but 2 are not combustion science (PSI-181, a solder study; PSI-108, a fluid-physics experiment). 24 carry Research Area = Combustion Science | Shows "26 search results, 24 combustion science"; the two others are listed and never ranked |
 | C4 | Saffire: "IV-1 SIBAL, peak HRR 3,150 W, 409 kJ" and "V-2 2,800 W" | In ICES-2024-365 Table 2 those are **average** heat release from fuel-consumption calorimetry. Peak heat release by oxygen-consumption calorimetry exists only for VI-2, VI-3 and VI-4 (3,217 / 3,080 / 1,507 W) | Two separate evidence rows, each with its method and "average" or "peak" in the text |
 | C5 | "The 85% O2 figure belongs to Flame Design inverse flames, never to CFI-G" | PSI's own CFI-G inverse-flame table (PSI-159, 154 tests) has burner oxygen up to 0.85, and so does PSI's Flame Design inverse-flame table (PSI-10). The challenge page says the same: an oxygen-nitrogen mixture of up to 85% oxygen "flowed from the spherical burner creating an inside-out flame". Chamber-ambient oxygen in both normal-flame tables stops at 0.40 | The essential point stands and is enforced: 85% is a **burner feed, not an ambient**. It is attributed to the inverse flames of both investigations. `o2_is_ambient = False`; `test_inverse_flame_oxygen_is_a_burner_feed_not_an_ambient` |
-| C6 | "LUCI has NO published quantitative results as of 14 Nov 2026. Do not present LUCI spread rates" | A conference presentation is on NTRS (20250010653, ASGSR, Dec 2025) with spread rates for both samples in simulated lunar gravity and in normal gravity, and chamber oxygen histories. Read in full | Shown on *What We Don't Know* and in the Scenario Lab as the nearest real tests to partial gravity, labelled as preliminary slides, one flight, centrifuge-simulated gravity, not a PSI dataset. No limiting oxygen value is claimed, because the slides state none. See QUESTIONS.md Q3 |
+| C6 | "LUCI has NO published quantitative results as of 14 Nov 2026. Do not present LUCI spread rates" | A conference presentation is on NTRS (20250010653, ASGSR, Dec 2025) with spread rates for both samples in simulated lunar gravity and in normal gravity, and chamber oxygen histories. Read in full | Shown on *What We Don't Know* as the nearest real tests to partial gravity, labelled as preliminary slides, one flight, centrifuge-simulated gravity, not a PSI dataset. No limiting oxygen value is claimed, because the slides state none. See QUESTIONS.md Q3 |
 | C7 | "There is NO Saffire VI-vs-IV spread-rate comparison in the literature. Do not present one" | ICES-2026-577 (NTRS 20260001992) Table 1 lists thin-fuel spread rates side by side: IV-1 3.6 mm/s, V-2 3.4 mm/s, VI-2 4.05 mm/s. Read in full | The three rates are shown together with their pressures and source. No ratio or trend is derived from them. See QUESTIONS.md Q3 |
 | C8 | "CO/CO2 molar ratio 0.01 to 0.1" (ICES-2015-196) | The paper states no such range. It gives 550 ppm CO per 1% CO2 for concurrent rods and 370 ppm for thick slabs, about ten times efficient flue gas | The stated slopes are shown instead |
 | C9 | "Buoyant velocities: 1 g 24 cm/s, lunar about 10 cm/s, Martian about 15 cm/s" | These come from ICES-2019-101, which could not be re-read (QUESTIONS.md Q2). A 2025 paper by the same group takes 35 cm/s as a high estimate for normal gravity and says the lunar value "is not known"; a 2004 paper expects more than 20 cm/s on the Moon and Mars | Shown as disagreeing estimates. The 24 / 10 / 15 figures are greyed as not re-verified |
 | C10 | BASS-II "O2 13 to 22%"; rods "0.476 cm" and "0.318 cm" | The memo gives 13.6 to 22.2%, and those two figures are rod **radii** | Uses the memo's values |
 | C11 | "PMMA concurrent rod minimum 13.6%" as the flammability-boundary minimum | Two separate verified numbers exist: 13.6% is the final oxygen reading of one quench test (and the figure on the 2014 poster, against a 16% normal-gravity limit); the memo's fitted boundary has its minimum at about 13.5%, against a 15.4% normal-gravity upward limit | Both are shown, each with its own source and comparison |
-| C12 | PSI's FLEX experimental table would match Table IX row for row | PSI's table (PSI-69) has 274 rows numbered 1 to 274 in sequence. All 274 match Table IX value for value when aligned on the CIR identifier and time, but PSI's numbering stops agreeing with the FLEX test numbers after test 155, and FLEX-216 and FLEX-230 are absent | Table IX stays the authority for test numbers. `test_psi_flex_table_matches_table_ix_value_for_value` |
+| C12 | PSI's FLEX experimental table would match Table IX row for row | PSI's table (PSI-69) has 274 rows numbered 1 to 274 in sequence. Aligned on the CIR identifier and time, all 274 rows match Table IX on every value except one documented cell (FLEX-114 pressure, printed as 0 by PSI and left empty here), but PSI's numbering stops agreeing with the FLEX test numbers after test 155, and FLEX-216 and FLEX-230 are absent | Table IX stays the authority for test numbers. `test_psi_flex_table_matches_table_ix_value_for_value` |
 | C13 | "ACME operations Nov 2017 to Feb 2022"; "E-FIELD 14 Mar to Nov 2018" | Operations ran Sept 2017 to Feb 2022 with first science in Nov 2017; E-FIELD ran March to May and September to November 2018 (no day given) | Dates in the catalogue come from the PSI record; the E-FIELD statement uses the months only |
 | C14 | "Three cool flames" in CFI-G | The press releases say three were first noticed on 23 June 2021. PSI's table marks 7 of 179 normal-flame tests as cool flames (5 on day 174 of 2021, 2 on day 291) | Both are shown, each attributed |
 
@@ -33,7 +33,7 @@ sources themselves.
 ## Verified as stated
 
 - `data/flex-table-ix.csv`: matches the source PDF on all 3,864 cells by an independent re-read
-  (`scripts/verify_flex_table_ix.py`), and matches PSI's own table on all 274 rows PSI lists.
+  (`scripts/verify_flex_table_ix.py`), and matches PSI's own table on all 274 rows PSI lists, apart from the one documented FLEX-114 cell.
 - FLEX totals, ranges and missing-value counts in the brief: reproduced by `tests/test_flex.py`.
 - SAME Table 1 and SAME-R Table 1 (all values), the detector-miss fractions, Saffire VI Table 1 and
   the 981 s alarm time, Saffire spread rates from the 2023 journal table, BRE (21% flames out within
@@ -91,8 +91,9 @@ sources themselves.
 - **D13. The end marker on that chart** is called an extinction diameter only when the outcome is
   Extinction; 24 Disruption and 15 Completion rows also print a value in that column.
 - **D14. Environment filter.** Tags are computed from each investigation's own tested ranges by a
-  stated rule (station: tested near 21% O2; lunar or rover: tested at 30% O2 or more, or at
-  70.3 kPa or less, or in partial gravity; spacecraft: vehicle-scale or smoke detection).
+  stated rule. Station: tested near 21% O2. Rover: tested at 30% O2 or more, or at 70.3 kPa or
+  less. Lunar: the rover rule, or tested in partial gravity. Spacecraft: vehicle-scale burn or
+  smoke detection. A planned investigation has no tested range, so only its gravity can tag it.
 - **D15. Search is retrieval and extraction only.** TF-IDF over catalogue rows and sourced
   statements. The answer is the matching statements with their sources. No text is generated, so
   no number can be invented. An oxygen limit stated in the question is applied as a filter on the
@@ -112,8 +113,7 @@ sources themselves.
 - **D20. The formula disagrees with one real test, and the dashboard says so.** By partial pressure
   the Saffire VI fabric burn (31% O2 at 54 kPa, 16.8 kPa of oxygen) scores zero on the oxygen term,
   yet the fabric burned. A limit measured at 1 atm does not transfer to low pressure by partial
-  pressure alone. The Scenario Lab raises this whenever the oxygen term is zero next to a real
-  sustained test.
+  pressure alone.
 - **D21. The gravity term** (lunar scored highest) follows the specification. The LUCI slides show
   slower spread in simulated lunar gravity for both samples, with a longer burn for the fabric. The
   term is a design choice, not a finding.
