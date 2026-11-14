@@ -140,6 +140,10 @@ def burning_rate_figure(df: pd.DataFrame, xcol: str = "d0_mm") -> go.Figure:
     return fig
 
 
+END_MARKER_EXTINCTION = "Reported visible-flame extinction diameter²"
+END_MARKER_OTHER = "Diameter² printed at test end ({outcome}, not an extinction)"
+
+
 def d2_reconstruction(row: pd.Series) -> go.Figure | None:
     """d²-law line rebuilt from Table IX (D0, average K, burn time). Not the measured trace."""
     d0, k, t_end = row["d0_mm"], row["burning_rate_mm2_s"], row["burn_time_s"]
@@ -157,10 +161,16 @@ def d2_reconstruction(row: pd.Series) -> go.Figure | None:
                              hovertemplate="D0 = %{customdata:.2f} mm<extra></extra>", customdata=[d0]))
     dext = row["extinction_diameter_mm"]
     if not pd.isna(dext):
+        # Table IX prints a value in this column for some Disruption and Completion tests too.
+        # Only an Extinction outcome makes it an extinction diameter.
+        if row["outcome"] == "Extinction":
+            name, label = END_MARKER_EXTINCTION, "Extinction diameter"
+        else:
+            name, label = END_MARKER_OTHER.format(outcome=row["outcome"]), "Printed end diameter"
         fig.add_trace(go.Scatter(
-            x=[t_end], y=[dext ** 2], mode="markers", name="Reported visible-flame extinction diameter²",
-            marker=dict(color=theme.RED, size=12, symbol="x"),
-            hovertemplate="Extinction diameter = %{customdata:.2f} mm at %{x:.1f} s<extra></extra>",
+            x=[t_end], y=[dext ** 2], mode="markers", name=name,
+            marker=dict(color=theme.OUTCOME_COLORS[row["outcome"]], size=12, symbol="x"),
+            hovertemplate=label + " = %{customdata:.2f} mm at %{x:.1f} s<extra></extra>",
             customdata=[dext]))
     fig.add_hline(y=0, line=dict(color=theme.BORDER, width=1))
     fig.update_layout(xaxis_title="Time from ignition, s", yaxis_title="Droplet diameter², mm²", height=380,
