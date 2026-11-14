@@ -3,6 +3,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 
+import { Decode } from "@/components/console/decode";
 import { cn } from "@/lib/utils";
 import type { Outcome, Verification } from "@/lib/types";
 
@@ -117,7 +118,7 @@ export function Panel({
   aside?: React.ReactNode;
 }) {
   return (
-    <div className={cn("border border-line bg-surface p-4", className)}>
+    <div className={cn("rounded-xl border border-line bg-surface p-4", className)}>
       {(title || aside) && (
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           {title && <h3 className="text-panel font-semibold text-foreground">{title}</h3>}
@@ -236,7 +237,7 @@ export function ReadoutGrid({ children, className }: { children: React.ReactNode
 /** The explicit NO DATA panel. "No data" is an answer, not an error. */
 export function NoData({ title, children, note, className }: { title: string; children: React.ReactNode; note?: string; className?: string }) {
   return (
-    <div role="note" className={cn("border border-dashed border-dim bg-background p-4", className)}>
+    <div role="note" className={cn("rounded-xl border border-dashed border-dim bg-surface p-4", className)}>
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="num bg-foreground px-1.5 py-px text-note font-bold tracking-widest text-background">NO DATA</span>
         <span className="text-panel font-semibold text-foreground">
@@ -268,7 +269,7 @@ export function Callout({
   className?: string;
 }) {
   return (
-    <div className={cn("border-l-2 bg-surface py-3 pr-4 pl-4", TONE_BORDER[tone], className)}>
+    <div className={cn("rounded-r-xl border-l-2 bg-surface py-3 pr-4 pl-4", TONE_BORDER[tone], className)}>
       <h3 className="text-panel font-semibold text-foreground">
         <Prose text={title} />
       </h3>
@@ -317,10 +318,12 @@ export function HeroBand({
   readouts: React.ReactNode;
 }) {
   return (
-    <section className="grid grid-cols-1 gap-px border border-line bg-line xl:grid-cols-12">
-      <div className="bg-surface p-4 sm:p-5 xl:col-span-5">
+    <section className="beam grid grid-cols-1 gap-px border border-line bg-line xl:grid-cols-12">
+      <div className="scan bg-surface p-4 sm:p-5 xl:col-span-5">
         <Kicker className="text-dim">{kicker}</Kicker>
-        <p className={cn("num mt-2 text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>{value}</p>
+        <p className={cn("glow num mt-2 text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
+          {typeof value === "string" || typeof value === "number" ? <Decode text={String(value)} /> : value}
+        </p>
         <p className="mt-3 text-body text-foreground">{children}</p>
         <p className="mt-1 text-note text-muted-foreground">
           <span className="text-dim">Source: </span>
@@ -353,8 +356,8 @@ export function Tile({
   return (
     <div className={cn("flex flex-col bg-surface p-4", className)}>
       {tag && <p className="mb-2">{tag}</p>}
-      <p className={cn("num text-[clamp(1.875rem,3.4vw,2.75rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
-        {value}
+      <p className={cn("glow num text-[clamp(1.875rem,3.4vw,2.75rem)] leading-none font-bold tracking-tight", TONE_TEXT[tone])}>
+        {typeof value === "string" || typeof value === "number" ? <Decode text={String(value)} /> : value}
         {unit && <span className="ml-1.5 text-panel font-medium text-muted-foreground">{unit}</span>}
       </p>
       <p className="mt-2 text-body text-foreground">
@@ -370,7 +373,7 @@ export function Tile({
 
 /** A row of tiles separated by hairlines. */
 export function TileRow({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-2 xl:grid-cols-4", className)}>{children}</div>;
+  return <div className={cn("grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4", className)}>{children}</div>;
 }
 
 export function NoDataTag() {
