@@ -1,6 +1,6 @@
 "use client";
 
-import { MotionConfig } from "framer-motion";
+import { MotionConfig } from "motion/react";
 
 /** One motion setting for the whole app: quick, and off for readers who ask for reduced motion. */
 export function Motion({ children }: { children: React.ReactNode }) {
