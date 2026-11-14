@@ -1,0 +1,39 @@
+{
+ "psi_id": "PSI-20",
+ "record_version": 4,
+ "file_count": 2361,
+ "total_bytes": 2035568427496.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 15061
+  },
+  "Reports": {
+   "files": 2,
+   "bytes": 18391525.0
+  },
+  "Raw Data": {
+   "files": 2297,
+   "bytes": 2035132220077.0
+  },
+  "Science Documents": {
+   "files": 22,
+   "bytes": 72094928.0
+  },
+  "Engineering Documents": {
+   "files": 25,
+   "bytes": 161416828.0
+  },
+  "Presentations": {
+   "files": 13,
+   "bytes": 184287964.0
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 1113
+  }
+ },
+ "experimental_tables": [
+  "PSI-20_Experimental table_ACME BRE.csv"
+ ]
+}
