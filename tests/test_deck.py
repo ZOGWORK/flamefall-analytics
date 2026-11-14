@@ -120,6 +120,27 @@ def test_web_page_root_fills_the_viewport():
     assert "position: fixed" in rule and "inset: 0" in rule
 
 
+def test_web_page_versions_every_mounted_file():
+    """Each file URL carries a hash of the build, so a cached old file can never be mixed with a new page."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import build_web
+
+    page = (ROOT / "index.html").read_text(encoding="utf-8")
+    version = re.search(r'const version = "([0-9a-f]{12})";', page).group(1)
+    assert version == build_web.content_version(build_web.collect())      # rebuild index.html after any change
+    assert 'p + "?v=" + version' in page
+
+
+def test_deep_links_are_sent_home_on_a_static_host():
+    not_found = (ROOT / "404.html").read_text(encoding="utf-8")
+    assert 'location.replace("/flamefall-analytics/")' in not_found and "http-equiv=\"refresh\"" in not_found
+
+
+def test_sidebar_collapses_on_a_phone():
+    app = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert 'initial_sidebar_state="auto"' in app and 'initial_sidebar_state="expanded"' not in app
+
+
 @pytest.mark.parametrize("module", ["flamefall/flex.py", "flamefall/catalogue.py", "flamefall/psi.py",
                                     "flamefall/ranking.py", "flamefall/ui.py", "flamefall/charts.py"])
 def test_app_modules_import_nothing_outside_the_browser_requirements(module):
