@@ -129,25 +129,32 @@ def test_preprocessing_statistics_come_from_the_training_rows_only():
     assert not np.isnan(model.transform(df, spec, prep_a)).any()   # missing diameters are imputed, not dropped
 
 
-def test_cross_validation_never_learns_preprocessing_from_the_rows_it_scores(monkeypatch):
-    """Inside nested CV every scaler is fitted on training rows only, and never on the whole frame."""
+def _scaler_violations(monkeypatch, fit=None) -> list[str]:
+    """Run nested CV on the droplet frame with every scaler fit and use recorded; list what breaks the protocol.
+
+    `fit(frame, spec, whole_frame)` returns the scaler and the rows it was really fitted on. The
+    default is the real one: fitted on the frame it is given. A test passes a leaky one to prove
+    that the checks here catch it.
+    """
     spec = model.SPECS["droplet_extinction"]
     df = model.frame_for("droplet_extinction").reset_index(drop=True)
     fitted_on, scored = {}, []
     real_fit, real_transform = model.fit_prep, model.transform
+    fit = fit or (lambda frame, s, whole: (real_fit(frame, s), frame))
 
     def spy_fit(frame, s):
-        prep = real_fit(frame, s)
-        fitted_on[id(prep)] = (prep, set(frame["row_id"]))
+        prep, used = fit(frame, s, df)
+        fitted_on[id(prep)] = (prep, frozenset(used["row_id"]))
         return prep
 
     def spy_transform(frame, s, prep):
-        scored.append((set(frame["row_id"]), id(prep)))
+        scored.append((frozenset(frame["row_id"]), id(prep)))
         return real_transform(frame, s, prep)
 
     monkeypatch.setattr(model, "fit_prep", spy_fit)
     monkeypatch.setattr(model, "transform", spy_transform)
     cv = model.nested_cv(df, spec)
+    monkeypatch.undo()
 
     ids = df["row_id"].to_numpy()
     everything = frozenset(ids)
@@ -172,29 +179,41 @@ def test_cross_validation_never_learns_preprocessing_from_the_rows_it_scores(mon
             assert not a & b and a | b == train
             allowed |= {(a, a), (a, b)}
 
-    seen = {(frozenset(fitted_on[key][1]), frozenset(rows)) for rows, key in scored}
-    assert seen <= allowed, "a scaler was fitted on, or applied to, rows the protocol does not allow"
-    assert all(pair in seen for pair in outer_scoring)             # every outer test fold was scored by its own fold's scaler
-    assert all(rows != everything for _, rows in fitted_on.values())
-    assert not any(fitted == test for fitted, _ in seen for _, test in outer_scoring)   # never fitted on a test fold
-    whole = real_fit(df, spec)
-    assert all(prep["mean"]["o2_pct"] != whole["mean"]["o2_pct"] for prep, _ in fitted_on.values())
+    seen = {(fitted_on[key][1], rows) for rows, key in scored}
+    problems = []
+    if not seen <= allowed:
+        problems.append("a scaler was fitted on, or applied to, rows the protocol does not allow")
+    if not all(pair in seen for pair in outer_scoring):
+        problems.append("an outer test fold was not scored by the scaler fitted on its own training rows")
+    if any(rows == everything for _, rows in fitted_on.values()):
+        problems.append("a scaler was fitted on the whole frame")
+    if any(fitted == test for fitted, _ in seen for _, test in outer_scoring):
+        problems.append("a scaler was fitted on a test fold")
+    return problems
 
 
-def test_the_preprocessing_test_catches_a_scaler_fitted_on_the_test_fold(monkeypatch):
-    """The check above must fail for the classic leak, or it proves nothing."""
-    spec = model.SPECS["droplet_extinction"]
-    df = model.frame_for("droplet_extinction").reset_index(drop=True)
-    cv = model.nested_cv(df, spec)
-    ids = df["row_id"].to_numpy()
-    allowed = set()
-    for fold in cv["folds"]:
-        train, test = frozenset(fold["train_rows"]), frozenset(fold["test_rows"])
-        allowed |= {(train, train), (train, test)}
-    for fold in cv["folds"]:
-        test = frozenset(fold["test_rows"])
-        assert (test, test) not in allowed                          # fitted on the test fold, applied to it
-        assert (frozenset(ids), test) not in allowed                # fitted on everything, applied to the test fold
+def test_cross_validation_never_learns_preprocessing_from_the_rows_it_scores(monkeypatch):
+    """Inside nested CV every scaler is fitted on training rows only, and never on the whole frame."""
+    assert _scaler_violations(monkeypatch) == []
+
+
+def test_the_preprocessing_check_fails_for_a_leaky_scaler(monkeypatch):
+    """The check above must fail for the classic leaks, or it proves nothing. Two leaky scalers are run through it."""
+    real_fit = model.fit_prep
+
+    def fitted_on_everything(frame, spec, whole):
+        return real_fit(whole, spec), whole
+
+    def fitted_on_the_held_out_rows(frame, spec, whole):
+        held_out = whole[~whole["row_id"].isin(frame["row_id"])]
+        return real_fit(held_out, spec), held_out
+
+    everything = _scaler_violations(monkeypatch, fitted_on_everything)
+    assert "a scaler was fitted on the whole frame" in everything
+    assert "a scaler was fitted on, or applied to, rows the protocol does not allow" in everything
+    held_out = _scaler_violations(monkeypatch, fitted_on_the_held_out_rows)
+    assert "a scaler was fitted on a test fold" in held_out
+    assert "a scaler was fitted on, or applied to, rows the protocol does not allow" in held_out
 
 
 def test_cards_state_where_they_depart_from_the_protocol(cards):
