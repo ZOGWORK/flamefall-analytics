@@ -105,3 +105,74 @@ followed by clearly separated extras. Columns the source does not give (cool-fla
 second-stage extinction diameter, flame temperatures, flame standoff ratio, soot volume fraction)
 are empty. `o2_is_ambient` is `True` for every FLEX row: all FLEX oxygen values are chamber ambient.
 See `DECISIONS.md` for where the schema had to be extended to avoid inventing a category.
+
+## `psi/` — snapshot of the PSI Data Repository (the challenge's official data source)
+
+| | |
+|---|---|
+| Source | PSI Data Repository, search term "combustion": https://psi.nasa.gov/physci/repo/search?q=combustion |
+| Retrieved | 14 Nov 2026, through the public JSON endpoints the PSI web application itself calls |
+| Script | `scripts/fetch_psi.py` (standard library only; endpoints listed in `psi/SNAPSHOT.json`) |
+| Licence | PSI records state CC0-1.0 |
+
+- `psi/search_combustion.json`: the 26 search hits in PSI's relevance order. 24 have Research Area
+  "Combustion Science"; PSI-181 (Materials Science) and PSI-108 (Fluid Physics) do not.
+- `psi/records/<id>.json`: each record's metadata as returned, minus two bulky version-diff fields
+  (`added`, `removed`) and minus e-mail, phone, fax and address fields.
+- `psi/files/<id>.json`: file counts and sizes per category for each record.
+- `psi/experimental_tables/*.csv`: all 25 "Experimental table" files attached to those records,
+  byte for byte. 22 of the 26 records attach at least one.
+
+Text from the API contains U+FFFD characters where PSI's source had dashes or quotes. The files
+keep PSI's bytes; `flamefall/psi.py::fix_text` repairs them for display only.
+
+Cross-check against the core dataset: PSI's own FLEX table (PSI-69) lists 274 tests. Aligned on
+CIR identifier and time, all 274 match `flex-table-ix.csv` on every value; the only difference is
+the documented cleaning of FLEX-114. PSI numbers its rows 1 to 274 in sequence rather than by FLEX
+test number, and does not list FLEX-216 or FLEX-230 (`tests/test_psi.py`).
+
+## `bass2/` — BASS-II test tables (126 tests, 290 labelled test points)
+
+| | |
+|---|---|
+| Source | Olson et al., *Burning and Suppression of Solids-II (BASS-II) Summary Report*, NASA/TM-20210011385, October 2021 |
+| NTRS record | https://ntrs.nasa.gov/citations/20210011385 |
+| PDF | https://ntrs.nasa.gov/api/citations/20210011385/downloads/TM-20210011385.pdf (48,972,416 bytes, 144 pages, SHA-256 `5ffa911fd9b6356f204646003fb9342e341810dcdfdf5cb15756e7f01ec5f770`) |
+| Scripts | `scripts/bass2/run_all.sh` rebuilds every CSV from the PDF; output checked byte-identical |
+| Details | `bass2/README.md`: column mapping, labelling rules, checks, and 28 listed judgement calls |
+
+Verbatim tables: 2.1, 4.1, 4.2, 5.1 (20 slab tests), 7.1 (31 fabric rows), D.2, and Appendix A
+(126 tests, all 35 printed columns). Every row was compared with the text of its PDF page: 0
+mismatches. `bass2_test_points.csv` is derived: one row per test and flow condition, labelled
+sustained / quenched / blowoff / no_ignition / ambiguous, each label carrying the words it rests on.
+
+The memo is a primary source found by the builder; it is not a link on the challenge's Resources tab.
+
+## `solid_test_points.csv` — every solid-fuel test point with a stated outcome (313 rows)
+
+Built by `scripts/build_solid_points.py` from `bass2/bass2_test_points.csv` plus 23 rows typed from
+four sources, each named per row: PSI experimental tables PSI-98 and PSI-99 (Saffire-I, -II), Olson
+et al. 2023 Table 1, ICES-2024-365 Table 1, ICES-2025-156 Table 1, and NTRS 20240007628 Table 1
+(SoFIE-GEL). 179 rows have oxygen, pressure, a velocity in cm/s and an unambiguous outcome.
+
+## `evidence.json` — 66 sourced statements
+
+One entry per quantitative statement shown outside the FLEX explorer: the statement, its value and
+unit, conditions, `o2_is_ambient`, the source reference and URL, a verification level, the read
+level (full text, accepted manuscript, slides, abstract only, or "read by research agent"), and a
+short quote. `unverified` entries are shown greyed with a "not verified" badge and never feed a
+model.
+
+## `investigations.csv` and `investigations_curated.json` — the catalogue (33 rows)
+
+Built by `scripts/build_investigations.py`. PSI-stated cells are copied from `psi/records/`; ranges
+are computed from PSI experimental tables and say which table and column in `range_source`; the key
+result points at an `evidence.json` entry. A cell that PSI does not state, and that no cited source
+states, is empty. 26 rows are the PSI search hits; 7 are investigations the search does not return
+(Saffire IV to VI, SoFIE-GEL, FLARE, LUCI, FM2) and are marked as such.
+
+## `models/*.json` and `cv_splits.json`
+
+Written by `scripts/train_models.py` (seed 42): coefficients, preprocessing statistics, every
+validation metric, out-of-fold predictions, 1,000 bootstrap coefficient sets, and the exact fold
+membership of every row.
