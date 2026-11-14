@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import searchJson from "@/data/search.json";
 import { rangeText, rankInvestigations, RELEVANCE_KEYS, type RankedInvestigation } from "@/lib/catalogue";
-import { catalogue, evidence } from "@/lib/data";
+import { catalogue, ev, evidence } from "@/lib/data";
 import { capitalise, g } from "@/lib/format";
 import { R } from "@/lib/ranking";
 import { SearchIndex } from "@/lib/search";
@@ -221,17 +221,17 @@ export function Catalogue() {
         readouts={
           <>
             <Readout className="border-0" icon={FlaskConical} meter={N.combustion_science / N.search_hits} value={N.combustion_science} tone="data" label="of those are Combustion Science" source="The other two are a solder study (PSI-181) and a fluid-physics experiment (PSI-108)" />
-            <Readout className="border-0" icon={Table2} meter={N.with_experimental_table / N.search_hits} value={N.tables} tone="done" label="per-test experimental tables attached to those records" source={`${N.with_experimental_table} of ${N.search_hits} records attach at least one; all copied into this repository`} />
-            <Readout className="border-0" icon={Telescope} meter={N.outside_psi_search / N.catalogue_rows} value={N.outside_psi_search} tone="disrupt" label="related investigations that the search does not return" source="Saffire IV to VI, SoFIE-GEL, FLARE, LUCI, FM2: added from their own papers and marked as such" />
+            <Readout className="border-0" icon={Table2} meter={N.with_experimental_table / N.search_hits} value={N.with_experimental_table} unit={`of ${N.search_hits}`} tone="data" label="records attach a per-test experimental table" source={`${N.tables} tables in all, every one copied into this repository`} />
+            <Readout className="border-0" icon={Telescope} meter={N.outside_psi_search / N.catalogue_rows} value={N.outside_psi_search} tone="amber" label="related investigations that the search does not return" source="Saffire IV to VI, SoFIE-GEL, FLARE, LUCI, FM2: added from their own papers and marked as such" />
           </>
         }
       >
         records come back from a PSI search for “combustion”.
       </HeroBand>
 
-      <Section title="Oxygen tested, by investigation" explainer="The ambient-oxygen range each investigation actually ran. An investigation with no stated range is not drawn.">
+      <Section title="Oxygen tested, by investigation" explainer="The ambient-oxygen range each investigation actually ran, one chart per kind of evidence. An investigation with no stated range is not drawn.">
         <Panel>
-          <OxygenRangeChart investigations={COMBUSTION} classLabel={catalogue.evidence_class_label} />
+          <OxygenRangeChart investigations={COMBUSTION} classLabel={catalogue.evidence_class_label} exploration={ev("brief-atmospheres").value as number} />
           <Source href={catalogue.search_url}>
             Ranges computed from each record&apos;s PSI experimental table or its cited paper; the source of every range is in the investigation&apos;s detail below. Burner-feed oxygen is never counted as ambient.
           </Source>
