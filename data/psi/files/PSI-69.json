@@ -1,0 +1,39 @@
+{
+ "psi_id": "PSI-69",
+ "record_version": 5,
+ "file_count": 6555,
+ "total_bytes": 923832535657.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 24780
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 24776
+  },
+  "Engineering Documents": {
+   "files": 3,
+   "bytes": 5745120.0
+  },
+  "Presentations": {
+   "files": 4,
+   "bytes": 7072984.0
+  },
+  "Raw Data": {
+   "files": 6424,
+   "bytes": 918326758436.0
+  },
+  "Calibration": {
+   "files": 120,
+   "bytes": 5492705004.0
+  },
+  "Science Documents": {
+   "files": 2,
+   "bytes": 204557.0
+  }
+ },
+ "experimental_tables": [
+  "PSI-69_Experimental table_FLEX.csv"
+ ]
+}

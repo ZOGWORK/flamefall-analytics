@@ -1,0 +1,47 @@
+{
+ "psi_id": "PSI-22",
+ "record_version": 7,
+ "file_count": 2590,
+ "total_bytes": 950212491107.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 15166
+  },
+  "Engineering Documents": {
+   "files": 26,
+   "bytes": 183892385.0
+  },
+  "Representative Image(s)": {
+   "files": 4,
+   "bytes": 351087
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 2475
+  },
+  "Presentations": {
+   "files": 32,
+   "bytes": 808342989.0
+  },
+  "Raw Data": {
+   "files": 2502,
+   "bytes": 949170887602.0
+  },
+  "Science Documents": {
+   "files": 13,
+   "bytes": 26440117.0
+  },
+  "Reports": {
+   "files": 9,
+   "bytes": 18707698.0
+  },
+  "Reference Data": {
+   "files": 2,
+   "bytes": 3851588.0
+  }
+ },
+ "experimental_tables": [
+  "PSI-22_Experimental table_ACME E-FIELD Flames.csv"
+ ]
+}

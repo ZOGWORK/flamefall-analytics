@@ -1,0 +1,43 @@
+{
+ "psi_id": "PSI-25",
+ "record_version": 4,
+ "file_count": 695,
+ "total_bytes": 274631106141.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 13439
+  },
+  "Engineering Documents": {
+   "files": 2,
+   "bytes": 2235212.0
+  },
+  "Raw Data": {
+   "files": 685,
+   "bytes": 274578648152.0
+  },
+  "Reference Data": {
+   "files": 1,
+   "bytes": 23973.0
+  },
+  "Science Documents": {
+   "files": 3,
+   "bytes": 1158834.0
+  },
+  "Reports": {
+   "files": 1,
+   "bytes": 48972416.0
+  },
+  "Representative Image(s)": {
+   "files": 1,
+   "bytes": 37525
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 16590
+  }
+ },
+ "experimental_tables": [
+  "PSI-25_Experimental table_BASS-II.csv"
+ ]
+}

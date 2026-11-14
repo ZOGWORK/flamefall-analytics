@@ -1,0 +1,23 @@
+{
+ "psi_id": "PSI-21",
+ "record_version": 4,
+ "file_count": 4883,
+ "total_bytes": 2005536295241.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 15476
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 2454
+  },
+  "Raw Data": {
+   "files": 4881,
+   "bytes": 2005536277311.0
+  }
+ },
+ "experimental_tables": [
+  "PSI-21_Experimental table_CLD Flame.csv"
+ ]
+}

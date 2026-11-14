@@ -1,0 +1,35 @@
+{
+ "psi_id": "PSI-181",
+ "record_version": 1,
+ "file_count": 340,
+ "total_bytes": 523321491502,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 9568
+  },
+  "Raw Data": {
+   "files": 289,
+   "bytes": 519512682247
+  },
+  "Analyzed Data": {
+   "files": 27,
+   "bytes": 2532552204
+  },
+  "Presentations": {
+   "files": 20,
+   "bytes": 1259136783
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 688
+  },
+  "Reports": {
+   "files": 2,
+   "bytes": 17110012
+  }
+ },
+ "experimental_tables": [
+  "PSI-181_Experimental table_Experimental Table_PSI_181.csv"
+ ]
+}

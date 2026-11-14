@@ -1,0 +1,25 @@
+{
+ "psi_id": "PSI-115",
+ "record_version": 3,
+ "file_count": 47,
+ "total_bytes": 264404901.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 7021
+  },
+  "Analyzed Data": {
+   "files": 44,
+   "bytes": 253683467.0
+  },
+  "Reports": {
+   "files": 1,
+   "bytes": 10617514.0
+  },
+  "Science Documents": {
+   "files": 1,
+   "bytes": 96899.0
+  }
+ },
+ "experimental_tables": []
+}

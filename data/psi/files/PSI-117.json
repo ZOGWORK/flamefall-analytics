@@ -1,0 +1,25 @@
+{
+ "psi_id": "PSI-117",
+ "record_version": 2,
+ "file_count": 16,
+ "total_bytes": 70820870,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 10382
+  },
+  "Presentations": {
+   "files": 4,
+   "bytes": 62456587
+  },
+  "Analyzed Data": {
+   "files": 10,
+   "bytes": 281272
+  },
+  "Reports": {
+   "files": 1,
+   "bytes": 8072629
+  }
+ },
+ "experimental_tables": []
+}
