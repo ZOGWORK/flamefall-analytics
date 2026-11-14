@@ -153,7 +153,12 @@ sources themselves.
   0.65). It is not used for any estimate. One pre-declared variant (flow also entered squared, for
   the two-branch boundary) was run once and did not help (0.50); it was not adopted.
 - **D29. Stress test.** Leave-one-fuel-out for droplets, leave-one-material-out for solids. The
-  headline is the worse of that and grouped CV: 0.74 for droplet extinction.
+  headline is the worse of that and grouped CV: 0.74 for droplet extinction. Every cool-flame row
+  is n-heptane, so that model has no stress test; its card says its headline is grouped CV alone.
+- **D29a. One input is not an initial condition.** For a solid-fuel flame that went out, oxygen is
+  the end-of-test reading (D9). That reading exists only because the flame went out, so the input
+  is chosen with knowledge of the outcome. It moves 13 of the 179 rows, all not sustained. The
+  card states it; the solid model fails either way and gives no estimate.
 - **D30. Distance to data** is the nearest-neighbour distance in standardised input space, compared
   with the 95th percentile of the training rows' own nearest-neighbour distances, plus a per-input
   range check.
