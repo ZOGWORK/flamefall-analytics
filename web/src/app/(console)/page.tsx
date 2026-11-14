@@ -9,7 +9,8 @@ import { Kicker, NoDataTag, Section, Source, Tile, TileRow } from "@/components/
 import { Block, CellMatrix, IconChip, Meter } from "@/components/console/viz";
 import { Glass } from "@/components/ui/liquid-glass";
 import { PAGES } from "@/components/shell/nav";
-import { catalogue, ev, flex, solid, SRC_RECOMPUTED } from "@/lib/data";
+import { partialGravityRecords } from "@/lib/catalogue";
+import { catalogue, ev, flex, solid, SOLID_O2_LIMIT, SRC_RECOMPUTED } from "@/lib/data";
 import { pct } from "@/lib/format";
 import { OverviewCharts } from "./overview-charts";
 
@@ -22,7 +23,8 @@ export default function Overview() {
   const n = catalogue.counts;
   const cool = s.cool_flame;
   const env = solid.envelope_all;
-  const partialG = catalogue.investigations.filter((r) => r.in_psi_search && typeof r.gravity_g === "number" && r.gravity_g > 0.05 && r.gravity_g < 0.5).length;
+  const partialG = partialGravityRecords(catalogue.investigations).length;
+  const brief = ev("brief-atmospheres");
   const solidCount = (outcome: string) => solid.points.filter((p) => p.outcome === outcome).length;
 
   return (
@@ -101,11 +103,11 @@ export default function Overview() {
               ]}
             />
           </Block>
-          <Block icon={BadgeCheck} tone="done" value={<Count text={String(n.evidence)} />} label={`sourced statements, ${n.evidence_verified} verified in full text`} source={`evidence table · ${n.evidence_index} abstract-only, ${n.evidence_unverified} not verified and marked`}>
+          <Block icon={BadgeCheck} tone="data" value={<Count text={String(n.evidence)} />} label={`sourced statements, ${n.evidence_verified} verified in full text`} source={`evidence table · ${n.evidence_index} abstract-only, ${n.evidence_unverified} not verified and marked`}>
             <CellMatrix
               label={`${n.evidence_verified} verified in full text, ${n.evidence_index} abstract only, ${n.evidence_unverified} not verified`}
               groups={[
-                { n: n.evidence_verified, color: "var(--done)", name: "verified against primary source" },
+                { n: n.evidence_verified, color: "var(--data)", name: "verified against primary source" },
                 { n: n.evidence_index, color: "var(--amber)", name: "abstract or summary only" },
                 { n: n.evidence_unverified, color: "var(--dim)", name: "not verified" },
               ]}
@@ -118,11 +120,11 @@ export default function Overview() {
         <OverviewCharts />
       </Section>
 
-      <Section title="The dangerous combination" explainer="Four conditions future crewed vehicles push towards at the same time.">
+      <Section title="Four conditions that meet in future vehicles" explainer="What crewed vehicles are moving towards, and what has been measured for each.">
         <TileRow>
-          <Tile icon={Thermometer} meter={0.3} value="30%+" unit="O2" tone="amber" label="expected in Moon-base and rover cabins, at 10.2 psi or less" source={ev("brief-atmospheres").source_ref} />
+          <Tile icon={Thermometer} meter={(brief.value as number) / 100} value={`${brief.value}%+`} unit="O2" tone="amber" label="oxygen expected in Moon-base and rover cabins" source={`${brief.source_ref}: “${brief.quote}”`} />
           <Tile icon={EyeOff} meter={cool.indicated / s.heptane_extinctions} value={`${cool.indicated} of ${s.heptane_extinctions}`} tone="ext" label="“no visible flame” was not “fire out”: a cool flame kept burning" source={`${flex.meta.report}, Appendix B captions`} />
-          <Tile icon={Flame} meter={(env.o2?.[1] ?? 0) / 100} value={`${env.o2?.[1].toFixed(1)}%`} tone="data" label="highest oxygen level of any solid-fuel test point; nothing above 34%" source={`${solid.n_decided} solid-fuel test points with a stated outcome`} />
+          <Tile icon={Flame} meter={(env.o2?.[1] ?? 0) / 100} value={`${env.o2?.[1].toFixed(1)}%`} tone="data" label={`highest oxygen level of any solid-fuel test point; nothing above ${SOLID_O2_LIMIT}%`} source={`${solid.n_decided} solid-fuel test points with a stated outcome`} />
           <Tile icon={Moon} value={partialG} tone="dim" tag={<NoDataTag />} label="combustion tests in lunar or Martian gravity in the repository" source={ev("brief-no-partial-g").source_ref} />
         </TileRow>
       </Section>
