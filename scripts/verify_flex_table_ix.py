@@ -9,7 +9,7 @@ Usage:
     python scripts/verify_flex_table_ix.py path/to/20150023456.pdf
 
 Source PDF: https://ntrs.nasa.gov/api/citations/20150023456/downloads/20150023456.pdf
-Requires: pymupdf (not needed by the dashboard itself).
+Requires: pymupdf (not needed by anything else here).
 """
 from __future__ import annotations
 

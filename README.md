@@ -6,22 +6,22 @@ spacecraft, stations, surface habitats and pressurised rovers.**
 Space Apps Challenge 2026 · *Flame in Freefall: SI-Powered Fire Safety Insights from Microgravity
 Combustion Data* · team Flamefall Analytics.
 
-The dashboard summarises, ranks and interprets combustion investigations from NASA's Physical
-Sciences Informatics (PSI) repository. Three rules hold on every page:
+The project summarises, ranks and interprets combustion investigations from NASA's Physical
+Sciences Informatics (PSI) repository. Three rules hold throughout:
 
 1. **Every number carries its source**: report, table, page and test number.
-2. **"No data" is an answer.** Where nobody has run the test (partial gravity, for example) the
-   dashboard says so and shows the nearest real tests. It never fills a gap by guessing.
+2. **"No data" is an answer.** Where nobody has run the test (partial gravity, for example) that is
+   stated, with the nearest real tests. A gap is never filled by guessing.
 3. **No verdicts.** Outputs are measurements and estimates with stated uncertainty. Nothing here
    rates a material, atmosphere or design as acceptable for flight.
 
-## Run it
+## Rebuild and check the data
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 python -m pip install -r requirements.txt
-python -m streamlit run app.py
+python scripts/build_flex_droplets.py
 ```
 
 Tests, in the same activated environment:
@@ -35,8 +35,7 @@ python -m pytest
 
 | Path | What it is |
 |---|---|
-| `app.py`, `views/` | The Streamlit app, one file per page |
-| `flamefall/` | Data loading, schema rules, charts, shared UI |
+| `flamefall/` | Data loading, schema rules and aggregates |
 | `data/flex-table-ix.csv` | 276 FLEX droplet-burn tests from NASA/TP-2015-216046, Table IX |
 | `data/flex_caption_annotations.csv` | Per-test cool-flame, support and extinction wording from the same report's figure captions |
 | `data/flex_droplets.csv` | The same tests in the normalised 24-column research schema |

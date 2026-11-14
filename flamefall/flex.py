@@ -53,7 +53,7 @@ def diluent_label(row: pd.Series) -> str:
 
 
 def atmosphere_family(row: pd.Series) -> str:
-    """The four filter families used in the Explorer."""
+    """The four filter families offered for exploring the table."""
     if row["co2"] > 0:
         return "CO2-diluted"
     if row["he"] > 0:

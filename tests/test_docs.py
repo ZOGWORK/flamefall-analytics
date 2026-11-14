@@ -22,7 +22,7 @@ def test_readme_commands_do_not_hardcode_a_platform_venv_path():
     # the interpreter is always plain `python` from an activated environment
     assert not any(c.startswith((".venv/Scripts/python", ".venv/bin/python", ".venv\\Scripts\\python"))
                    for c in commands)
-    assert "python -m streamlit run app.py" in commands
+    assert "python scripts/build_flex_droplets.py" in commands
     assert "python -m pytest" in commands
 
 
