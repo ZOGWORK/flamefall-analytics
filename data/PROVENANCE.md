@@ -76,7 +76,11 @@ radiative or diffusive. The captions do. For each caption the script keeps:
 - `support`: free-floating (210) or fiber-supported (64), from the caption's first sentence.
 - `cool_flame`: `indicated` (39), `not_indicated` (8), `unclear` (7), or empty when the caption says
   nothing (220). The exact sentence is kept in `cool_flame_quote`.
-- `extinction_wording`: `radiative` (46), `diffusive` (38), `both_mentioned` (5), or empty (185).
+- `extinction_wording`: `radiative` (46), `diffusive` (39), `both_mentioned` (4), or empty (185).
+  `both_mentioned` means the caption says it cannot tell which of the two it was (FLEX-247, 251,
+  255, 264). A caption that states one mode and names the other as a contribution, such as
+  FLEX-225 ("extinguished diffusively with a significant contribution from radiative loss"),
+  takes the stated mode.
 
 Reading rules, applied by phrase and then read row by row:
 
