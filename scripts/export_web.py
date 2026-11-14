@@ -233,7 +233,7 @@ def golden() -> dict:
         "which droplets burned in CO2 above 30%?", "cool flames after extinction", "oxygen below 15 percent for solids",
         "zxqv nonsense words", "", "helium dilution", "Kapton wire smoke particle size", "tests with o2 above 30%",
         "Which materials did the smoke detector miss?", "Which experiments ran above 80% oxygen?",
-        "fabric at least 25% oxygen",
+        "fabric at least 25% oxygen", "solid materials above 30% oxygen",
     ]
     g["answer"] = []
     for q in questions:
