@@ -174,10 +174,10 @@ ICES-2025-156 Table 1 (the Saffire-VI Nomex sample, 1 row) and NTRS 20240007628 
 
 ## `evidence.json` — 66 sourced statements
 
-One entry per quantitative statement shown outside the FLEX explorer: the statement, its value and
+One entry per quantitative statement outside the FLEX table: the statement, its value and
 unit, conditions, `o2_is_ambient`, the source reference and URL, a verification level, the read
 level (full text, accepted manuscript, slides, abstract only, or "read by research agent"), and a
-short quote. `unverified` entries are shown greyed with a "not verified" badge and never feed a
+short quote. `unverified` entries are marked as such wherever they appear and never feed a
 model.
 
 ## `investigations.csv` and `investigations_curated.json` — the catalogue (33 rows)
