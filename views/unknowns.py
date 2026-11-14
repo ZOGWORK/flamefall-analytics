@@ -17,7 +17,7 @@ decided = solid[solid["outcome"] != "ambiguous"]
 
 def cite(eid: str) -> None:
     e = ev.loc[eid]
-    ui.source(f"{ui.verification_badge(e['verification'])}{ui.esc(e['source_ref'])} · read: {ui.esc(e['read_level'])}", e["source_url"])
+    ui.source(f"{e['source_ref']} · read: {e['read_level']}", e["source_url"], verification=e["verification"])
 
 
 def statement(eid: str) -> None:
@@ -58,9 +58,9 @@ a, b = st.columns([3, 2], gap="large")
 with a:
     st.markdown("**The nearest real tests: one suborbital flight, preliminary slides**")
     ui.plotly(fig, key="luci")
-    ui.source(f"{ui.verification_badge('verified_live')}Ferkul et al., ASGSR 2025 presentation, slides 19, 21, 33, 36 "
-              "(NTRS 20250010653). A conference presentation, not peer reviewed, not a repository dataset",
-              "https://ntrs.nasa.gov/citations/20250010653")
+    ui.source("Ferkul et al., ASGSR 2025 presentation, slides 19, 21, 33, 36 (NTRS 20250010653). "
+              "A conference presentation, not peer reviewed, not a repository dataset",
+              "https://ntrs.nasa.gov/citations/20250010653", verification="verified_live")
 with b:
     ui.callout("Read these three bars with care",
                "Lunar gravity was created by spinning the capsule at 11 RPM, so Coriolis force bends the flames. It is one "
@@ -200,7 +200,8 @@ ui.callout("Near its limit a flame shrinks, turns blue and can sit on the fuel f
 x, y = st.columns(2, gap="large")
 with x:
     st.markdown("> the flame shrinks to a hemispherical blue flame and oscillates with increasing amplitude just before going out")
-    ui.source(f"{ui.verification_badge('verified_live')}NASA/TM-20210011385 §6.1.1 (report p. 64)", "https://ntrs.nasa.gov/citations/20210011385")
+    ui.source("NASA/TM-20210011385 §6.1.1 (report p. 64)", "https://ntrs.nasa.gov/citations/20210011385",
+              verification="verified_live")
 with y:
     statement("bre-21pct-out")
     statement("bre-25pct")
