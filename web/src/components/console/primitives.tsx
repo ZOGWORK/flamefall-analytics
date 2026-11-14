@@ -173,7 +173,7 @@ export function Tag({ children, tone = "dim", className }: { children: React.Rea
 }
 
 const VERIFICATION: Record<string, [string, Tone]> = {
-  verified_live: ["verified against primary source", "done"],
+  verified_live: ["verified against primary source", "data"],
   index: ["abstract or summary only", "amber"],
   unverified: ["not verified", "dim"],
 };
