@@ -186,3 +186,9 @@ are computed from PSI experimental tables and say which table and column in `ran
 result points at an `evidence.json` entry. A cell that PSI does not state, and that no cited source
 states, is empty. 26 rows are the PSI search hits; 7 are investigations the search does not return
 (Saffire IV to VI, SoFIE-GEL, FLARE, LUCI, FM2) and are marked as such.
+
+## `models/*.json` and `cv_splits.json`
+
+Written by `scripts/train_models.py` (seed 42): coefficients, preprocessing statistics, every
+validation metric, out-of-fold predictions, 1,000 bootstrap coefficient sets, and the exact fold
+membership of every row. The cards are strict JSON: a missing value is `null`, never `NaN`.
