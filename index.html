@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Flamefall Analytics</title>
+<meta name="description" content="What microgravity combustion experiments actually measured, for crewed spacecraft fire protection. Every number carries its source.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/browser@1.12.0/build/stlite.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #0B0F14; color: #E6EDF3; font-family: system-ui, sans-serif; }
+  #boot { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+          gap: 10px; text-align: center; padding: 24px; background: #0B0F14; z-index: 0; }
+  #boot b { font: 700 0.8rem ui-monospace, Menlo, Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; color: #F59E0B; }
+  #boot p { margin: 0; color: #9AA7B6; max-width: 46ch; line-height: 1.5; }
+  #boot a { color: #22D3EE; }
+  #root { position: relative; z-index: 1; }
+</style>
+</head>
+<body>
+<div id="boot">
+  <b>Flamefall Analytics</b>
+  <p>Loading the dashboard. The first visit downloads the Python runtime and takes about half a minute; after that it opens quickly.</p>
+  <p><a href="deck/">Open the 7-slide summary</a> · <a href="https://github.com/ZOGWORK/flamefall-analytics">Code and data</a></p>
+  <noscript><p>This dashboard needs JavaScript. The code and data are in the repository linked above.</p></noscript>
+</div>
+<div id="root"></div>
+<script type="module">
+import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@1.12.0/build/stlite.js";
+const paths = [
+ "app.py",
+ "flamefall/__init__.py",
+ "flamefall/catalogue.py",
+ "flamefall/charts.py",
+ "flamefall/flex.py",
+ "flamefall/model.py",
+ "flamefall/psi.py",
+ "flamefall/ranking.py",
+ "flamefall/schema.py",
+ "flamefall/theme.py",
+ "flamefall/ui.py",
+ "views/catalogue.py",
+ "views/flex_explorer.py",
+ "views/model_lab.py",
+ "views/overview.py",
+ "views/scenario_lab.py",
+ "views/unknowns.py",
+ "data/flex-table-ix.csv",
+ "data/flex_caption_annotations.csv",
+ "data/flex_droplets.csv",
+ "data/investigations.csv",
+ "data/solid_test_points.csv",
+ "data/cv_splits.json",
+ "data/evidence.json",
+ "data/investigations_curated.json",
+ "data/models/droplet_cool_flame.json",
+ "data/models/droplet_extinction.json",
+ "data/models/solid_sustained.json",
+ "data/psi/SNAPSHOT.json",
+ "data/psi/search_combustion.json",
+ "data/psi/records/PSI-10.json",
+ "data/psi/records/PSI-100.json",
+ "data/psi/records/PSI-101.json",
+ "data/psi/records/PSI-102.json",
+ "data/psi/records/PSI-106.json",
+ "data/psi/records/PSI-107.json",
+ "data/psi/records/PSI-108.json",
+ "data/psi/records/PSI-115.json",
+ "data/psi/records/PSI-117.json",
+ "data/psi/records/PSI-142.json",
+ "data/psi/records/PSI-159.json",
+ "data/psi/records/PSI-181.json",
+ "data/psi/records/PSI-20.json",
+ "data/psi/records/PSI-21.json",
+ "data/psi/records/PSI-22.json",
+ "data/psi/records/PSI-23.json",
+ "data/psi/records/PSI-25.json",
+ "data/psi/records/PSI-26.json",
+ "data/psi/records/PSI-39.json",
+ "data/psi/records/PSI-47.json",
+ "data/psi/records/PSI-60.json",
+ "data/psi/records/PSI-62.json",
+ "data/psi/records/PSI-68.json",
+ "data/psi/records/PSI-69.json",
+ "data/psi/records/PSI-98.json",
+ "data/psi/records/PSI-99.json",
+ "data/psi/files/PSI-10.json",
+ "data/psi/files/PSI-100.json",
+ "data/psi/files/PSI-101.json",
+ "data/psi/files/PSI-102.json",
+ "data/psi/files/PSI-106.json",
+ "data/psi/files/PSI-107.json",
+ "data/psi/files/PSI-108.json",
+ "data/psi/files/PSI-115.json",
+ "data/psi/files/PSI-117.json",
+ "data/psi/files/PSI-142.json",
+ "data/psi/files/PSI-159.json",
+ "data/psi/files/PSI-181.json",
+ "data/psi/files/PSI-20.json",
+ "data/psi/files/PSI-21.json",
+ "data/psi/files/PSI-22.json",
+ "data/psi/files/PSI-23.json",
+ "data/psi/files/PSI-25.json",
+ "data/psi/files/PSI-26.json",
+ "data/psi/files/PSI-39.json",
+ "data/psi/files/PSI-47.json",
+ "data/psi/files/PSI-60.json",
+ "data/psi/files/PSI-62.json",
+ "data/psi/files/PSI-68.json",
+ "data/psi/files/PSI-69.json",
+ "data/psi/files/PSI-98.json",
+ "data/psi/files/PSI-99.json",
+ "data/psi/experimental_tables/PSI-100_Experimental table_SAFFIRE-3.csv",
+ "data/psi/experimental_tables/PSI-101_Experimental table_SAME-R.csv",
+ "data/psi/experimental_tables/PSI-102_Experimental table_SAME.csv",
+ "data/psi/experimental_tables/PSI-106_Experimental table_Slice.csv",
+ "data/psi/experimental_tables/PSI-107_Experimental table_Spice.csv",
+ "data/psi/experimental_tables/PSI-108_Experimental table_STDCE-1(1).csv",
+ "data/psi/experimental_tables/PSI-108_Experimental table_STDCE-1.csv",
+ "data/psi/experimental_tables/PSI-10_Experimental table_Flame Design_Inverse Flame.csv",
+ "data/psi/experimental_tables/PSI-10_Experimental table_Flame Design_Normal Flame.csv",
+ "data/psi/experimental_tables/PSI-142_Experimental table_Data Summary Table.csv",
+ "data/psi/experimental_tables/PSI-159_Experimental table_CFI-G_Inverse Flames.csv",
+ "data/psi/experimental_tables/PSI-159_Experimental table_CFI-G_Normal Flames.csv",
+ "data/psi/experimental_tables/PSI-181_Experimental table_Experimental Table_PSI_181.csv",
+ "data/psi/experimental_tables/PSI-20_Experimental table_ACME BRE.csv",
+ "data/psi/experimental_tables/PSI-21_Experimental table_CLD Flame.csv",
+ "data/psi/experimental_tables/PSI-22_Experimental table_ACME E-FIELD Flames.csv",
+ "data/psi/experimental_tables/PSI-23_Experimental table_ACME s-Flame.csv",
+ "data/psi/experimental_tables/PSI-25_Experimental table_BASS-II.csv",
+ "data/psi/experimental_tables/PSI-26_Experimental table_BASS.csv",
+ "data/psi/experimental_tables/PSI-39_Experimental table_CFI.csv",
+ "data/psi/experimental_tables/PSI-47_Experimental table_DAFT.csv",
+ "data/psi/experimental_tables/PSI-68_Experimental table_Flex2.csv",
+ "data/psi/experimental_tables/PSI-69_Experimental table_FLEX.csv",
+ "data/psi/experimental_tables/PSI-98_Experimental table_SAFFIRE-1.csv",
+ "data/psi/experimental_tables/PSI-99_Experimental table_SAFFIRE-2.csv",
+ "data/bass2/appendix_a_tests.csv",
+ "data/bass2/bass2_test_points.csv",
+ "data/bass2/table_2_1.csv",
+ "data/bass2/table_4_1.csv",
+ "data/bass2/table_4_2.csv",
+ "data/bass2/table_5_1.csv",
+ "data/bass2/table_7_1.csv",
+ "data/bass2/table_d_2.csv"
+];
+const files = Object.fromEntries(paths.map((p) => [p, { url: new URL(p, window.location.href).href }]));
+const root = document.getElementById("root");
+mount({
+  entrypoint: "app.py",
+  requirements: ["pandas", "numpy", "plotly", "scikit-learn"],
+  files,
+  streamlitConfig: {"theme.base": "dark", "theme.primaryColor": "#F59E0B", "theme.backgroundColor": "#0B0F14", "theme.secondaryBackgroundColor": "#111821", "theme.textColor": "#E6EDF3", "client.toolbarMode": "minimal", "client.showErrorDetails": false},
+}, root);
+// Drop the loading note once the app has drawn its first heading.
+new MutationObserver((_, observer) => {
+  if (root.querySelector('[data-testid="stMain"] h1')) {
+    document.getElementById("boot")?.remove();
+    observer.disconnect();
+  }
+}).observe(root, { childList: true, subtree: true });
+</script>
+</body>
+</html>
