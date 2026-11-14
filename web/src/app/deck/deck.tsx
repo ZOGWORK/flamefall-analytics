@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, ChevronLeft, ChevronRight, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { OutcomeStrip } from "@/components/charts/outcome-strip";
 import { CountBars } from "@/components/charts/unknown-charts";
@@ -355,12 +356,31 @@ const SLIDES: { name: string; render: () => React.ReactNode }[] = [
 
 // ------------------------------------------------------------------------------------------ deck
 
+interface Travel {
+  d: number;
+  instant: boolean;
+}
+
 export function Deck() {
-  const [[index, direction], setPage] = useState<[number, number]>([0, 1]);
+  // [slide, direction of travel, show at once]. A slide opened from a link appears at once;
+  // only a change made by the reader is animated, so nothing depends on an animation finishing.
+  const [[index, direction, instant], setPage] = useState<[number, number, boolean]>([0, 1, false]);
   const touch = useRef<number | null>(null);
+  const [printing, setPrinting] = useState(false);
+
+  useEffect(() => {
+    const before = () => flushSync(() => setPrinting(true)); // the copies must be in the page before it is laid out for print
+    const after = () => setPrinting(false);
+    window.addEventListener("beforeprint", before);
+    window.addEventListener("afterprint", after);
+    return () => {
+      window.removeEventListener("beforeprint", before);
+      window.removeEventListener("afterprint", after);
+    };
+  }, []);
   const go = useCallback((to: number) => setPage(([cur]) => {
     const next = Math.min(SLIDES.length - 1, Math.max(0, to));
-    return next === cur ? [cur, 1] : [next, next > cur ? 1 : -1];
+    return [next, next >= cur ? 1 : -1, false];
   }), []);
 
   // the slide number lives in the address bar's hash: no navigation, no reload
@@ -368,10 +388,11 @@ export function Deck() {
     const n = Number(window.location.hash.replace("#", ""));
     // reading the address bar is only possible after mounting
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (n >= 1 && n <= SLIDES.length) setPage([n - 1, 1]);
+    if (n >= 1 && n <= SLIDES.length) setPage([n - 1, 1, true]);
   }, []);
   useEffect(() => {
     const hash = `#${index + 1}`;
+    if (index === 0 && !window.location.hash) return; // the first slide needs no hash: leave the address as it was opened
     if (window.location.hash !== hash) window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${hash}`);
   }, [index]);
 
@@ -382,16 +403,17 @@ export function Deck() {
       if (target && (target.closest("a, button, input, select, textarea") || target.isContentEditable)) {
         if (e.key === " " || e.key === "Enter") return; // let a focused control act
       }
-      if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); setPage(([cur]) => [Math.min(SLIDES.length - 1, cur + 1), 1]); }
-      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); setPage(([cur]) => [Math.max(0, cur - 1), -1]); }
-      else if (e.key === "Home") { e.preventDefault(); setPage([0, -1]); }
-      else if (e.key === "End") { e.preventDefault(); setPage([SLIDES.length - 1, 1]); }
+      if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); setPage(([cur]) => [Math.min(SLIDES.length - 1, cur + 1), 1, false]); }
+      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); setPage(([cur]) => [Math.max(0, cur - 1), -1, false]); }
+      else if (e.key === "Home") { e.preventDefault(); setPage([0, -1, false]); }
+      else if (e.key === "End") { e.preventDefault(); setPage([SLIDES.length - 1, 1, false]); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   const Current = SLIDES[index].render;
+  const travel: Travel = { d: direction, instant };
   const counter = `${String(index + 1).padStart(2, "0")} / ${String(SLIDES.length).padStart(2, "0")}`;
 
   return (
@@ -417,12 +439,16 @@ export function Deck() {
         </header>
 
         <main className="relative flex-1 overflow-x-hidden">
-          <AnimatePresence mode="wait" custom={direction} initial={false}>
+          <AnimatePresence mode="wait" custom={travel} initial={false}>
             <motion.section
               key={index}
-              custom={direction}
+              custom={travel}
               aria-label={`Slide ${index + 1} of ${SLIDES.length}: ${SLIDES[index].name}`}
-              variants={{ enter: (d: number) => ({ opacity: 0, x: 28 * d }), centre: { opacity: 1, x: 0 }, exit: (d: number) => ({ opacity: 0, x: -28 * d }) }}
+              variants={{
+                enter: (t: Travel) => (t.instant ? { opacity: 1, x: 0 } : { opacity: 0, x: 28 * t.d }),
+                centre: { opacity: 1, x: 0 },
+                exit: (t: Travel) => (t.instant ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, x: -28 * t.d }),
+              }}
               initial="enter"
               animate="centre"
               exit="exit"
@@ -459,7 +485,8 @@ export function Deck() {
         </footer>
       </div>
 
-      {/* Printing gives every slide, one per page. */}
+      {/* Printing gives every slide, one per page. The copies exist only while printing. */}
+      {printing && (
       <div className="hidden print:block">
         {SLIDES.map((s, i) => (
           <section key={s.name} className="flex min-h-screen break-after-page flex-col px-8 py-10">
@@ -470,6 +497,7 @@ export function Deck() {
           </section>
         ))}
       </div>
+      )}
     </>
   );
 }
