@@ -96,7 +96,23 @@ def read_table(filename: str) -> pd.DataFrame:
     else:
         raise ValueError(f"cannot decode {filename}")
     df.columns = [c.strip() for c in df.columns]
-    return df
+    # Some PSI files carry hundreds of comma-only padding rows after the last test (861 of the 1,015
+    # lines in the CFI-G inverse-flame table). They are not tests and are dropped on read.
+    blank = (df.apply(lambda col: col.str.strip()) == "").all(axis=1)
+    return df[~blank].reset_index(drop=True)
+
+
+def distinct_rows(table: pd.DataFrame) -> pd.DataFrame:
+    """The table without exact repeats of an earlier row.
+
+    A few PSI files repeat a block of rows (8 in the CFI table, 34 in SPICE, 8 in E-FIELD Flames).
+    Counting or summing over the raw rows would count those tests twice.
+    """
+    return table.drop_duplicates().reset_index(drop=True)
+
+
+def duplicate_count(table: pd.DataFrame) -> int:
+    return int(table.duplicated().sum())
 
 
 def numeric(series: pd.Series) -> pd.Series:
