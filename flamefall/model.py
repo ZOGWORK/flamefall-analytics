@@ -43,6 +43,7 @@ class Spec:
     title: str
     target_label: str               # what y = 1 means
     burning_is_y1: bool             # True: y = 1 is "still burning"; False: y = 0 is "still burning"
+    burning_label: str              # what the "still burning" class is called for this model
     continuous: list[str]           # standardised; missing values median-imputed in-fold
     log_features: list[str]         # subset of `continuous` that is log-transformed first
     log1p_features: list[str]
@@ -98,7 +99,7 @@ SPECS = {
     "droplet_extinction": Spec(
         name="droplet_extinction", title="Droplet model: did the visible flame go out?",
         target_label="test ended in Extinction (visible flame went out before the fuel was gone)",
-        burning_is_y1=False,
+        burning_is_y1=False, burning_label="the visible flame did not go out",
         continuous=["o2_pct", "pressure_kpa", "o2_partial_kpa", "co2_pct", "he_pct", "d0_mm"],
         log_features=["pressure_kpa", "d0_mm"], log1p_features=[], binary=["fuel_heptane"],
         dropped=DROPLET_DROPPED, added=DROPLET_ADDED,
@@ -109,7 +110,7 @@ SPECS = {
     "droplet_cool_flame": Spec(
         name="droplet_cool_flame", title="Droplet model: cool-flame evidence after visible extinction",
         target_label="report caption states evidence of cool-flame burning after the visible flame went out",
-        burning_is_y1=True,
+        burning_is_y1=True, burning_label="cool-flame evidence after the visible flame went out",
         continuous=["o2_pct", "pressure_kpa", "o2_partial_kpa", "co2_pct", "he_pct", "d0_mm"],
         log_features=["pressure_kpa", "d0_mm"], log1p_features=[], binary=[],
         dropped={**DROPLET_DROPPED, "material_class": "every labelled row is n-heptane: the feature is constant"},
@@ -122,7 +123,7 @@ SPECS = {
     "solid_sustained": Spec(
         name="solid_sustained", title="Solid-fuel model: is the flame sustained?",
         target_label="source states the flame burned or spread at this condition",
-        burning_is_y1=True,
+        burning_is_y1=True, burning_label="the flame was sustained",
         continuous=["o2_pct", "pressure_kpa", "o2_partial_kpa", "flow_cm_s", "thickness_mm"],
         log_features=["pressure_kpa", "thickness_mm"], log1p_features=["flow_cm_s"], binary=["is_quiescent"],
         categorical={"flow_direction": ["opposed", "concurrent", "stagnation"],
@@ -502,6 +503,7 @@ def train(name: str, n_boot: int = N_BOOT) -> dict:
 
     result = {
         "name": name, "title": spec.title, "target_label": spec.target_label, "burning_is_y1": spec.burning_is_y1,
+        "burning_label": spec.burning_label,
         "seed": SEED, "n_rows": int(len(df)), "n_positive": int(y.sum()), "positive_share": float(y.mean()),
         "class_weight_balanced": balanced, "C_grid": C_GRID, "C_final": C_final,
         "outer_folds": cv["k"], "C_per_outer_fold": cv["C_per_fold"],
