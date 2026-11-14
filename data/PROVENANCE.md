@@ -49,7 +49,7 @@ extinguish: 24 Disruption and 15 Completion rows print a value there (159 Extinc
 `flamefall/aggregates.py` names that value an extinction diameter only when the outcome is
 Extinction; for the other two outcomes it is the diameter printed at the end of the test.
 
-### Recomputed facts (asserted by `tests/test_flex.py`, never hard-coded in the app)
+### Recomputed facts (asserted by `tests/test_flex.py`, never hard-coded)
 
 - 276 rows, FLEX-001 to FLEX-280; numbers 156, 205, 213 and 228 do not appear in Table IX.
 - Outcomes: Extinction 186, Disruption 62, Completion 28.
@@ -191,5 +191,7 @@ states, is empty. 26 rows are the PSI search hits; 7 are investigations the sear
 ## `models/*.json` and `cv_splits.json`
 
 Written by `scripts/train_models.py` (seed 42): coefficients, preprocessing statistics, every
-validation metric, out-of-fold predictions, 1,000 bootstrap coefficient sets, and the exact fold
-membership of every row. The cards are strict JSON: a missing value is `null`, never `NaN`.
+validation metric, out-of-fold predictions, up to 1,000 bootstrap coefficient sets, and the exact
+fold membership of every row. A bootstrap resample that draws a single outcome class cannot be
+fitted and is skipped, so each card states how many sets it holds (`bootstrap.n`: 1,000 for
+droplet extinction, 992 for droplet cool-flame evidence, 1,000 for solids). The cards are strict JSON: a missing value is `null`, never `NaN`.
