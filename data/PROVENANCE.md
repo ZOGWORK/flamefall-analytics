@@ -132,7 +132,8 @@ See `DECISIONS.md` for where the schema had to be extended to avoid inventing a 
   (`added`, `removed`) and minus e-mail, phone, fax and address fields.
 - `psi/files/<id>.json`: file counts and sizes per category for each record.
 - `psi/experimental_tables/*.csv`: all 25 "Experimental table" files attached to those records,
-  byte for byte. 22 of the 26 records attach at least one.
+  with their content unchanged (git may normalise line endings). 22 of the 26 records attach at
+  least one.
 
 Text from the API contains U+FFFD characters where PSI's source had dashes or quotes. The files
 keep PSI's bytes; `flamefall/psi.py::fix_text` repairs them for display only.
