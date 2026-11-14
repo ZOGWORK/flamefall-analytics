@@ -110,7 +110,7 @@ export function CoefficientChart({ card, label }: { card: ModelCard; label: (fea
           <ReferenceLine x={0} stroke="var(--input)" />
           <Bar dataKey="log_odds">
             {rows.map((r) => (
-              <Cell key={r.feature} fill={r.log_odds > 0 ? "var(--ext)" : "var(--data)"} />
+              <Cell key={r.feature} fill={r.log_odds > 0 ? "var(--amber)" : "var(--data)"} />
             ))}
             <ErrorBar dataKey="err" direction="x" width={4} strokeWidth={1} stroke="var(--foreground)" />
           </Bar>
@@ -118,7 +118,7 @@ export function CoefficientChart({ card, label }: { card: ModelCard; label: (fea
       </Chart>
       <Legend
         items={[
-          { label: "raises the odds of the positive class", color: "var(--ext)" },
+          { label: "raises the odds of the positive class", color: "var(--amber)" },
           { label: "lowers them", color: "var(--data)" },
           { label: "95% bootstrap interval", color: "var(--foreground)", shape: "line" },
         ]}
