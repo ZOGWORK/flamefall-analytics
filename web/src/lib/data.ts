@@ -23,5 +23,11 @@ export function ev(id: string): Evidence {
   return e;
 }
 
+/**
+ * The top of the oxygen range any solid-fuel investigation states (SoFIE-GEL, up to 34% O2).
+ * Above it there is no solid-material test point at all, so the app answers NO DATA.
+ */
+export const SOLID_O2_LIMIT = ev("sofie-gel-envelope").o2_max_pct as number;
+
 export const TABLE_SOURCE = flex.meta.table_source;
 export const SRC_RECOMPUTED = `${flex.meta.report}, Table IX · recomputed from the data`;
