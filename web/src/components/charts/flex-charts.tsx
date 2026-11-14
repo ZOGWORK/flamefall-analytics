@@ -234,7 +234,7 @@ export function D2Chart({ line, row }: { line: D2Line; row: FlexRow }) {
   const color = FUEL_COLOR[row.fuel];
   const data = [
     { t: 0, d2: line.d2_start },
-    { t: line.t_end, d2: line.d2_end },
+    { t: line.t_line_end, d2: line.d2_end }, // stops at zero when the printed K and burn time would go below it
   ];
   const top = Math.max(line.d2_start, line.marker?.d2 ?? 0);
   return (
@@ -242,7 +242,7 @@ export function D2Chart({ line, row }: { line: D2Line; row: FlexRow }) {
       <Chart height={320} label={`Droplet diameter squared against time for ${row.test_id}, rebuilt from Table IX`}>
         <LineChart data={data} margin={{ top: 12, right: 16, bottom: 18, left: 4 }}>
           <CartesianGrid {...GRID} />
-          <XAxis type="number" dataKey="t" domain={[0, "dataMax"]} {...AXIS} label={axisLabel("Time from ignition, s", "x")} />
+          <XAxis type="number" dataKey="t" domain={[0, line.t_end]} {...AXIS} label={axisLabel("Time from ignition, s", "x")} />
           <YAxis type="number" domain={[0, Math.ceil(top * 1.08)]} {...AXIS} label={axisLabel("Droplet diameter², mm²", "y")} />
           <Tooltip
             cursor={{ stroke: "var(--input)" }}
@@ -270,6 +270,11 @@ export function D2Chart({ line, row }: { line: D2Line; row: FlexRow }) {
           ...(line.marker ? [{ label: line.marker.name, color: OUTCOME_COLOR[row.outcome], shape: "x" as const }] : []),
         ]}
       />
+      {line.t_zero !== null && (
+        <p className="mt-2 text-note text-amber">
+          {`The printed burning rate and burn time (${line.t_end} s) would take this line below zero at ${line.t_zero.toFixed(1)} s. A diameter squared cannot be negative, so the line stops there: the three printed numbers do not fit one straight line over the whole burn.`}
+        </p>
+      )}
     </div>
   );
 }
