@@ -52,7 +52,7 @@ if query:
         parts = ([f"ambient O2 of {f['o2_at_least']:g}% or more"] if "o2_at_least" in f else []) \
             + ([f"ambient O2 of {f['o2_at_most']:g}% or less"] if "o2_at_most" in f else []) \
             + ([f"{cat.EVIDENCE_CLASS_LABEL[f['evidence_class']].lower()} only"] if "evidence_class" in f else [])
-        if "o2_at_least" in f or "o2_at_most" in f:
+        if parts:
             st.caption("Filter read from your question: " + "; ".join(parts) + ". Burner-feed oxygen values are never matched.")
     if not res["statements"] and res["hits"].empty:
         ui.no_data("Nothing in the catalogue matches that question",
