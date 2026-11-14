@@ -67,7 +67,8 @@ fuel for droplet extinction.
 whether a planned atmosphere was ever tested. A student can see how a model is validated honestly,
 including one that fails.
 
-**Tools.** Next.js (React, App Router), shadcn/ui, Recharts, Framer Motion, TypeScript and Vitest for
+**Tools.** Next.js (React, App Router), shadcn/ui, Recharts, Motion, react-countup, the Sera UI
+liquid-glass surface, TypeScript and Vitest for
 the web app, hosted on Render as a static site; Python, pandas, scikit-learn and pytest for the
 data and models, run at build time only.
 
