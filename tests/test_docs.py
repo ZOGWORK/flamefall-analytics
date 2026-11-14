@@ -23,6 +23,8 @@ def test_readme_commands_do_not_hardcode_a_platform_venv_path():
     assert not any(c.startswith((".venv/Scripts/python", ".venv/bin/python", ".venv\\Scripts\\python"))
                    for c in commands)
     assert "python scripts/build_flex_droplets.py" in commands
+    assert "python scripts/export_web.py" in commands
+    assert {"npm ci", "npm run dev", "npm run test", "npm run build"} <= set(commands)
     assert "python -m pytest" in commands
 
 
