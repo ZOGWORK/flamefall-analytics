@@ -263,7 +263,7 @@ def parse_filters(query: str) -> dict:
     """Numeric oxygen limits and a fuel class, if the question states them in words."""
     q = query.lower()
     out = {}
-    if "oxygen" in q or "o2" in q:
+    if "oxygen" in q or re.search(r"\bo2\b", q):          # "co2" must not be read as "o2"
         if m := ABOVE.search(q):
             out["o2_at_least"] = float(m.group(2))
         if m := BELOW.search(q):
