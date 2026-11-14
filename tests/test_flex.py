@@ -153,7 +153,7 @@ def test_caption_atmosphere_is_recorded_but_never_used(f):
     quotes = set(f.loc[f["support"] != "", "support_quote"])
     assert quotes == {"Free-floating methanol droplet", "Free-floating heptane droplet",
                       "Fiber-supported methanol droplet", "Fiber-supported heptane droplet",
-                      "Fiber-supported methanol with no translation"}        # FLEX-127's own wording
+                      "Fiber-supported methanol"}       # FLEX-127 reads "methanol with no translation"
     assert not any(ch.isdigit() for q in quotes for ch in q)
 
 
