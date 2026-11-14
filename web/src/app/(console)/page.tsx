@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { OutcomeStrip } from "@/components/charts/outcome-strip";
+import { Decode } from "@/components/console/decode";
+import { TestMatrix } from "@/components/console/fx";
 import { Kicker, NoDataTag, Prose, Section, Source, Tile, TileRow } from "@/components/console/primitives";
 import { PAGES } from "@/components/shell/nav";
 import { catalogue, ev, flex, solid, SRC_RECOMPUTED } from "@/lib/data";
@@ -39,21 +41,29 @@ export default function Overview() {
         <p className="mt-1.5 max-w-3xl text-body text-muted-foreground">Every number carries its source. Where nobody ran the test, it says “no data”.</p>
       </header>
 
-      <section className="grid grid-cols-1 border border-line bg-surface xl:grid-cols-12">
-        <div className="p-4 sm:p-6 xl:col-span-7 xl:border-r xl:border-line">
+      <section className="beam grid grid-cols-1 border border-line bg-surface xl:grid-cols-12">
+        <div className="scan p-4 sm:p-6 xl:col-span-7 xl:border-r xl:border-line">
           <Kicker className="text-dim">The quantitative core — FLEX droplet experiment</Kicker>
-          <p className="num mt-3 text-[clamp(5rem,15vw,10rem)] leading-[0.85] font-bold tracking-tight text-amber">{s.n}</p>
+          <p className="glow num mt-3 text-[clamp(5rem,15vw,10rem)] leading-[0.85] font-bold tracking-tight text-amber">
+            <Decode text={String(s.n)} />
+          </p>
           <p className="mt-3 text-body text-foreground">droplet burns on the space station, one row each in Table IX.</p>
           <div className="mt-6">
             <p className="kicker mb-2 text-dim">How the {s.n} tests ended</p>
             <OutcomeStrip counts={s.outcomes} height={36} />
+          </div>
+          <div className="mt-5">
+            <p className="kicker mb-2 text-dim">Every test, in test order · one cell each</p>
+            <TestMatrix />
           </div>
           <Source href={flex.meta.record_url}>{`${flex.meta.report}, Table IX · tests ${s.first_test} to ${s.last_test}. Totals recomputed from the data.`}</Source>
         </div>
         <dl className="grid grid-cols-1 sm:grid-cols-2 xl:col-span-5 xl:grid-cols-1">
           {channels.map((c) => (
             <div key={c.label} className="border-t border-line px-4 py-3 sm:px-6 xl:first:border-t-0">
-              <dd className={`num text-heading leading-tight font-medium ${c.tone}`}>{c.value}</dd>
+              <dd className={`num text-heading leading-tight font-medium ${c.tone}`}>
+                <Decode text={c.value} />
+              </dd>
               <dt className="text-body text-foreground">{c.label}</dt>
               <dd className="mt-0.5 text-note text-muted-foreground">
                 <Prose text={c.source} />
@@ -77,7 +87,7 @@ export default function Overview() {
       </Section>
 
       <Section title="Where to look" explainer="Each page answers one question.">
-        <ul className="border border-line">
+        <ul className="overflow-hidden rounded-xl border border-line bg-surface">
           {PAGES.filter((p) => p.href !== "/").map((p) => (
             <li key={p.href} className="border-b border-line last:border-b-0">
               <Link
