@@ -145,7 +145,7 @@ const paths = [
  "data/bass2/table_d_2.csv"
 ];
 // The version is a hash of every mounted file, so a browser never mixes a cached file with a new build.
-const version = "8dc0e65f1f36";
+const version = "9a962cbb29e7";
 const files = Object.fromEntries(paths.map((p) => [p, { url: new URL(p + "?v=" + version, window.location.href).href }]));
 const root = document.getElementById("root");
 mount({
