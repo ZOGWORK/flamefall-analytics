@@ -153,3 +153,11 @@ sources themselves.
   quotes with page and read level. LUCI, the 2026 Saffire table, the SoFIE-GEL table, the BASS-II
   poster and the lunar-gravity ignition paper were then re-read directly before use. Statements
   that rest on an agent's reading alone say "read by research agent" in their read level.
+- **D33. One export, checked both ways.** `scripts/export_web.py` writes everything the web app
+  reads. Where the app must answer at once (a filter, a slider) it repeats a calculation that
+  lives in Python; the export also writes Python's answers for a fixed set of cases
+  (`golden.json`), and the app's tests compare. The committed export is itself tested for being
+  current.
+- **D34. Tied scores keep corpus order.** Search results are sorted with a stable sort, so two
+  statements with the same score always come back in the same order, in Python and in the browser.
+
