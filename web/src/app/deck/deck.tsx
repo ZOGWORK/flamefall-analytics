@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import coolJson from "@/data/model_droplet_cool_flame.json";
 import extinctionJson from "@/data/model_droplet_extinction.json";
 import solidJson from "@/data/model_solid_sustained.json";
-import { catalogue, ev, flex, panels, solid } from "@/lib/data";
+import { partialGravityRecords } from "@/lib/catalogue";
+import { catalogue, ev, flex, panels, solid, SOLID_O2_LIMIT } from "@/lib/data";
 import { pct } from "@/lib/format";
 import { hazard, R, scenario, TERM_KEYS } from "@/lib/ranking";
 import type { ModelCard } from "@/lib/types";
@@ -159,8 +160,8 @@ function SlideFlex() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-x-6 gap-y-5">
-          <Stat value="3,864" label="cells re-read from the PDF with a second parser: all match" source="scripts/verify_flex_table_ix.py" tone="text-done" />
-          <Stat value="274" label="rows in the repository's own table: all match but one documented cell" source="PSI-69 table; tests/test_psi.py" tone="text-done" />
+          <Stat value="3,864" label="cells re-read from the PDF with a second parser: all match" source="scripts/verify_flex_table_ix.py" tone="text-data" />
+          <Stat value="274" label="rows in the repository's own table: all match but one documented cell" source="PSI-69 table; tests/test_psi.py" tone="text-data" />
           <Stat value={S.ranges.extinction_diameter_mm[3]} label="tests print no extinction diameter. None is filled in" source={`${REPORT}, Table IX`} tone="text-foreground" />
           <Stat value={`${pct(S.ranges.o2[0], 0)}–${pct(S.ranges.o2[1], 0)}`} label={`oxygen range tested; CO2 up to ${pct(S.ranges.co2[1], 0)}, helium up to ${pct(S.ranges.he[1], 0)}`} source={`${REPORT}, Table IX`} tone="text-foreground" />
         </div>
@@ -284,10 +285,10 @@ function SlideLimits() {
       <Title>The most useful answer is sometimes “nobody has run this test”.</Title>
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <NoData title="Partial gravity" note="Source: official challenge brief; PSI search.">
-          {`0 combustion tests in lunar or Martian gravity are in the repository. The nearest real evidence is one suborbital flight: fabric spread at ${panels.luci.rows[0].lunar} mm/s in simulated lunar gravity against ${panels.luci.rows[0].earth} mm/s in normal gravity.`}
+          {`${partialGravityRecords(catalogue.investigations).length} combustion tests in lunar or Martian gravity are in the repository. The nearest real evidence is one suborbital flight: fabric spread at ${panels.luci.rows[0].lunar} mm/s in simulated lunar gravity against ${panels.luci.rows[0].earth} mm/s in normal gravity.`}
         </NoData>
-        <NoData title="Solids above 34% oxygen" note={`Source: ${solid.n_decided} solid-fuel test points with a stated outcome; see the console's gaps page.`}>
-          {`No solid-material test point exists above 34% O2 at any pressure. The highest with a stated outcome is ${env.o2?.[1].toFixed(1)}%, the highest with a sustained flame ${env.sustained_o2_max?.toFixed(1)}%.`}
+        <NoData title={`Solids above ${SOLID_O2_LIMIT}% oxygen`} note={`Source: ${solid.n_decided} solid-fuel test points with a stated outcome; see the console's gaps page.`}>
+          {`No solid-material test point exists above ${SOLID_O2_LIMIT}% O2 at any pressure. The highest with a stated outcome is ${env.o2?.[1].toFixed(1)}%, the highest with a sustained flame ${env.sustained_o2_max?.toFixed(1)}%.`}
         </NoData>
         <NoData title="CO2 and helium together" note={`Source: ${REPORT}, Table IX.`}>
           {`${S.co2_and_he} of ${S.n} droplet tests contain both diluents. CO2 was present in ${S.co2_tests} tests and helium in ${S.he_tests}; helium's own effect is unclear.`}
@@ -316,7 +317,7 @@ function SlideClose() {
           <p className="kicker text-dim">Use of SI tools</p>
           <ul className="mt-2 list-disc space-y-1.5 pl-5 text-body text-muted-foreground marker:text-dim">
             <li>Research notes were compiled by an SI research assistant, then checked against primary sources; every correction is logged.</li>
-            <li>Code, data pipeline, console and this deck were written with an SI coding agent directed by the team, and reviewed by an SI code-review bot.</li>
+            <li>Code, data pipeline, console and this deck were written with an SI coding agent directed by the team. An SI code-review bot reviewed the early rounds until its monthly limit ran out; the final code was self-reviewed by the coding agent using independent reviewer agents.</li>
             <li>Inside the console there is no generative model: retrieval, a stated formula, and small validated classifiers.</li>
             <li>No SI-generated images, video or audio. Every chart is drawn from the data by code.</li>
           </ul>
