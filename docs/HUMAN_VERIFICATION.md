@@ -11,7 +11,7 @@ Nothing below has been ticked by a human yet.
 | 1 | FLEX-001: methanol, 757.7 mmHg, D0 1.69 mm, K 0.52 mm²/s, 4.3 s, Disruption | FLEX Explorer, table | NASA/TP-2015-216046, Table IX, PDF p. 26, first row: https://ntrs.nasa.gov/api/citations/20150023456/downloads/20150023456.pdf | |
 | 2 | FLEX-280: heptane, 766.2 mmHg, 0.21/0.64/0/0.15, D0 2.82 mm, 11.7 s, Extinction | FLEX Explorer, table | Same report, Table IX, PDF p. 34, last row | |
 | 3 | 276 rows; Extinction 186, Disruption 62, Completion 28 | Overview cards | Run `python -m pytest tests/test_flex.py` and read `test_outcome_totals` | |
-| 4 | FLEX-196 caption: cool-flame burning "likely" after extinction | FLEX Explorer, single test | Same report, Appendix B, Figure 196 caption | |
+| 4 | FLEX-196 caption: cool-flame burning "likely" after extinction | FLEX Explorer, single test | Same report, Appendix B, Figure 199 (the figure for test FLEX-196; figure and test numbers differ) | |
 | 5 | Minimum of the PMMA rod flammability boundary about 13.5% O2, against 15.4% in normal gravity | Catalogue, BASS-II | NASA/TM-20210011385, report pp. 75-76: https://ntrs.nasa.gov/api/citations/20210011385/downloads/TM-20210011385.pdf | |
 | 6 | SIBAL quenched at 2.2 cm/s, 18.7% O2 (GMT45-T4); blew off at 47 cm/s, 17.2% (GMT190-T21) | Catalogue, BASS-II; Scenario Lab nearest tests | Same memo, Table 7.1, report p. 96 | |
 | 7 | Kapton smoke 80 nm fresh, 155 nm aged (first flight) | What We Don't Know, smoke | SAME Final Report, Table 1: https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=904707 | |
