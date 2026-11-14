@@ -14,11 +14,10 @@
     green   completion
     violet  disruption (never grey: grey is "not verified" and "no data")
 
-  Panels are clear glass over a dark backdrop: blurred, with a bright rim, and no tint. Light is
-  used in two places only: faintly behind the one main number of a page, and on position markers.
-  Data marks and ordinary numbers never get a halo, because a halo blurs what a reader came to read.
+  Panels, stat cards, tables and charts sit on a plain solid surface. Nothing carries a halo:
+  no number, data mark, cell or control, because a halo blurs what a reader came to read.
   Liquid glass (components/ui/liquid-glass.tsx) is used in one place only: the hero card of the
-  Overview. Data panels, stat cards and charts use the plain `.bg-surface` rule below.
+  Overview.
 */
 @theme inline {
   --color-background: var(--background);
@@ -93,7 +92,7 @@
   --done: #22c55e;
   --disrupt: #a78bfa;
   --dim: #6b7887;
-  --surface: rgba(20, 27, 36, 0.5);
+  --surface: #141b24;
   --line: rgba(148, 163, 184, 0.16);
   --glow: 255, 140, 26;
 
@@ -206,7 +205,7 @@ body::after {
   }
 }
 
-/* Two slow embers of light drifting behind the glass. */
+/* Two slow embers of light drifting in the page backdrop, behind every panel. */
 .ambient {
   position: fixed;
   inset: 0;
@@ -245,83 +244,29 @@ body::after {
   }
 }
 
-/* ------------------------------------------------------------------ glass */
+/* ------------------------------------------------------------------ surfaces */
 
-/* Every panel, tile and readout: translucent, blurred, lit along its top edge. */
-.bg-surface {
-  /* clear glass, with the same rim light as the liquid-glass surfaces: a bright thin edge,
-     a soft inner sheen, and what is behind it blurred */
-  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015) 40%, rgba(255, 255, 255, 0.03));
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  backdrop-filter: blur(20px) saturate(160%);
-  box-shadow:
-    0 0 1.5px 0.5px color-mix(in oklch, white, transparent 72%) inset,
-    0 0 10px 3px color-mix(in oklch, white, transparent 92%) inset,
-    0 24px 50px -36px rgba(0, 0, 0, 0.9);
-}
+/* Panels, tiles, readouts and tables use the solid `bg-surface` colour: no blur, no rim light. */
 
-/* The navigation rail and the top bars. */
+/* The navigation rail and the top bars: solid, so text never shows through while scrolling. */
 .glass-rail {
-  background: linear-gradient(180deg, rgba(22, 29, 38, 0.62), rgba(12, 16, 22, 0.58));
-  -webkit-backdrop-filter: blur(26px) saturate(170%);
-  backdrop-filter: blur(26px) saturate(170%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: #0e131a;
 }
 
-/* A beam of light that travels around the border of a page's main readout. */
-@property --beam {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
+/* The main readout of a page: a rounded frame, nothing more. */
 .beam {
   position: relative;
   overflow: hidden;
   border-radius: 14px;
 }
-.beam::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  padding: 1px;
-  border-radius: inherit;
-  background: conic-gradient(from var(--beam), transparent 0 80%, rgba(var(--glow), 0.5) 89%, transparent 97%);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  animation: beam 14s linear infinite;
-  pointer-events: none;
-}
-@keyframes beam {
-  to {
-    --beam: 360deg;
-  }
-}
 
-/* Numbers are plain. */
-.glow {
-  text-shadow: none;
-}
-/* Only the main number of a page carries light, and only faintly. */
-.scan > .glow,
-.scan > div > .glow {
-  text-shadow: 0 0 26px color-mix(in srgb, currentColor 24%, transparent);
-}
-
-/* A small light that breathes. */
+/* A small status dot that breathes. No halo. */
 .led {
   display: inline-block;
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 50%;
   background: var(--amber);
-  box-shadow: 0 0 6px rgba(var(--glow), 0.6);
   animation: breathe 2.8s ease-in-out infinite;
 }
 @keyframes breathe {
@@ -417,7 +362,6 @@ body::after {
 [data-slot="slider-thumb"] {
   border-color: #ffe0b8;
   background: var(--amber);
-  box-shadow: 0 0 0 3px rgba(var(--glow), 0.18);
 }
 thead.bg-secondary {
   background: #141b24;
@@ -439,7 +383,6 @@ thead.bg-secondary {
 @media (prefers-reduced-motion: reduce) {
   body::after,
   .ambient span,
-  .beam::before,
   .led,
   .cell,
   .dial-arc,
