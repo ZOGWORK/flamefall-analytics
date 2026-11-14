@@ -266,7 +266,8 @@ def search(query: str, k: int = 8, min_score: float = 0.04) -> pd.DataFrame:
     q = vec.transform([expand(query)])
     scores = (matrix @ q.T).toarray().ravel()
     out = corpus().assign(score=scores)
-    out = out[out["score"] >= min_score].sort_values("score", ascending=False).head(k)
+    # a stable sort keeps tied scores in corpus order, so the order is the same on every platform
+    out = out[out["score"] >= min_score].sort_values("score", ascending=False, kind="stable").head(k)
     return out.reset_index(drop=True)
 
 
@@ -318,7 +319,7 @@ def answer(query: str, k: int = 6) -> dict:
         if "evidence_class" in filters:
             wanted = {filters["evidence_class"]} | ({"partial_g"} if filters["evidence_class"] == "solid" else set())
             docs = docs[docs["evidence_class"].isin(wanted)]
-        statements = docs.sort_values("score", ascending=False).head(k)[
+        statements = docs.sort_values("score", ascending=False, kind="stable").head(k)[
             ["doc_id", "kind", "investigation_id", "title", "text", "source_ref", "source_url", "verification", "score"]]
         if has_o2:
             inv = load_investigations()

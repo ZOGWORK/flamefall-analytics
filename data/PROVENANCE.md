@@ -200,3 +200,34 @@ validation metric, out-of-fold predictions, up to 1,000 bootstrap coefficient se
 fold membership of every row. A bootstrap resample that draws a single outcome class cannot be
 fitted and is skipped, so each card states how many sets it holds (`bootstrap.n`: 1,000 for
 droplet extinction, 992 for droplet cool-flame evidence, 1,000 for solids). The cards are strict JSON: a missing value is `null`, never `NaN`.
+
+## `panels.json` — small curated tables (3 panels)
+
+Hand-entered, like `evidence.json`, and checked by `tests/test_export.py`:
+
+- **`luci`**: three spread-rate pairs (simulated lunar gravity against normal gravity) from the ASGSR
+  2025 presentation, NTRS 20250010653, slides 19, 33 and 36. Each row stores the slide text it was
+  read from. The PMMA pair is printed as 0.15 and 0.40 cm/s and is stored in mm/s.
+- **`smoke`**: the two SAME particle-size tables. Every number is also in the evidence entry the
+  flight cites (`same1-table1`, `samer-table1`), and the test compares them. The two flights are
+  two tables and are never averaged.
+- **`other_gaps`**, **`blue_flame_quote`**, **`partial_gravity_wording`**: text only.
+
+## `web/src/data/`, `web/public/psi/`, `golden.json` — the JSON export (10 + 25 + 1 = 36 files)
+
+Written by `python scripts/export_web.py`; never edited by hand. `tests/test_export.py` fails if any
+committed file differs from a fresh export (`python scripts/export_web.py --check` does the same).
+
+| File | Built from | Notes |
+|---|---|---|
+| `flex.json` | `flex.load_flex()`, `flex.summary()` | 276 rows; a missing source cell is `null`, never 0 |
+| `catalogue.json` | `investigations.csv` plus the computed environment tags | planned rows carry no tested range |
+| `evidence.json` | `evidence.json` | unchanged, with the ambient-or-burner flag |
+| `solid.json` | `solid_test_points.csv` | all 313 points, whether each pressure is stated or assumed, and the tested envelope per material |
+| `search.json` | the TF-IDF index of `catalogue.corpus()` | vocabulary, weights and document vectors as numbers, so a browser can score a question as Python does |
+| `ranking.json` | constants of `flamefall/ranking.py` | weights, lookup values, the numbers inside the formula, and presets |
+| `model_*.json` | `data/models/*.json` | the cards without their per-row out-of-fold predictions |
+| `panels.json` | `data/panels.json` | unchanged |
+| `public/psi/*.json` | the 25 PSI experimental tables | fetched only when a reader opens one |
+| `src/lib/__fixtures__/golden.json` | this layer's own answers | reference values for a front end's tests |
+

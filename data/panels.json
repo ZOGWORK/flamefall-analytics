@@ -1,0 +1,67 @@
+{
+  "luci": {
+    "title": "Flame spread in simulated lunar gravity against normal gravity, same hardware",
+    "unit": "mm/s",
+    "source_ref": "Ferkul et al., ASGSR 2025 presentation, slides 19, 33, 36 (NTRS 20250010653). A conference presentation, not peer reviewed, not a repository dataset",
+    "source_url": "https://ntrs.nasa.gov/citations/20250010653",
+    "verification": "verified_live",
+    "rows": [
+      {"label": "SIBAL fabric, flame base (downward)", "lunar": 0.92, "earth": 1.5,
+       "quote": "Flame base spread rate = .92 mm/s. | Flame Base .9 1.5 .6", "slides": "19, 33"},
+      {"label": "SIBAL fabric, flame tip", "lunar": 1.1, "earth": 2.8,
+       "quote": "Flame tip spread rate = 1.1 mm/s | Flame Tip 1.1 2.8 .39", "slides": "19, 33"},
+      {"label": "4-mm PMMA rod, flame tip (upward)", "lunar": 1.5, "earth": 4.0,
+       "quote": "Partial-G (cm/s) 1-G (cm/s) Ratio .15 .40 .38", "slides": "36",
+       "note": "Printed as 0.15 and 0.40 cm/s; shown here in mm/s."}
+    ]
+  },
+  "smoke": {
+    "unit": "nm",
+    "threshold_nm": 500,
+    "note": "The two flights used different hardware and diagnostics and their values differ by about a factor of two. They are kept as two tables and never averaged.",
+    "flights": [
+      {"id": "same1", "label": "First flight (SAME)", "evidence_id": "same1-table1",
+       "rows": [
+         {"material": "Kapton", "fresh": 80, "aged": 155},
+         {"material": "Teflon", "fresh": 170, "aged": 228},
+         {"material": "Lamp wick (cellulose)", "fresh": 186, "aged": 258},
+         {"material": "Silicone rubber", "fresh": 189, "aged": 352}
+       ]},
+      {"id": "samer", "label": "Reflight (SAME-R)", "evidence_id": "samer-table1",
+       "rows": [
+         {"material": "Kapton", "fresh": 42, "aged": 89},
+         {"material": "Teflon", "fresh": 81, "aged": 70},
+         {"material": "Lamp wick (cellulose)", "fresh": 90, "aged": 229},
+         {"material": "Silicone rubber", "fresh": 128, "aged": 269},
+         {"material": "Pyrell", "fresh": 149, "aged": 293}
+       ]}
+    ]
+  },
+  "other_gaps": [
+    {"gap": "A smoke-detection delay in microgravity compared with normal gravity, in seconds",
+     "status": "No published number. The SAME report says lags are longer and gives none; Saffire gives absolute microgravity times only.",
+     "source": "SAME Final Report abstract; ICES-2024-365; ICES-2026-577"},
+    {"gap": "Cool-flame burning rates for n-heptane",
+     "status": "No open table. Hot and cool rates are published for n-decane and n-octane only; Table IX gives hot-flame rates.",
+     "source": "NTRS 20140006750; NASA/TP-2015-216046"},
+    {"gap": "One-step cool-flame kinetic parameters fitted to FLEX (2012)",
+     "status": "Not openly available. A later six-step model is open and is cited instead.",
+     "source": "Williams and Nayagam 2019 (open copy)"},
+    {"gap": "Numeric extinction or dilution limits for coflow and spherical gas flames",
+     "status": "Qualitative statements only in every open source read.",
+     "source": "ACME overview, JASMAC-33 (NTRS 20210022542)"},
+    {"gap": "BASS-II extinction velocities for most rod and film tests",
+     "status": "Recorded as fan settings; the memo prints no conversion to cm/s, so 100 of 290 test points have no velocity.",
+     "source": "NASA/TM-20210011385, Appendix A"},
+    {"gap": "Numbers that appear only in the 2019 BASS-II conference paper",
+     "status": "Not re-read: the repository blocks automated access. Marked as not verified wherever they appear.",
+     "source": "ICES-2019-101"}
+  ],
+  "blue_flame_quote": {
+    "quote": "the flame shrinks to a hemispherical blue flame and oscillates with increasing amplitude just before going out",
+    "source_ref": "NASA/TM-20210011385 §6.1.1 (report p. 64)",
+    "source_url": "https://ntrs.nasa.gov/citations/20210011385",
+    "verification": "verified_live"
+  },
+  "partial_gravity_wording": "Spread rate vs gravity is non-monotonic in the models and in low-conductivity-core wire tests, with a maximum and a minimum flammability O2 near lunar gravity; thin-cellulose KC-135 data at 0.2–0.4 atm are monotonic in g over 0.1–1 g. The peak location is material-, geometry- and pressure-dependent and is not yet fixed by a lunar-surface measurement — that is what FM2 is for."
+}
