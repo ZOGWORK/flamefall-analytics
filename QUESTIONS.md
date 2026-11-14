@@ -9,7 +9,7 @@ assumption for each one.
    Universal Event teams need at least two participants to be eligible for global judging. The
    team is registered as a solo team. Is that still the rule on the 2026 FAQ page, and if so do you
    want to add a second participant before submitting?
-   *Assumption while building:* none needed; this does not change the dashboard.
+   *Assumption while building:* none needed; this does not change anything built here.
 
 ## Could not verify (source blocked to automated access)
 
