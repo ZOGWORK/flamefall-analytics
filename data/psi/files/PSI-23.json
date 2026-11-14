@@ -1,0 +1,43 @@
+{
+ "psi_id": "PSI-23",
+ "record_version": 4,
+ "file_count": 4165,
+ "total_bytes": 782172126062.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 20061
+  },
+  "Presentations": {
+   "files": 17,
+   "bytes": 50663477.0
+  },
+  "Raw Data": {
+   "files": 4058,
+   "bytes": 780797309850.0
+  },
+  "Reference Data": {
+   "files": 50,
+   "bytes": 1120419099.0
+  },
+  "Science Documents": {
+   "files": 7,
+   "bytes": 9806480.0
+  },
+  "Engineering Documents": {
+   "files": 29,
+   "bytes": 190421311.0
+  },
+  "Reports": {
+   "files": 2,
+   "bytes": 3483328.0
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 2456
+  }
+ },
+ "experimental_tables": [
+  "PSI-23_Experimental table_ACME s-Flame.csv"
+ ]
+}
