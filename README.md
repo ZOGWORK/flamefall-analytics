@@ -8,7 +8,7 @@ Combustion Data* · team Flamefall Analytics.
 
 | | |
 |---|---|
-| **Live dashboard** | https://zogwork.github.io/flamefall-analytics/ (runs in your browser; the first visit takes about half a minute to load) |
+| **Live dashboard** | https://zogwork.github.io/flamefall-analytics/ (runs in your browser; the first visit can take up to a minute to load) |
 | **7-slide summary** | https://zogwork.github.io/flamefall-analytics/deck/ |
 | **Use of SI tools** | [docs/SI_DISCLOSURE.md](docs/SI_DISCLOSURE.md) |
 | **Corrections found by checking sources** | [DECISIONS.md](DECISIONS.md) |
