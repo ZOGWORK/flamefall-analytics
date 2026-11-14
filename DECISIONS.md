@@ -147,7 +147,7 @@ sources themselves.
 ### Process
 - **D31. Layers and stack.** Python owns the data: loading, checking, aggregating and fitting
   (pandas, numpy, scikit-learn; versions pinned to the ones the tests ran on). The front end is a
-  separate React app (`web/`: Next.js App Router, shadcn/ui, Recharts, Framer Motion) that reads
+  separate React app (`web/`: Next.js App Router, shadcn/ui, Recharts, Motion) that reads
   what Python exports and never re-derives a source value. Models
   are trained offline and stored as JSON; an estimate is computed from the stored coefficients,
   never by re-fitting.
@@ -177,18 +177,25 @@ sources themselves.
   extinction, green completion, violet disruption, grey for not verified and no data); no emoji,
   Lucide icons. The biggest type on each page is that page's most important number, and each page
   leads with numbers and charts; long evidence text is folded behind its count and opens in place.
-  The first version of this app was flat and unlit. At the team lead's request it is now a glass
-  console lit in orange: translucent blurred panels, an orange glow along their edges, a beam of
-  light around each page's main readout, a drifting grid behind, numbers that decode into place,
-  one lit cell per FLEX test on the Overview, and charts that draw themselves in. The glow and
-  the motion are decoration only and never use a meaning colour. Entrance animations are plain
-  CSS, so content never waits on a script, and all of it stops for readers who ask for reduced
-  motion.
+  Panels are clear glass: blurred, with a bright rim and no tint. A first glass version put an
+  orange halo on every number, cell and control; the team lead judged, rightly, that it competed
+  with the data, so light is now used in two places only: faintly behind the one main number of
+  a page, and on position markers. Data marks and ordinary numbers never get a halo. Motion is
+  decoration only: big numbers count up, cells light in turn, charts draw in, sections settle. Entrance animations are plain CSS, so content never waits on a script, and all of it
+  stops for readers who ask for reduced motion.
 - **D40. Instruments instead of sentences.** A share or a score is drawn as well as printed: a dial
   beside each page's main number, a segmented meter under a readout, and a matrix with one lit
   cell per item (per test, per test point, per statement). Each is drawn from the same exported
   value as the number next to it, carries that value as its text alternative, and keeps its
   source line. No instrument shows a value that is not also printed.
+- **D41. Animation libraries, and liquid glass in one place.** Motion (`motion/react`) drives
+  page and section entrances, the scroll reveals, the navigation marker and the slide changes.
+  react-countup counts the big single numbers up when they scroll into view. Charts use Recharts'
+  own animation, left on its automatic setting so it is off while the page is prerendered; no
+  chart here has more than 313 points. GSAP is not installed: it was reserved for one
+  choreographed piece, and none was built. Lenis and React Spring are not used. The liquid-glass
+  surface (adapted from Sera UI, MIT) is used once, on the Overview's hero card, in its subtle
+  variant; data panels, stat cards and charts never use it.
 - **D38. Solid-fuel outcome colours.** Amber is a sustained flame, red is a flame that went out
   (quenched, or blown off, drawn as a cross), grey is no ignition. Red means "the flame went out"
   for droplets and for solids alike.
