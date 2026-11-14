@@ -190,6 +190,8 @@ export interface SolidPoint {
   flow_cm_s: number | null;
   o2_at_outcome_pct: number | null;
   pressure_kPa: number | null;
+  /** false: the source does not print a pressure for this test and the value is assumed. */
+  pressure_stated: boolean;
   outcome: SolidOutcome;
   outcome_quote: string;
   source_ref: string;
@@ -211,6 +213,8 @@ export interface SolidData {
   envelope_all: SolidEnvelope;
   envelopes: Record<string, SolidEnvelope>;
   n_decided: number;
+  n_pressure_stated: number;
+  pressure_note: string;
   n_total: number;
 }
 
@@ -239,6 +243,7 @@ export interface SearchData {
   class_words: Record<string, string>;
   min_score: number;
   investigation_class: Record<string, string>;
+  investigation_o2: Record<string, [number, number] | null>;
 }
 
 export interface ScenarioInput {
@@ -268,6 +273,9 @@ export interface RankingData {
   detection: Record<string, { score: number; why: string }>;
   detection_default: { score: number; why: string };
   large_volume_m3: number;
+  large_volume_bonus: number;
+  hrr_log_range_w: [number, number];
+  cool_flame_min_d0_mm: number;
   gravity_score: { g: number; score: number; name: string }[];
   presets: ScenarioInput[];
 }
@@ -349,6 +357,7 @@ export interface ModelCard {
   };
   headline_auc: number | null;
   headline_is: string;
+  headline_note: string;
   envelope: Record<string, [number, number]>;
   distance: { columns: string[]; train_nn_median: number; train_nn_p95: number; train_nn_max: number };
   training_rows: ({ row_id: string; y: number } & Record<string, number | string | null>)[];
