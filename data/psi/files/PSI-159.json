@@ -1,0 +1,36 @@
+{
+ "psi_id": "PSI-159",
+ "record_version": 1,
+ "file_count": 3756,
+ "total_bytes": 2085592429259,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 8404
+  },
+  "Reports": {
+   "files": 1,
+   "bytes": 3894907
+  },
+  "Engineering Documents": {
+   "files": 1,
+   "bytes": 7496324
+  },
+  "Experimental table": {
+   "files": 2,
+   "bytes": 61588
+  },
+  "Raw Data": {
+   "files": 3749,
+   "bytes": 2085580830202
+  },
+  "Representative Image(s)": {
+   "files": 2,
+   "bytes": 137834
+  }
+ },
+ "experimental_tables": [
+  "PSI-159_Experimental table_CFI-G_Normal Flames.csv",
+  "PSI-159_Experimental table_CFI-G_Inverse Flames.csv"
+ ]
+}
