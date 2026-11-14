@@ -1,0 +1,27 @@
+{
+ "psi_id": "PSI-99",
+ "record_version": 5,
+ "file_count": 217,
+ "total_bytes": 16917376045.0,
+ "by_category": {
+  "Investigation Metadata Files": {
+   "files": 1,
+   "bytes": 10539
+  },
+  "Experimental table": {
+   "files": 1,
+   "bytes": 1973
+  },
+  "Raw Data": {
+   "files": 211,
+   "bytes": 16895467188.0
+  },
+  "Science Documents": {
+   "files": 4,
+   "bytes": 21896345.0
+  }
+ },
+ "experimental_tables": [
+  "PSI-99_Experimental table_SAFFIRE-2.csv"
+ ]
+}
