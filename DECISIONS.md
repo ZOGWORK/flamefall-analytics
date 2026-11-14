@@ -98,13 +98,13 @@ sources themselves.
   Extinction; 24 Disruption and 15 Completion rows also print a value in that column.
 - **D14. Environment filter.** Tags are computed from each investigation's own tested ranges by a
   stated rule. Station: tested near 21% O2. Rover: tested at 30% O2 or more, or at 70.3 kPa or
-  less. Lunar: the rover rule, or tested in partial gravity. Spacecraft: vehicle-scale burn or
+  less. Lunar: the rover rule, or tested in, or planned for, partial gravity. Spacecraft: vehicle-scale burn or
   smoke detection. A planned investigation has no tested range, so only its gravity can tag it,
   and it earns no relevance to any scenario: every term reads "planned, not tested".
 - **D14a. Relevance in still gas.** An investigation that ran in still gas only is a full match for
   a still-gas scenario, and the match fades to zero over 20 cm/s of flow, like any other range.
 - **D14b. Nearest tests and missing values.** A test that does not state one of the compared
-  quantities (FLEX-114 has no pressure, 12 FLEX tests no initial diameter, 100 solid points no flow
+  quantities (FLEX-114 has no pressure, 12 FLEX tests no initial diameter, 96 of the solid points that are ranked no flow
   speed) is compared on the quantities it does state, is ranked after every test that states them
   all, and says which quantity was not compared.
 - **D15. Search is retrieval and extraction only.** TF-IDF over catalogue rows and sourced
