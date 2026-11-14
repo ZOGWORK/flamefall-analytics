@@ -96,6 +96,17 @@ Reading rules, applied by phrase and then read row by row:
 - "not clear", "not known", "not enough evidence", "difficult to determine" → `unclear`.
 - A silent caption stays empty. It is **not** treated as "no cool flame".
 
+- `support_quote` holds only the opening words the support label rests on ("Free-floating
+  methanol droplet").
+- `caption_atmosphere` holds the atmosphere as the caption words it (268 of 274 captions state
+  one). **It is never used as a value.** For 45 tests it differs from Table IX: 29 by 0.01
+  to 0.02 in one or two gases (the caption gives a nominal mixture, the table the printed one), and
+  16 by more, including plain slips such as FLEX-185 (caption 0.70/0.52/0.25 O2/N2/CO2,
+  which sums to 1.47; table 0.23/0.52/0.25), FLEX-280 (nitrogen and helium swapped) and FLEX-158 to
+  160 (the caption repeats the previous series' mixture). Table IX agrees with the repository's own
+  table on these tests, so Table IX is used everywhere and the Explorer shows a note on the 45
+  tests. `flex.caption_atmosphere_conflicts()` lists them.
+
 FLEX-149 and FLEX-240 have no caption in the full-text file and carry no annotation.
 
 ## `flex_droplets.csv` — normalised research schema (276 rows)
