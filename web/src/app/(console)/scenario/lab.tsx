@@ -15,12 +15,12 @@ import { Label } from "@/components/ui/label";
 import coolJson from "@/data/model_droplet_cool_flame.json";
 import extinctionJson from "@/data/model_droplet_extinction.json";
 import solidModelJson from "@/data/model_solid_sustained.json";
-import { evidence, flex, panels, solid } from "@/lib/data";
+import { ev, evidence, flex, panels, solid } from "@/lib/data";
 import { capitalise, g, g3 } from "@/lib/format";
 import { predict } from "@/lib/model";
 import { nearestFlex, nearestSolid, type NearFlex, type NearSolid } from "@/lib/nearest";
 import { normalise, R, rank, sensitivity, terms, TERM_KEYS } from "@/lib/ranking";
-import { DEFAULT_STATE, FEATURED, gaps as findGaps, MATERIALS, toScenario, YOUR_SCENARIO, type LabState, type MaterialKey } from "@/lib/scenario";
+import { DEFAULT_STATE, FEATURED, gaps as findGaps, LIMITS, MATERIALS, parseState, toScenario, YOUR_SCENARIO, type LabState, type MaterialKey } from "@/lib/scenario";
 import type { Fuel, ModelCard, TermKey } from "@/lib/types";
 import { useUrlState } from "@/lib/use-url-state";
 
@@ -34,7 +34,12 @@ const GRAVITY = [
   { value: "0.38", label: "Mars, 0.38 g" },
   { value: "1", label: "Earth, 1 g" },
 ];
-const PARTIAL_G_SOURCES = ["LUCI", "Lunar-g drop-tower centrifuge", "KC-135 partial-gravity flights", "Parabolic-flight wire tests", "FM2"];
+// Tests that were run. FM2 is planned, not flown, so it is listed apart and never as evidence.
+const PARTIAL_G_SOURCES = ["LUCI", "Lunar-g drop-tower centrifuge", "KC-135 partial-gravity flights", "Parabolic-flight wire tests"];
+const FM2_PLAN = [ev("fm2-plan")];
+const SAFFIRE_VI = ev("saffire-vi-partial-pressure");
+// the dial's scale: the highest oxygen partial pressure among the droplet tests, rounded up
+const PO2_SCALE = Math.ceil(EXT.envelope.o2_partial_kpa[1]);
 const DECIDED = solid.points.filter((p) => p.outcome !== "ambiguous");
 const PARTIAL_G = evidence.filter((e) => e.evidence_class === "partial_g" && PARTIAL_G_SOURCES.includes(e.investigation_id));
 const URL_DEFAULTS = Object.fromEntries(Object.entries(DEFAULT_STATE).map(([k, v]) => [k, String(v)])) as Record<keyof LabState, string>;
@@ -57,6 +62,13 @@ const FLEX_COLS: Column<NearFlex>[] = [
     cell: (x) => n(x.distance),
     title: "0 = identical conditions. Scaled: 5 points of O2, 50 kPa, 15 points of CO2, 10 of helium, 0.8 mm each count as 1.",
   },
+  {
+    key: "nc",
+    header: "Not compared",
+    cell: (x) => (x.not_compared ? <span className="text-amber">{x.not_compared}: not stated</span> : ""),
+    title: "A test that does not state a quantity is compared on the rest, and is listed after every test that states them all.",
+    className: "whitespace-nowrap",
+  },
   { key: "src", header: "Source", cell: (x) => <span className="text-note text-muted-foreground">{x.row.source}</span>, className: "min-w-64" },
 ];
 
@@ -65,8 +77,27 @@ const SOLID_COLS: Column<NearSolid>[] = [
   { key: "test", header: "Test", cell: (x) => <Num>{x.point.test_no}</Num>, className: "whitespace-nowrap" },
   { key: "mat", header: "Material (as printed)", cell: (x) => <Prose text={x.point.material_verbatim} />, className: "min-w-48" },
   { key: "o2", header: "O2, %", numeric: true, cell: (x) => n(x.point.o2_at_outcome_pct, 1) },
-  { key: "p", header: "Pressure, kPa", numeric: true, cell: (x) => n(x.point.pressure_kPa, 1) },
-  { key: "flow", header: "Flow, cm/s", numeric: true, cell: (x) => n(x.point.flow_cm_s, 1) },
+  {
+    key: "p",
+    header: "Pressure, kPa",
+    numeric: true,
+    cell: (x) => (
+      <>
+        {n(x.point.pressure_kPa, 1)}
+        {!x.point.pressure_stated && <span className="ml-1.5 text-note text-dim">assumed</span>}
+      </>
+    ),
+    title: "“assumed”: the source does not print a pressure for this test.",
+    className: "whitespace-nowrap",
+  },
+  {
+    key: "flow",
+    header: "Flow, cm/s",
+    numeric: true,
+    cell: (x) => (x.not_compared ? <span className="text-amber">not stated: not compared</span> : n(x.point.flow_cm_s, 1)),
+    title: "A point with no flow speed is compared on oxygen and pressure only, and is listed after every point that states its flow.",
+    className: "whitespace-nowrap",
+  },
   { key: "dir", header: "Flow direction", cell: (x) => x.point.flow_direction },
   { key: "out", header: "Outcome", cell: (x) => <Tag tone={x.point.outcome === "sustained" ? "amber" : x.point.outcome === "no_ignition" ? "dim" : "ext"}>{x.point.outcome.replace("_", " ")}</Tag> },
   {
@@ -84,15 +115,8 @@ const SOLID_COLS: Column<NearSolid>[] = [
 export function Lab() {
   const [q, set, reset] = useUrlState(URL_DEFAULTS);
   const [rawWeights, setRawWeights] = useState<Record<TermKey, number>>({ ...R.weights });
-  const s: LabState = useMemo(
-    () => ({
-      material: (q.material in MATERIALS ? q.material : "pmma") as MaterialKey,
-      o2: Number(q.o2), p: Number(q.p), flow: Number(q.flow), g: Number(q.g), co2: Number(q.co2), he: Number(q.he), d0: Number(q.d0),
-      hrr: q.hrr in R.hrr_scale_w ? q.hrr : DEFAULT_STATE.hrr,
-      volume: Number(q.volume),
-    }),
-    [q],
-  );
+  // the address bar is checked: an unknown material or gravity, or anything that is not a number, becomes the default
+  const s: LabState = useMemo(() => parseState(q), [q]);
   const apply = (next: Partial<LabState>) => set(Object.fromEntries(Object.entries(next).map(([k, v]) => [k, String(v)])) as Partial<typeof URL_DEFAULTS>);
 
   const m = MATERIALS[s.material];
@@ -152,14 +176,14 @@ export function Lab() {
           <Field label="Gravity">
             <Segments label="Gravity" value={String(s.g)} onChange={(v) => apply({ g: Number(v) })} options={GRAVITY} />
           </Field>
-          <SliderField label="Oxygen, % by volume" min={10} max={60} step={0.5} value={s.o2} onChange={(v) => apply({ o2: v })} format={(v) => `${g(v)}%`} />
-          <SliderField label="Pressure, kPa" min={20} max={310} step={0.1} value={s.p} onChange={(v) => apply({ p: Number(v.toFixed(1)) })} format={(v) => `${v.toFixed(1)} kPa`} hint="101.3 kPa = 14.7 psi (sea level). 70.3 kPa = 10.2 psi. 56.5 kPa = 8.2 psi." />
-          <SliderField label="Ventilation flow, cm/s" min={0} max={80} step={0.5} value={s.flow} onChange={(v) => apply({ flow: v })} format={(v) => `${g(v)} cm/s`} />
+          <SliderField label="Oxygen, % by volume" min={LIMITS.o2[0]} max={LIMITS.o2[1]} step={0.5} value={s.o2} onChange={(v) => apply({ o2: v })} format={(v) => `${g(v)}%`} />
+          <SliderField label="Pressure, kPa" min={LIMITS.p[0]} max={LIMITS.p[1]} step={0.1} value={s.p} onChange={(v) => apply({ p: Number(v.toFixed(1)) })} format={(v) => `${v.toFixed(1)} kPa`} hint="101.3 kPa = 14.7 psi (sea level). 70.3 kPa = 10.2 psi. 56.5 kPa = 8.2 psi." />
+          <SliderField label="Ventilation flow, cm/s" min={LIMITS.flow[0]} max={LIMITS.flow[1]} step={0.5} value={s.flow} onChange={(v) => apply({ flow: v })} format={(v) => `${g(v)} cm/s`} />
           {droplet && (
             <>
-              <SliderField label="Droplet diameter, mm" min={0.5} max={8} step={0.1} value={s.d0} onChange={(v) => apply({ d0: Number(v.toFixed(1)) })} format={(v) => `${v.toFixed(1)} mm`} />
-              <SliderField label="CO2 in the atmosphere, %" min={0} max={80} step={5} value={s.co2} onChange={(v) => apply({ co2: v })} format={(v) => `${g(v)}%`} />
-              <SliderField label="Helium in the atmosphere, %" min={0} max={80} step={5} value={s.he} onChange={(v) => apply({ he: v })} format={(v) => `${g(v)}%`} />
+              <SliderField label="Droplet diameter, mm" min={LIMITS.d0[0]} max={LIMITS.d0[1]} step={0.1} value={s.d0} onChange={(v) => apply({ d0: Number(v.toFixed(1)) })} format={(v) => `${v.toFixed(1)} mm`} />
+              <SliderField label="CO2 in the atmosphere, %" min={LIMITS.co2[0]} max={LIMITS.co2[1]} step={5} value={s.co2} onChange={(v) => apply({ co2: v })} format={(v) => `${g(v)}%`} />
+              <SliderField label="Helium in the atmosphere, %" min={LIMITS.he[0]} max={LIMITS.he[1]} step={5} value={s.he} onChange={(v) => apply({ he: v })} format={(v) => `${g(v)}%`} />
             </>
           )}
         </div>
@@ -173,26 +197,29 @@ export function Lab() {
             <span className="ml-2 text-heading font-medium text-muted-foreground">kPa</span>
           </>
         }
-        dial={{ value: po2 / 65, tick: 21.2 / 65, caption: "mark: sea-level air" }}
-        source={`computed from the inputs: ${g(s.o2)}% × ${g(s.p)} kPa. Sea-level air is 21.2 kPa. Dial scale 0 to 65 kPa, the highest in the droplet tests.`}
+        dial={{ value: po2 / PO2_SCALE, tick: R.p_o2_ref_kpa / PO2_SCALE, caption: "mark: sea-level air" }}
+        source={`computed from the inputs: ${g(s.o2)}% × ${g(s.p)} kPa. Sea-level air is ${g(R.p_o2_ref_kpa)} kPa. Dial scale 0 to ${PO2_SCALE} kPa, the highest in the droplet tests.`}
         readouts={
           <>
-            <Readout className="border-0" icon={Gauge} meter={s.p / 310} value={(s.p / KPA_PER_PSI).toFixed(1)} unit="psi" tone="data" label="total pressure" source={`${g(s.p)} kPa = ${(s.p / 101.325).toFixed(2)} atm`} />
-            <Readout className="border-0" icon={Wind} meter={s.flow / 80} value={g(s.flow)} unit="cm/s" tone="data" label="ventilation flow" source={s.flow === 0 ? "still gas" : "forced flow past the fuel"} />
-            <Readout className="border-0" icon={Orbit} meter={s.g} value={`${g(s.g)} g`} tone={s.g === 0 ? "done" : "disrupt"} label="gravity" source={gravityLabel} />
+            <Readout className="border-0" icon={Gauge} meter={s.p / LIMITS.p[1]} value={(s.p / KPA_PER_PSI).toFixed(1)} unit="psi" tone="data" label="total pressure" source={`${g(s.p)} kPa = ${(s.p / 101.325).toFixed(2)} atm`} />
+            <Readout className="border-0" icon={Wind} meter={s.flow / LIMITS.flow[1]} value={g(s.flow)} unit="cm/s" tone="data" label="ventilation flow" source={s.flow === 0 ? "still gas" : "forced flow past the fuel"} />
+            <Readout className="border-0" icon={Orbit} meter={s.g} value={`${g(s.g)} g`} tone={s.g === 0 ? "data" : "amber"} label="gravity" source={gravityLabel} />
           </>
         }
       >
         of oxygen for {droplet ? (m.code === "Heptane" ? "an n-heptane droplet" : "a methanol droplet") : m.label} in this atmosphere.
       </HeroBand>
 
-      {(s.g === 0.16 || s.g === 0.38) && (
+      {s.g !== 0 && s.g !== 1 && (
         <Section title="Partial gravity" explainer="This gravity has never been tested in the repository. Nothing below is scaled or adjusted for it.">
           <NoData title={`No combustion test at ${gravityLabel.split(",")[0]} gravity exists in the PSI repository`} note="Source: official challenge brief: “there is currently no partial-gravity combustion data available in PSI.”">
-            Everything below is from microgravity. The closest real evidence for partial gravity is listed next; none of it is a repository dataset.
+            Everything below is from microgravity. The closest real tests in partial gravity are listed next; none of them is a repository dataset.
           </NoData>
           <div className="mt-3">
-            <EvidenceGroup entries={PARTIAL_G} label="sourced statements: the nearest real evidence for partial gravity" lead />
+            <EvidenceGroup entries={PARTIAL_G} label="sourced statements from tests that were run: the nearest real evidence for partial gravity" lead />
+          </div>
+          <div className="mt-3">
+            <EvidenceGroup entries={FM2_PLAN} label="sourced statement on an experiment that is planned, not flown: a plan, not evidence" />
           </div>
           <div className="mt-4">
             <Quote>
@@ -233,6 +260,9 @@ export function Lab() {
               </p>
             )}
             <DataTable rows={nearS} columns={SOLID_COLS} rowKey={(x) => x.point.point_id} caption="Nearest solid-fuel test points" minWidth={1500} maxHeight={380} />
+            <p className="mt-2 text-note text-muted-foreground">
+              <Prose text={`${solid.n_total - solid.n_pressure_stated} of the ${solid.n_total} solid-fuel points have an assumed pressure. ${solid.pressure_note}`} />
+            </p>
             <Source href="https://ntrs.nasa.gov/citations/20210011385">
               BASS-II summary memo NASA/TM-20210011385 (Tables 5.1, 7.1, A.1 to A.6); PSI Saffire tables; ICES-2024-365; NTRS 20240007628. Each row names its own source.
             </Source>
@@ -250,7 +280,7 @@ export function Lab() {
             <div className="grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-2 xl:grid-cols-4">
               <Readout className="border-0" tone={demo ? "dim" : "ext"} value={pc(out.p)} label="estimated chance the visible flame goes out" source={`95% interval ${pc(out.lo)} to ${pc(out.hi)} (cluster bootstrap)${demo ? " · DEMO: extrapolated" : ""}`} />
               <Readout className="border-0" tone="data" value={out.p >= thr ? "above" : "below"} label={`the decision threshold of ${thr.toFixed(2)}`} source="Youden's J threshold on out-of-fold predictions; this console uses it and says so" />
-              <Readout className="border-0" tone={out.far_from_data ? "dim" : "done"} value={out.nn_distance.toFixed(2)} label="distance to the nearest training test" source={`typical ${out.train_nn_median.toFixed(2)}; 95% of training tests are within ${out.train_nn_p95.toFixed(2)} of another`} />
+              <Readout className="border-0" tone={out.far_from_data ? "dim" : "data"} value={out.nn_distance.toFixed(2)} label="distance to the nearest training test" source={`typical ${out.train_nn_median.toFixed(2)}; 95% of training tests are within ${out.train_nn_p95.toFixed(2)} of another`} />
               <Readout className="border-0" tone="amber" value={(EXT.headline_auc as number).toFixed(2)} label="headline AUC of this model" source={`worse of grouped CV (${(em.roc_auc as number).toFixed(2)}) and leave-one-fuel-out; false-positive rate ${pc(em.confusion_at_youden.false_positive_rate)}`} />
             </div>
             {demo && (
@@ -291,8 +321,8 @@ export function Lab() {
                 <Prose text={tally(nearS.map((x) => x.point.outcome)).map(([k, v]) => `${v} ${k.replace("_", " ")}`).join(" · ")} />.{" "}
                 <span className="text-muted-foreground">
                   Their distance from your scenario ranges from <Num>{Math.min(...nearS.map((x) => x.distance)).toFixed(2)}</Num> to{" "}
-                  <Num>{Math.max(...nearS.map((x) => x.distance)).toFixed(2)}</Num>; a distance above about <Num>2</Num> means a different
-                  regime, not a comparable test.
+                  <Num>{Math.max(...nearS.map((x) => x.distance)).toFixed(2)}</Num>. The larger the distance, the less comparable the
+                  test: read each row, not the tally.
                 </span>
               </p>
             )}
@@ -317,6 +347,11 @@ export function Lab() {
               <p className="text-body text-foreground">triage score, from 0 to 1</p>
             </div>
             <p className="mt-1 text-note text-muted-foreground">Hazard = Σ weight × term. A design choice, for ordering only.</p>
+            {s.g !== 0 && (
+              <p className="mt-2 text-note text-amber">
+                {`The gravity term is a design choice of the formula, not a measurement: no combustion test in this data set was run at ${gravityLabel}. The score orders scenarios; it measures nothing about burning at this gravity.`}
+              </p>
+            )}
             {t.flags.map((flag) => (
               <p key={flag} className="mt-2 text-note text-amber">
                 Flag: {flag}.
@@ -429,7 +464,7 @@ export function Lab() {
                     <Prose text={`${tally(nearS.map((x) => x.point.outcome)).map(([k, v]) => `${v} of the ${nearS.length} nearest test points: ${k.replace("_", " ")}`).join("; ")}.`} />
                   </li>
                   <li>
-                    <Prose text={`Oxygen partial pressure here is ${po2.toFixed(1)} kPa. Saffire VI burned fabric and acrylic at about 16.8 kPa (31% O2, 54 kPa).`} />
+                    <Prose text={`Oxygen partial pressure here is ${po2.toFixed(1)} kPa. ${SAFFIRE_VI.statement} Source: ${SAFFIRE_VI.source_ref}.`} />
                   </li>
                 </>
               )}
