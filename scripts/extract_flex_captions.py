@@ -40,6 +40,7 @@ UNCLEAR = re.compile(
 
 # "diffusively or radiatively", "radiative or diffusive": the caption does not choose
 EITHER_MODE = re.compile(r"(radiativ\w*|diffusiv\w*) or (radiativ\w*|diffusiv\w*)|difficult to (say|tell)", re.I)
+EITHER_OR = re.compile(r"\beither\b.*\bor\b", re.I)
 STATED_MODE = re.compile(r"extinguish\w*,? (?:\w+ )?(radiatively|diffusively)|(?:to|near) (radiative|diffusive)", re.I)
 
 
@@ -66,6 +67,10 @@ def classify_cool(sents: list[str]) -> tuple[str, str]:
 
 
 def classify_ext(sents: list[str]) -> tuple[str, str]:
+    # A sentence that offers the mode only as one of two alternatives ("either extinguished
+    # radiatively or was completely outside of the flammability boundary", FLEX-140 and FLEX-141)
+    # does not state a mode, so it is not read as one.
+    sents = [s for s in sents if not EITHER_OR.search(s)]
     rad = [s for s in sents if re.search(r"radiativ", s, re.I)]
     dif = [s for s in sents if re.search(r"diffusiv", s, re.I)]
     hedged = any(UNCLEAR.search(s) or EITHER_MODE.search(s)
