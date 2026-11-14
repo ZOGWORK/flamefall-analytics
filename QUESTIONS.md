@@ -26,8 +26,7 @@ with their pressures, no ratio derived). The brief told me to correct numbers th
 contradict, so I treated these as corrections (DECISIONS.md C6, C7).
 *If you would rather hold to the brief's wording:* say so and I will remove both. The change is six entries in
 `data/evidence.json` (`luci-sibal`, `luci-pmma`, `luci-method`, `saffire-2026-spread`,
-`saffire-2026-alarm`, `saffire-2026-hrr-differs`), the LUCI catalogue row, and anything the front end
-shows from those entries.
+`saffire-2026-alarm`, `saffire-2026-hrr-differs`), and the LUCI catalogue row.
 
 **Q4. The "85% O2" correction is itself corrected.** The brief says the 85% figure is Flame
 Design's, "never CFI-G". PSI's own CFI-G inverse-flame table and the challenge page both put 85%
@@ -49,7 +48,7 @@ BASS-II summary memo states the same quantity, the memo is cited instead.
 
 **Q5. Sources that only an abstract could be read for** (publisher blocks automated access): the
 Flame Design journal paper (burn times 28 to 336 s) and the FLEX limiting-oxygen abstract (0.12
-methanol, 0.15 n-heptane). Both carry the level `index`. The FLARE conference paper
+methanol, 0.15 n-heptane). Both carry the verification level `index`. The FLARE conference paper
 was unreachable, so FLARE has no numbers in the catalogue.
 
 ## Decisions I made that you may want to change

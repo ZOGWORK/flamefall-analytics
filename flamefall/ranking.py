@@ -3,8 +3,8 @@
     Hazard = 0.30 M_O2 + 0.20 M_flow + 0.15 H + 0.15 D + 0.10 G + 0.10 C
 
 Every term is in [0, 1] (1 = more hazardous). Every weight and every lookup value below is a
-DESIGN CHOICE, shown in the interface, adjustable there, and tested for whether the ordering of
-scenarios survives changing it. The score orders scenarios for attention. It does not say that
+DESIGN CHOICE, stated as one, and tested for whether the ordering of scenarios survives changing
+it. The score orders scenarios for attention. It does not say that
 any scenario is acceptable.
 """
 from __future__ import annotations

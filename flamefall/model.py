@@ -6,10 +6,13 @@ Three models, one protocol:
   solid_sustained     P(flame is sustained)          BASS-II, Saffire, SoFIE-GEL test points
 
 Protocol (research specification section 7.3):
-  * features are initial conditions only: nothing measured after ignition is a feature;
+  * features are initial conditions: nothing measured after ignition is a feature, with one stated
+    exception. A solid-fuel flame that went out is placed at the end-of-test oxygen reading, the
+    oxygen it went out at (see `solid_frame`); the model card counts the rows this moves;
   * L2 logistic regression, C chosen from {0.01, 0.1, 1, 10} by inner grouped CV;
   * outer GroupKFold(5), inner GroupKFold(3): a group is never split between train and test;
-  * a separate leave-one-material-out stress test; the headline is the WORSE of the two AUCs;
+  * a separate leave-one-material-out stress test; the headline is the WORSE of the two AUCs
+    (where every row is one material no stress test can be run, and the card says so);
   * every preprocessing statistic (median, mean, SD) is learned on the training fold only.
 
 Training lives here and is run by scripts/train_models.py, which writes plain JSON. An estimate
@@ -145,7 +148,9 @@ def solid_frame() -> pd.DataFrame:
     s = s[s["usable_for_model"].astype(str).str.lower() == "true"].copy()
     s["y"] = s["sustained"].astype(int)
     s["o2_initial_pct"] = s["o2_pct"]
-    s["o2_pct"] = s["o2_at_outcome_pct"]              # extinctions are placed at the oxygen they happened at
+    # Extinctions are placed at the oxygen they happened at. That reading is taken after ignition and
+    # only for flames that went out, so it is the one input chosen with knowledge of the outcome.
+    s["o2_pct"] = s["o2_at_outcome_pct"]
     s["o2_partial_kpa"] = s["o2_pct"] / 100 * s["pressure_kPa"]
     s["pressure_kpa"] = s["pressure_kPa"]
     s["is_quiescent"] = (s["flow_cm_s"] == 0).astype(float)
@@ -425,8 +430,9 @@ def roc_points(y: np.ndarray, p: np.ndarray) -> list[list[float]]:
 # =============================================================================== full run
 
 def rowwise_auc(df: pd.DataFrame, spec: Spec, C: float, balanced: bool) -> float | None:
-    """AUC from ordinary row-wise 5-fold CV. Reported ONLY to show how much it flatters the model:
-    rows from one atmosphere or one test series land on both sides of the split."""
+    """AUC from ordinary row-wise 5-fold CV. Reported ONLY for comparison, never as a result: rows
+    from one atmosphere or one test series land on both sides of the split, which can flatter a
+    model (it does for the solid model)."""
     from sklearn.model_selection import StratifiedKFold
 
     y = df["y"].to_numpy()
@@ -438,6 +444,24 @@ def rowwise_auc(df: pd.DataFrame, spec: Spec, C: float, balanced: bool) -> float
         oof[te] = _fit(transform(df.iloc[tr], spec, prep), y[tr], C, balanced).predict_proba(
             transform(df.iloc[te], spec, prep))[:, 1]
     return auc(y, oof)
+
+
+def data_notes(name: str, df: pd.DataFrame) -> list[str]:
+    """Notes whose numbers are counted from the training frame, so they cannot drift from it."""
+    if name != "solid_sustained":
+        return []
+    moved = df[df["o2_initial_pct"] != df["o2_pct"]]
+    return [f"Oxygen is the initial reading, except for a flame that quenched or blew off: there it is the "
+            f"end-of-test reading, the oxygen the flame went out at. This moves {len(moved)} of the {len(df)} rows, "
+            f"{int((moved['y'] == 0).sum())} of them not sustained, so this one input is chosen with knowledge of "
+            "the outcome. It is the only input that is not an initial condition."]
+
+
+def headline_note(lomo: dict) -> str:
+    if lomo["pooled_auc"] is None:
+        return ("Every row is one material, so no leave-one-material-out stress test can be run. The headline is "
+                "grouped cross-validation alone, not the worse of two.")
+    return "The worse of grouped cross-validation and the leave-one-material-out stress test."
 
 
 def nn_distances(X: np.ndarray) -> np.ndarray:
@@ -511,7 +535,7 @@ def train(name: str, n_boot: int = N_BOOT) -> dict:
         "features": names, "continuous": spec.continuous, "log_features": spec.log_features,
         "log1p_features": spec.log1p_features, "binary": spec.binary, "categorical": spec.categorical,
         "interactions": [list(t) for t in spec.interactions], "squares": spec.squares,
-        "dropped_features": spec.dropped, "added_features": spec.added, "notes": spec.notes,
+        "dropped_features": spec.dropped, "added_features": spec.added, "notes": spec.notes + data_notes(name, df),
         "prep": prep, "coef": coef.round(6).tolist(),
         "coef_table": [{"feature": n, "log_odds": float(c), "odds_ratio": float(np.exp(c)),
                         "ci_low": float(l), "ci_high": float(h)}
@@ -531,6 +555,7 @@ def train(name: str, n_boot: int = N_BOOT) -> dict:
         "headline_auc": min(candidates) if candidates else None,
         "headline_is": ("leave-one-material-out" if candidates and lomo["pooled_auc"] is not None
                         and lomo["pooled_auc"] <= (a if a is not None else 2) else "grouped cross-validation"),
+        "headline_note": headline_note(lomo),
         "envelope": {c: [float(df[c].min()), float(df[c].max())] for c in dist_cols},
         "distance": {"columns": dist_cols, "train_nn_median": float(np.median(nn)),
                      "train_nn_p95": float(np.percentile(nn, 95)), "train_nn_max": float(nn.max())},
