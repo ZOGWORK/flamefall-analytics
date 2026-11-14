@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { AXIS_LABEL, D2Chart, MixChart, RateChart, ShareChart, type RateColumn } from "@/components/charts/flex-charts";
 import { OutcomeStrip } from "@/components/charts/outcome-strip";
 import { Chips, Field, Pick, RangeField, Segments } from "@/components/console/controls";
+import { Decode } from "@/components/console/decode";
 import { DataTable, n, type Column } from "@/components/console/data-table";
 import { Callout, KV, Kicker, NoData, Num, OutcomeBadge, Panel, Quote, Readout, Section, Source, Tag } from "@/components/console/primitives";
 import { Button } from "@/components/ui/button";
@@ -191,10 +192,12 @@ export function Explorer() {
     <>
       {filters}
 
-      <section className="grid grid-cols-1 gap-px border border-line bg-line xl:grid-cols-12">
-        <div className="bg-surface p-4 sm:p-5 xl:col-span-5">
+      <section className="beam grid grid-cols-1 gap-px border border-line bg-line xl:grid-cols-12">
+        <div className="scan bg-surface p-4 sm:p-5 xl:col-span-5">
           <Kicker className="text-dim">Ended in extinction</Kicker>
-          <p className="num mt-2 text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight text-ext">{pct(k / total)}</p>
+          <p className="glow num mt-2 text-[clamp(3.5rem,9vw,6rem)] leading-none font-bold tracking-tight text-ext">
+            <Decode text={pct(k / total)} />
+          </p>
           <p className="mt-3 text-body text-foreground">
             <Num>{k}</Num> of <Num>{total}</Num> matching tests ended with the visible flame going out.
           </p>
