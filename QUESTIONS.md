@@ -9,7 +9,8 @@ assumption for each one.
 Universal Event teams need at least two participants to be eligible for global judging. The team
 is registered as a solo team. Is that still the rule on the 2026 FAQ page, and if so do you want to
 add a second participant before submitting?
-*Assumption while building:* none needed; this does not change anything built here.
+*Answered 14 Nov:* the team is two people (Srikar joined on 13 Nov), so it is eligible for global
+judging. Nothing to change.
 
 **Q3. Two hard rules in the brief were overturned by primary sources. Keep the corrections?**
 
@@ -28,6 +29,7 @@ contradict, so I treated these as corrections (DECISIONS.md C6, C7).
 `data/evidence.json` (`luci-sibal`, `luci-pmma`, `luci-method`, `saffire-2026-spread`,
 `saffire-2026-alarm`, `saffire-2026-hrr-differs`), the LUCI catalogue row, the LUCI rows of `data/panels.json`,
 and the chart drawn from them on *What We Don't Know*.
+*Answered 14 Nov:* keep both corrections.
 
 **Q4. The "85% O2" correction is itself corrected.** The brief says the 85% figure is Flame
 Design's, "never CFI-G". PSI's own CFI-G inverse-flame table and the challenge page both put 85%
@@ -65,18 +67,19 @@ for Next.js on Render. It is a Render static site in your workspace, free plan, 
 and so no cold start:
 
 - Live: https://flamefall-analytics.onrender.com and https://flamefall-analytics.onrender.com/deck/
-- It builds from the branch `feat/web-app` and redeploys on every push to it. **Once the PRs are
-  merged, change the branch to `main`** (Render dashboard, the service's Settings, Branch). I did
-  not find a way to change it from here.
-- The earlier in-browser Streamlit build on GitHub Pages is no longer the product. It is still
-  online at zogwork.github.io/flamefall-analytics until you say to take it down (Settings, Pages).
+- *Answered 14 Nov:* serve the site from `main` once the pull requests are merged, and take the
+  old GitHub Pages site down so nobody lands on a stale version. The status of both is in the
+  final report of the build, not here, because this file is written before the merge.
 
 **Q8. Human spot-checks.** The Space Apps rules ask what a human verified. `docs/HUMAN_VERIFICATION.md`
 lists 14 numbers with the exact page to open for each. Nothing in it is ticked yet.
+*Still open:* this is the one item that needs a person. The coding agent cannot tick it.
 
 **Q9. The name of the research assistant.** `docs/SI_DISCLOSURE.md` describes the tool that wrote
 the research notes as "an SI research assistant (named 'Bruno' in the team's notes)". Replace that
 with the product and model name before pasting the disclosure into the project page.
+*Answered 14 Nov:* the research assistant is Bruno. The disclosure names it that way; add its
+product and model name if the project page asks for one.
 
 **Q10. The review bot has stopped, so nothing can be merged under your rule.** Loopy posted on
 14 Nov: "This organization has used all 50 reviews on its Free plan this month. Reviews start
@@ -85,4 +88,19 @@ no PR had reached 5/5 when it stopped (the last scores were 4/5 with only minor 
 So every PR is still open and `main` is empty. Your options: upgrade Loopy in its Billing page and
 I continue the loop; or tell me to merge on the tests alone; or leave the PRs open, which does not
 stop you submitting, because the live site builds from the branch.
+*Answered 14 Nov:* merge on the tests, on one condition: a temporary self-review of each pull
+request's final version first, and no merge with a blocker open. What that review did is in
+DECISIONS.md D42. It does not replace the review bot, and no document says the bot approved the
+final code.
+
+**Q11. BASS-II pressure is assumed for most tests.** The summary memo states 1 atm for the fabric
+tests only. The other 242 BASS-II test points are taken as 1 atm because they ran in the same
+glovebox (DECISIONS.md D8), and the Saffire VI Nomex sample is given its campaign's initial
+pressure. Each of those 243 points is marked "assumed" where it is shown. If you know of a
+source that prints the pressure per test, the flag is one column in `data/solid_test_points.csv`.
+
+**Q12. One number in the triage formula rests on the paper that could not be re-read.** The
+"small sample" heat release, about 50 W, comes from ICES-2019-101 (Q2). The brief's worked example
+(0.637 / 0.687 / 0.337) needs it, so it stays, labelled "not re-verified". The memo that was read
+says only that most tests were well below 100 W. It feeds the ordering formula and no model.
 
