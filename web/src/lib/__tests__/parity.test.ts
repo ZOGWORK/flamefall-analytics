@@ -115,8 +115,14 @@ describe("FLEX aggregates", () => {
       }
       close(got!.d2_start, c.line.d2_start);
       close(got!.d2_end, c.line.d2_end);
+      close(got!.t_line_end, c.line.t_line_end);
+      if (c.line.t_zero === null) expect(got!.t_zero).toBeNull();
+      else close(got!.t_zero as number, c.line.t_zero);
+      expect(got!.d2_end).toBeGreaterThanOrEqual(0); // a diameter squared is never drawn below zero
       expect(got!.marker?.name).toBe(c.line.marker?.name);
-      expect(got!.marker?.name === flex.meta.end_marker_extinction).toBe(row.outcome === "Extinction");
+      // a marker exists only when Table IX prints an end diameter; when it does, its name follows the outcome
+      if (got!.marker) expect(got!.marker.name === flex.meta.end_marker_extinction).toBe(row.outcome === "Extinction");
+      else expect(row.extinction_diameter_mm).toBeNull();
     }
   });
 });
@@ -129,7 +135,8 @@ describe("catalogue", () => {
         catalogue.investigations,
         { o2_pct: s.o2_pct, pressure_kpa: s.pressure_kpa, flow_cm_s: s.flow_cm_s, evidence_class: "solid", gravity_g: s.gravity_g },
         catalogue.relevance_weights,
-      ).slice(0, 12);
+      );
+      expect(got.length).toBeGreaterThan(25); // every combustion investigation, the planned one included
       expect(got.map((r) => r.row.investigation_id)).toEqual(c.top.map((t: { id: string }) => t.id));
       got.forEach((r, i) => {
         close(r.rel.score, c.top[i].relevance);
@@ -141,15 +148,30 @@ describe("catalogue", () => {
     }
   });
 
-  it("a planned investigation earns no oxygen or pressure closeness", () => {
+  it("a planned investigation earns no closeness at all", () => {
     const ranked = rankInvestigations(
       catalogue.investigations,
       { o2_pct: 34, pressure_kpa: 56.5, flow_cm_s: 5, evidence_class: "solid", gravity_g: 0.16 },
       catalogue.relevance_weights,
     );
     const fm2 = ranked.find((r) => r.row.investigation_id === "FM2")!;
-    expect(fm2.rel.terms.oxygen).toBe(0);
-    expect(fm2.rel.terms.pressure).toBe(0);
+    expect(fm2.rel.score).toBe(0);
+    for (const k of RELEVANCE_KEYS) {
+      expect(fm2.rel.terms[k]).toBe(0);
+      expect(fm2.rel.why[k]).toBe("planned, not tested");
+    }
+    expect(ranked.find((r) => r.row.investigation_id === "LUCI")!.rel.terms.gravity).toBe(1); // flown
+  });
+
+  it("a question naming two fuel classes is not filtered to one; an oxygen limit filters investigations too", () => {
+    expect(index.parseFilters("Which materials did the smoke detector miss?")).toEqual({});
+    const got = index.answer("Which materials did the smoke detector miss?");
+    expect(got.statements.some((s) => s.doc.doc_id === "same-detector-misses")).toBe(true);
+    const high = index.answer("Which experiments ran above 80% oxygen?");
+    expect(high.investigations).not.toContain("FM2");
+    for (const h of high.hits.filter((x) => x.doc.kind === "investigation")) {
+      expect(searchJson.investigation_o2[h.doc.investigation_id as keyof typeof searchJson.investigation_o2]![1]).toBeGreaterThanOrEqual(80);
+    }
   });
 
   it("retrieval: expansion, filters, statements and their order", () => {
@@ -178,17 +200,35 @@ describe("nearest real tests", () => {
   it("droplets", () => {
     for (const c of G.nearest_flex) {
       const [fuel, o2, p, co2, he, d0] = c.args;
-      const got = nearestFlex(flex.rows, fuel as Fuel, o2, p, co2, he, d0);
+      const got = nearestFlex(flex.rows, fuel as Fuel, o2, p, co2, he, d0, c.k);
       expect(got.map((n) => n.row.test_id)).toEqual(c.ids);
+      expect(got.map((n) => n.not_compared)).toEqual(c.not_compared);
       got.forEach((n, i) => close(n.distance, c.distance[i]));
     }
+  });
+
+  it("a missing value is never a perfect match: such a test is ranked last and says what was left out", () => {
+    const methanol = flex.rows.filter((r) => r.fuel === "Methanol");
+    const noPressure = flex.rows.filter((r) => r.pressure_kpa === null);
+    expect(noPressure.map((r) => r.test_id)).toEqual(["FLEX-114"]);
+    const { fuel, o2_pct, co2_pct, he_pct } = noPressure[0];
+    const all = nearestFlex(flex.rows, fuel, o2_pct, 101.3, co2_pct, he_pct, null, flex.rows.length);
+    expect(all.at(-1)).toMatchObject({ not_compared: "pressure" });
+    expect(all.at(-1)!.row.test_id).toBe("FLEX-114"); // identical on every stated input, still last
+    expect(all.slice(0, -1).every((n) => n.not_compared === "")).toBe(true);
+    expect(nearestFlex(methanol, "Methanol", 21, 101.3, 0, 0, 3).every((n) => n.not_compared === "")).toBe(true);
+    const pmma = nearestSolid(solid.points, "PMMA", 17, 101.3, 10, 400);
+    const firstMissing = pmma.findIndex((n) => n.not_compared !== "");
+    expect(firstMissing).toBeGreaterThan(0);
+    expect(pmma.slice(firstMissing).every((n) => n.not_compared === "flow" && n.point.flow_cm_s === null)).toBe(true);
   });
 
   it("solids: same material first, other materials marked", () => {
     for (const c of G.nearest_solid) {
       const [mat, o2, p, flow] = c.args;
-      const got = nearestSolid(solid.points, mat, o2, p, flow);
+      const got = nearestSolid(solid.points, mat, o2, p, flow, c.k);
       expect(got.map((n) => n.point.point_id)).toEqual(c.ids);
+      expect(got.map((n) => n.not_compared)).toEqual(c.not_compared);
       expect(got.map((n) => n.same_material)).toEqual(c.same_material);
       got.forEach((n, i) => close(n.distance, c.distance[i]));
     }
