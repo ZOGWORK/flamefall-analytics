@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 /** Each page settles in when it is navigated to. The frame around it never reloads. */
 export default function Template({ children }: { children: React.ReactNode }) {
