@@ -1,6 +1,8 @@
 """The FLEX dataset: totals are recomputed from the CSV, never copied from a document."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -39,7 +41,8 @@ def test_outcomes_by_fuel(raw):
     tab = raw.groupby(["fuel", "outcome"]).size().unstack(fill_value=0)
     assert tab.loc["Methanol"].to_dict() == {"Completion": 8, "Disruption": 23, "Extinction": 126}
     assert tab.loc["Heptane"].to_dict() == {"Completion": 20, "Disruption": 39, "Extinction": 60}
-    assert round(126 / 157 * 100, 1) == 80.3 and round(60 / 119 * 100, 1) == 50.4
+    share = {fuel: round(tab.loc[fuel, "Extinction"] / tab.loc[fuel].sum() * 100, 1) for fuel in tab.index}
+    assert share == {"Heptane": 50.4, "Methanol": 80.3}       # both sides come from the data
 
 
 def test_ranges_and_missing(raw):
@@ -130,14 +133,6 @@ def test_extinction_wording_takes_the_stated_mode(f):
         assert pd.isna(sch.loc[n, "D_rad_ext_mm"]) and sch.loc[n, "visible_ext_diameter_mm"] > 0
 
 
-def test_outcome_badges_use_the_chart_colours():
-    from flamefall import theme, ui
-
-    assert ui.OUTCOME_BADGE == {"Extinction": "bad", "Disruption": "violet", "Completion": "ok"}
-    assert ".ff-badge.violet" in theme.CSS
-    assert ui.OUTCOME_BADGE["Disruption"] != "mute"          # grey is reserved for unverified / no data
-
-
 def test_caption_atmosphere_is_recorded_but_never_used(f):
     """45 captions word the atmosphere differently from Table IX; the table's values are the data."""
     conflicts = flex.caption_atmosphere_conflicts()
@@ -157,37 +152,6 @@ def test_caption_atmosphere_is_recorded_but_never_used(f):
     assert not any(ch.isdigit() for q in quotes for ch in q)
 
 
-def test_ui_helpers_escape_text_unless_marked_as_markup():
-    from flamefall import ui
-
-    cards = ui.stat_cards_html([dict(value="<1>", label="<b>bold</b>", source="a & <i>b</i>", tone="amber")])
-    assert "<b>" not in cards and "<i>" not in cards and "&lt;b&gt;bold&lt;/b&gt;" in cards and "&lt;1&gt;" in cards
-    call = ui.callout_html("<script>x</script>", "body <u>u</u>", "info", "m <a href='#'>l</a>")
-    assert "<script>" not in call and "<u>" not in call and "<a href" not in call
-    trusted = ui.callout_html(ui.Html("<em>ok</em>"), "plain")
-    assert "<em>ok</em>" in trusted
-    assert isinstance(ui.badge("x<y", "info"), ui.Html) and "x&lt;y" in ui.badge("x<y", "info")
-
-
-def test_disclaimer_is_rendered_before_any_page_runs():
-    """A page may call st.stop(); the note in the sidebar must already be on screen by then."""
-    from pathlib import Path
-
-    from streamlit.testing.v1 import AppTest
-
-    app = Path(flex.__file__).resolve().parents[1] / "app.py"
-    src = app.read_text(encoding="utf-8")
-    assert src.index("ui.DISCLAIMER") < src.index("nav.run()")
-    at = AppTest.from_file(str(app), default_timeout=120)
-    at.run()
-    at.switch_page("views/flex_explorer.py")
-    at.run()
-    at.multiselect[0].set_value([])                 # empty filter: the page stops early
-    at.run()
-    side = " ".join(m.value for m in at.sidebar.markdown)
-    assert "never rates a material" in side and not at.exception
-
-
 def test_disruption_is_never_extinction(f):
     assert f.loc[f["outcome"] == "Disruption", "extinguished"].sum() == 0
     sch = flex.build_schema_frame()
@@ -198,7 +162,7 @@ def test_disruption_is_never_extinction(f):
 
 def test_extinction_column_is_only_called_extinction_for_extinction_outcomes(f):
     """Table IX prints a value in the extinction-diameter column for 39 tests that did not extinguish."""
-    from flamefall import charts
+    from flamefall import aggregates
 
     printed = f[f["extinction_diameter_mm"].notna()].groupby("outcome").size().to_dict()
     assert printed == {"Completion": 15, "Disruption": 24, "Extinction": 159}
@@ -207,31 +171,42 @@ def test_extinction_column_is_only_called_extinction_for_extinction_outcomes(f):
     for test_id, outcome in [("FLEX-001", "Disruption"), ("FLEX-051", "Completion"), ("FLEX-002", "Extinction")]:
         row = by_id.loc[test_id]
         assert row["outcome"] == outcome
-        names = [t.name for t in charts.d2_reconstruction(row).data]
-        assert (charts.END_MARKER_EXTINCTION in names) == (outcome == "Extinction"), test_id
-        assert (charts.END_MARKER_OTHER.format(outcome=outcome) in names) == (outcome != "Extinction"), test_id
+        line = aggregates.d2_line(row)
+        name = line["marker"]["name"]
+        assert (name == aggregates.END_MARKER_EXTINCTION) == (outcome == "Extinction"), test_id
+        assert (name == aggregates.END_MARKER_OTHER.format(outcome=outcome)) == (outcome != "Extinction"), test_id
+        assert line["d2_start"] == pytest.approx(row["d0_mm"] ** 2)
+        assert line["d2_end"] == pytest.approx(row["d0_mm"] ** 2 - row["burning_rate_mm2_s"] * row["burn_time_s"])
+    assert aggregates.d2_line(by_id.loc["FLEX-212"]) is None     # no diameters printed: no line, never a guess
+    assert aggregates.end_diameter_label("Extinction") == "Ext. diameter"
+    assert aggregates.end_diameter_label("Disruption") == aggregates.end_diameter_label("Completion") \
+        == "Diameter at test end"
 
 
-def test_end_diameter_is_labelled_by_outcome():
-    """The single-test panel and the chart use the same rule for the extinction-diameter column."""
-    from pathlib import Path
+def test_aggregates_accept_an_empty_selection(f):
+    from flamefall import aggregates
 
-    from streamlit.testing.v1 import AppTest
+    empty = f.iloc[0:0]
+    assert list(aggregates.share_by_level(empty, "o2_pct").columns) == aggregates.SHARE_COLUMNS
+    assert len(aggregates.nearest_tests(empty, 21, 1.0)) == 0
 
-    from flamefall import charts
 
-    assert charts.end_diameter_label("Extinction") == "Ext. diameter"
-    assert charts.end_diameter_label("Disruption") == charts.end_diameter_label("Completion") == "Diameter at test end"
-    at = AppTest.from_file(str(Path(flex.__file__).resolve().parents[1] / "app.py"), default_timeout=120)
-    at.run()
-    at.switch_page("views/flex_explorer.py")
-    at.run()                                                   # default selection is FLEX-001, a Disruption
-    panel = " ".join(m.value for m in at.markdown)
-    assert "Diameter at test end" in panel and ">Ext. diameter<" not in panel
-    pick = next(s for s in at.selectbox if s.label == "Test")
-    pick.set_value("FLEX-002").run()                           # an Extinction
-    panel = " ".join(m.value for m in at.markdown)
-    assert ">Ext. diameter<" in panel and "Diameter at test end" not in panel
+def test_share_by_level_recounts_the_table(f):
+    from flamefall import aggregates
+
+    agg = aggregates.share_by_level(f, "o2_pct")
+    assert int(agg["n"].sum()) == 276 and int(agg["k"].sum()) == 186
+    assert int(agg["disruption"].sum()) == 62 and int(agg["completion"].sum()) == 28
+    assert ((agg["lo"] <= agg["share"] + 1e-12) & (agg["share"] <= agg["hi"] + 1e-12)).all()
+
+
+def test_nearest_tests_never_use_an_imputed_pressure(f):
+    from flamefall import aggregates
+
+    assert f.set_index("test_id").loc["FLEX-114", ["pressure_atm"]].isna().all()
+    near = aggregates.nearest_tests(f, f.set_index("test_id").loc["FLEX-114", "o2_pct"], 1.0, n=276)
+    assert len(near) == 275 and "FLEX-114" not in set(near["test_id"]) and near["pressure_atm"].notna().all()
+    assert near["distance"].is_monotonic_increasing
 
 
 def test_flex_212_keeps_its_printed_atmosphere(raw):
@@ -251,8 +226,38 @@ def test_schema_file_is_current(sch):
     assert list(sch.columns) == flex.SCHEMA_COLUMNS + flex.EXTRA_COLUMNS
     assert len(sch) == 276 and sch["test_id"].tolist() == built["test_id"].tolist()
     assert len(flex.SCHEMA_COLUMNS) == 24
-    pd.testing.assert_series_equal(sch["K_hot_mm2_s"], built["K_hot_mm2_s"], check_names=False)
-    assert sch["extinction_mode"].tolist() == built["extinction_mode"].tolist()
+    # every column of the committed file must equal a fresh build, not just a few of them
+    fresh = built.copy()
+    for col in ("support", "notes", "cool_flame_label", "cool_flame_quote", "extinction_wording"):
+        fresh[col] = fresh[col].fillna("")
+    for col in sch.columns:
+        a, b = sch[col], fresh[col]
+        if pd.api.types.is_numeric_dtype(b) and not pd.api.types.is_bool_dtype(b):
+            pd.testing.assert_series_equal(a.astype(float), b.astype(float), check_names=False, rtol=1e-9, obj=col)
+        else:
+            assert a.astype("string").fillna("").tolist() == b.astype("string").fillna("").tolist(), col
+
+
+def test_build_script_refuses_to_write_an_invalid_file(tmp_path, monkeypatch):
+    import sys
+
+    sys.path.insert(0, str(Path(flex.__file__).resolve().parents[1] / "scripts"))
+    import build_flex_droplets as build
+
+    good = flex.build_schema_frame()
+    assert build.problems(good) == []                          # documented source gaps are not problems
+    bad = good.copy()
+    bad.loc[bad.index[0], "extinction_mode"] = "made_up_mode"
+    bad.loc[bad.index[1], "test_id"] = bad.loc[bad.index[2], "test_id"]
+    bad.loc[bad.index[3], "D_rad_ext_mm"] = bad.loc[bad.index[3], "D0_mm"] + 1.0
+    found = build.problems(bad)
+    assert any("made_up_mode" in p for p in found) and any("duplicate" in p for p in found)
+    assert any("rule (c)" in p for p in found)
+    monkeypatch.setattr(flex, "DATA", tmp_path)
+    monkeypatch.setattr(flex, "build_schema_frame", lambda: bad)
+    assert build.main() == 1 and not (tmp_path / "flex_droplets.csv").exists()
+    monkeypatch.setattr(flex, "build_schema_frame", lambda: good)
+    assert build.main() == 0 and (tmp_path / "flex_droplets.csv").exists()
 
 
 def test_vocabulary(sch):
@@ -285,7 +290,36 @@ def test_rule_d_burner_flow_never_on_ambient_axis(sch):
         schema.ambient_o2_only(probe.drop(columns=["o2_is_ambient"]))
 
 
+def test_rule_d_reads_the_flag_whatever_its_type(sch):
+    probe = sch.head(6).copy()
+    probe["o2_is_ambient"] = [1.0, 0.0, float("nan"), 1.0, 1.0, 0.0]     # a 1/0 column that gained a blank
+    assert len(schema.ambient_o2_only(probe)) == 3
+    probe["o2_is_ambient"] = probe["o2_is_ambient"].astype(object)
+    probe["o2_is_ambient"] = ["1.0", "true", "yes", " TRUE ", "0", "maybe"]
+    assert len(schema.ambient_o2_only(probe)) == 4
+    for yes in (True, 1, 1.0, "1", "1.0", "True", "yes"):
+        assert schema.is_ambient_flag(yes), yes
+    for no in (False, 0, 0.0, None, float("nan"), pd.NA, "", "0", "no", "false", "85"):
+        assert not schema.is_ambient_flag(no), no
+
+
+def test_vocabulary_reports_blanks_and_unknowns_together(sch):
+    probe = sch.head(4).copy()
+    probe.loc[probe.index[0], "extinction_mode"] = None
+    probe.loc[probe.index[1], "extinction_mode"] = "made_up_mode"
+    probe.loc[probe.index[2], "verification"] = float("nan")
+    probe.loc[probe.index[3], "verification"] = "trust me"
+    found = schema.check_vocabulary(probe)                       # must list problems, not raise
+    assert "extinction_mode is blank in 1 row(s)" in found and "verification is blank in 1 row(s)" in found
+    assert any("made_up_mode" in p for p in found) and any("trust me" in p for p in found)
+
+
 def test_rule_e_unverified_rows_excluded_from_models(sch):
-    probe = sch.head(3).copy()
+    probe = sch.head(5).copy()
     probe.loc[probe.index[0], "verification"] = "unverified"
-    assert len(schema.model_rows_only(probe)) == 2
+    probe.loc[probe.index[1], "verification"] = None          # a blank cell
+    probe.loc[probe.index[2], "verification"] = "something else"
+    kept = schema.model_rows_only(probe)
+    assert len(kept) == 2 and set(kept["verification"]) == {"verified_live"}     # fails closed
+
+

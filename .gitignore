@@ -2,7 +2,6 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-.streamlit/secrets.toml
 .DS_Store
 .claude/
 build/

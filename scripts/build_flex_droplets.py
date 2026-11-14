@@ -15,9 +15,29 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from flamefall import flex, schema  # noqa: E402
 
 
+def problems(df) -> list[str]:
+    """Everything that must be empty before the file may be written.
+
+    The documented source gaps are not problems: the 16 ignited tests with no printed burning rate,
+    FLEX-212 (rule b) and the 0.01 mm rounding step of FLEX-129 (inside rule (c)'s tolerance).
+    """
+    found = list(schema.check_vocabulary(df))
+    found += [f"rule (a): {t} has a burning rate but did not ignite" for t in schema.rule_a_no_ignition_has_no_K(df)]
+    unexpected_b = set(schema.rule_b_cool_flame_needs_radiative_diameter(df)) - set(schema.KNOWN_SOURCE_GAPS["b"])
+    found += [f"rule (b): {t} has cool-flame evidence but no radiative-extinction diameter" for t in sorted(unexpected_b)]
+    found += [f"rule (c): {t} has diameters out of order" for t in schema.rule_c_diameters_ordered(df)]
+    return found
+
+
 def main() -> int:
     df = flex.build_schema_frame()
     out = flex.DATA / "flex_droplets.csv"
+    found = problems(df)
+    if found:
+        print(f"NOT written: {out.name} would break {len(found)} schema rule(s):")
+        for line in found:
+            print("  ", line)
+        return 1
     df.to_csv(out, index=False, lineterminator="\n")
     print(f"wrote {out.name}: {len(df)} rows x {len(df.columns)} columns")
     print("extinction_mode:", df["extinction_mode"].value_counts().to_dict())

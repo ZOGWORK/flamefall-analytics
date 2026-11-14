@@ -70,23 +70,46 @@ def ambient_o2_only(df: pd.DataFrame, o2_col: str = "o2_mol_pct") -> pd.DataFram
     """
     if "o2_is_ambient" not in df:
         raise ValueError("o2_is_ambient column is mandatory for any frame plotted against ambient O2")
-    flag = df["o2_is_ambient"].map(lambda v: str(v).strip().lower() in ("true", "1", "yes"))
+    flag = df["o2_is_ambient"].map(is_ambient_flag)
     return df[flag & df[o2_col].notna()]
 
 
+def is_ambient_flag(value: object) -> bool:
+    """True only for a clear yes: True, 1, 1.0, "true", "1", "1.0", "yes". Blank or unknown is not ambient."""
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in ("true", "yes"):
+            return True
+        try:
+            return float(text) == 1.0
+        except ValueError:
+            return False
+    try:
+        return bool(value == 1)            # True, 1, 1.0 and numpy equivalents; NaN and pd.NA are not 1
+    except TypeError:
+        return False
+
+
+MODEL_VERIFICATION = {"verified_live", "index"}
+
+
 def model_rows_only(df: pd.DataFrame) -> pd.DataFrame:
-    """(e) Rows marked unverified never reach a model."""
-    return df[df["verification"] != "unverified"]
+    """(e) Only rows with a stated, acceptable verification level reach a model.
+
+    Fails closed: `unverified`, a blank cell and any unknown value are all kept out.
+    """
+    return df[df["verification"].isin(MODEL_VERIFICATION)]
 
 
 def check_vocabulary(df: pd.DataFrame) -> list[str]:
     problems = []
-    bad = set(df["extinction_mode"]) - ALLOWED_EXTINCTION_MODES
-    if bad:
-        problems.append(f"extinction_mode not allowed: {sorted(bad)}")
-    bad = set(df["verification"]) - ALLOWED_VERIFICATION
-    if bad:
-        problems.append(f"verification not allowed: {sorted(bad)}")
+    for col, allowed in (("extinction_mode", ALLOWED_EXTINCTION_MODES), ("verification", ALLOWED_VERIFICATION)):
+        blank = int(df[col].isna().sum())                    # both columns are mandatory
+        if blank:
+            problems.append(f"{col} is blank in {blank} row(s)")
+        bad = set(df[col].dropna()) - allowed
+        if bad:
+            problems.append(f"{col} not allowed: {sorted(map(str, bad))}")
     bad = set(df["support"].dropna()) - ALLOWED_SUPPORT - {""}
     if bad:
         problems.append(f"support not allowed: {sorted(bad)}")
