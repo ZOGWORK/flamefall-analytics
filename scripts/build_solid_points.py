@@ -3,8 +3,8 @@
 Sources, all read in full:
   * BASS-II  - data/bass2/bass2_test_points.csv, transcribed from NASA/TM-20210011385
                (Tables 5.1, 7.1, A.1-A.6). See data/bass2/README.md for the labelling rules.
-  * Saffire  - PSI experimental tables (PSI-98, PSI-99), Olson et al. 2023 Table 1,
-               ICES-2024-365 Table 1, ICES-2025-156 Table 1.
+  * Saffire  - the PSI-99 experimental table (Saffire-II), Olson et al. 2023 Table 1
+               (Saffire-I, -III), ICES-2024-365 Table 1 (IV to VI), ICES-2025-156 Table 1 (VI Nomex).
   * SoFIE-GEL - Li et al., NTRS 20240007628, Table 1.
 
 Solid fuels only. Droplet and gas-flame tests never enter this file.
