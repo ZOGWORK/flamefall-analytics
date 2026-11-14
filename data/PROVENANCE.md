@@ -192,3 +192,11 @@ are computed from PSI experimental tables and say which table and column in `ran
 result points at an `evidence.json` entry. A cell that PSI does not state, and that no cited source
 states, is empty. 26 rows are the PSI search hits; 7 are investigations the search does not return
 (Saffire IV to VI, SoFIE-GEL, FLARE, LUCI, FM2) and are marked as such.
+
+## `models/*.json` and `cv_splits.json`
+
+Written by `scripts/train_models.py` (seed 42): coefficients, preprocessing statistics, every
+validation metric, out-of-fold predictions, up to 1,000 bootstrap coefficient sets, and the exact
+fold membership of every row. A bootstrap resample that draws a single outcome class cannot be
+fitted and is skipped, so each card states how many sets it holds (`bootstrap.n`: 1,000 for
+droplet extinction, 992 for droplet cool-flame evidence, 1,000 for solids). The cards are strict JSON: a missing value is `null`, never `NaN`.
