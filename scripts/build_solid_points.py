@@ -1,4 +1,7 @@
-"""Build data/solid_test_points.csv: every solid-fuel test point with a stated outcome.
+"""Build data/solid_test_points.csv: every solid-fuel test point transcribed from the sources.
+
+A point whose outcome the source leaves ambiguous is kept with that label and is left out of every
+calculation.
 
 Sources, all read in full:
   * BASS-II  - data/bass2/bass2_test_points.csv, transcribed from NASA/TM-20210011385
@@ -33,11 +36,13 @@ PSI99 = ("PSI-99 experimental table (Saffire-II)", "https://psi.nasa.gov/physci/
 BASS2_PRESSURE_BASIS = ("NASA/TM-20210011385 §7 (report p. 95): 'Ambient pressure was 1 atm', stated for the fabric "
                         "tests; the other BASS-II tests ran in the same glovebox working volume")
 KPA_PER_ATM = 101.325
+# Points whose pressure is not printed for that test: the campaign's initial pressure is used instead.
+PRESSURE_FROM_CAMPAIGN = {"SAF6-1"}
 
 COLUMNS = ["point_id", "investigation_id", "group_id", "test_no", "material_class", "material_verbatim", "geometry",
            "thickness_mm", "flow_direction", "flow_cm_s", "flow_value_kind", "o2_pct", "o2_final_pct", "o2_at_outcome_pct",
            "o2_at_outcome_basis", "o2_is_ambient",
-           "pressure_kPa", "pressure_basis", "gravity_g", "outcome", "sustained", "outcome_quote", "source_ref",
+           "pressure_kPa", "pressure_basis", "pressure_stated", "gravity_g", "outcome", "sustained", "outcome_quote", "source_ref",
            "source_url", "verification", "usable_for_model", "notes"]
 
 # (point_id, investigation, test, material_class, material, geometry, thickness_mm, direction, flow, o2, kPa,
@@ -126,6 +131,8 @@ def bass2_rows() -> pd.DataFrame:
         "o2_is_ambient": True,
         "pressure_kPa": 101.3,
         "pressure_basis": BASS2_PRESSURE_BASIS,
+        # the memo states 1 atm for the fabric tests of Table 7.1 only; for every other test it is assumed
+        "pressure_stated": b["source_table"].str.contains("Table 7.1", regex=False),
         "gravity_g": 0.0,
         "outcome": b["outcome"],
         "outcome_quote": b["outcome_quote"],
@@ -143,7 +150,8 @@ def extra_rows() -> pd.DataFrame:
         rows.append(dict(point_id=pid, investigation_id=inv, group_id=inv, test_no=test, material_class=mclass,
                          material_verbatim=mat, geometry=geom, thickness_mm=thick, flow_direction=direction,
                          flow_cm_s=flow, flow_value_kind="source_table", o2_pct=o2, o2_is_ambient=True,
-                         pressure_kPa=kpa, pressure_basis=src[0], gravity_g=0.0, outcome=outcome,
+                         pressure_kPa=kpa, pressure_basis=src[0], pressure_stated=pid not in PRESSURE_FROM_CAMPAIGN,
+                         gravity_g=0.0, outcome=outcome,
                          outcome_quote=quote, source_ref=src[0], source_url=src[1], verification="verified_live",
                          notes=notes))
     return pd.DataFrame(rows)

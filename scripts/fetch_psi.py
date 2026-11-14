@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import sys
 import time
 import urllib.parse
@@ -34,6 +35,23 @@ OUT = Path(__file__).resolve().parents[1] / "data" / "psi"
 HEADERS = {"User-Agent": "flamefall-analytics (open-source research dashboard)", "Accept": "application/json"}
 TERM = "combustion"
 DROP_KEYS = ("added", "removed")
+CONTACT_KEY = re.compile(r"e-?mail|phone|fax|address", re.I)
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+
+
+def strip_contacts(node):
+    """Remove contact details from a PSI record before it is written.
+
+    Fields named for an e-mail address, phone, fax or postal address are dropped, and an e-mail
+    address inside any other text is replaced. Names, roles and affiliations are kept.
+    """
+    if isinstance(node, dict):
+        return {k: strip_contacts(v) for k, v in node.items() if not CONTACT_KEY.search(k)}
+    if isinstance(node, list):
+        return [strip_contacts(v) for v in node]
+    if isinstance(node, str):
+        return EMAIL.sub("[e-mail removed]", node)
+    return node
 
 
 def get(url: str, data: bytes | None = None, as_json: bool = True, tries: int = 3):
@@ -77,7 +95,7 @@ def main() -> int:
         start += 25
     print(f"search '{TERM}': {total} hits, {len(hits)} fetched")
     (OUT / "search_combustion.json").write_text(json.dumps(
-        [{"rank": i + 1, "score": h.get("_score"), **h["_source"]} for i, h in enumerate(hits)],
+        [{"rank": i + 1, "score": h.get("_score"), **strip_contacts(h["_source"])} for i, h in enumerate(hits)],
         indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
     tables, summary = [], []
@@ -87,6 +105,7 @@ def main() -> int:
         rec = get(f"{BASE}/repo/investigations/{psi_id}")
         for bulky in DROP_KEYS:          # version-diff blobs, megabytes each, not record content
             rec.pop(bulky, None)
+        rec = strip_contacts(rec)
         (OUT / "records" / f"{psi_id}.json").write_text(json.dumps(rec, indent=1, ensure_ascii=False) + "\n",
                                                         encoding="utf-8")
         version = rec.get("versionInfo", {}).get("version") or rec.get("version") or 1

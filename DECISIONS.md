@@ -19,7 +19,7 @@ sources themselves.
 | C6 | "LUCI has NO published quantitative results as of 14 Nov 2026. Do not present LUCI spread rates" | A conference presentation is on NTRS (20250010653, ASGSR, Dec 2025) with spread rates for both samples in simulated lunar gravity and in normal gravity, and chamber oxygen histories. Read in full | Recorded as the nearest real tests to partial gravity, labelled as preliminary slides, one flight, centrifuge-simulated gravity, not a PSI dataset. No limiting oxygen value is claimed, because the slides state none. See QUESTIONS.md Q3 |
 | C7 | "There is NO Saffire VI-vs-IV spread-rate comparison in the literature. Do not present one" | ICES-2026-577 (NTRS 20260001992) Table 1 lists thin-fuel spread rates side by side: IV-1 3.6 mm/s, V-2 3.4 mm/s, VI-2 4.05 mm/s. Read in full | The three rates are shown together with their pressures and source. No ratio or trend is derived from them. See QUESTIONS.md Q3 |
 | C8 | "CO/CO2 molar ratio 0.01 to 0.1" (ICES-2015-196) | The paper states no such range. It gives 550 ppm CO per 1% CO2 for concurrent rods and 370 ppm for thick slabs, about ten times efficient flue gas | The stated slopes are shown instead |
-| C9 | "Buoyant velocities: 1 g 24 cm/s, lunar about 10 cm/s, Martian about 15 cm/s" | These come from ICES-2019-101, which could not be re-read (QUESTIONS.md Q2). A 2025 paper by the same group takes 35 cm/s as a high estimate for normal gravity and says the lunar value "is not known"; a 2004 paper expects more than 20 cm/s on the Moon and Mars | Shown as disagreeing estimates. The 24 / 10 / 15 figures are greyed as not re-verified |
+| C9 | "Buoyant velocities: 1 g 24 cm/s, lunar about 10 cm/s, Martian about 15 cm/s" | These come from ICES-2019-101, which could not be re-read (QUESTIONS.md Q2). A 2025 paper by the same group takes 35 cm/s as a high estimate for normal gravity and says the lunar value "is not known"; a 2004 paper expects more than 20 cm/s on the Moon and Mars | Recorded as disagreeing estimates. The 24 / 10 / 15 figures carry the verification level `unverified` |
 | C10 | BASS-II "O2 13 to 22%"; rods "0.476 cm" and "0.318 cm" | The memo gives 13.6 to 22.2%, and those two figures are rod **radii** | Uses the memo's values |
 | C11 | "PMMA concurrent rod minimum 13.6%" as the flammability-boundary minimum | Two separate verified numbers exist: 13.6% is the final oxygen reading of one quench test (and the figure on the 2014 poster, against a 16% normal-gravity limit); the memo's fitted boundary has its minimum at about 13.5%, against a 15.4% normal-gravity upward limit | Both are shown, each with its own source and comparison |
 | C12 | PSI's FLEX experimental table would match Table IX row for row | PSI's table (PSI-69) has 274 rows numbered 1 to 274 in sequence. Aligned on the CIR identifier and time, all 274 rows match Table IX on every value except one documented cell (FLEX-114 pressure, printed as 0 by PSI and left empty here), but PSI's numbering stops agreeing with the FLEX test numbers after test 155, and FLEX-216 and FLEX-230 are absent | Table IX stays the authority for test numbers. `test_psi_flex_table_matches_table_ix_value_for_value` |
@@ -60,9 +60,10 @@ sources themselves.
 
 ### Data
 - **D1. Extra `extinction_mode` values.** Table IX records Disruption, and most captions do not say
-  which extinction mode occurred. Three values were added rather than forcing rows into the four
-  specified ones: `disruption`, `radiative_cool_flame_not_stated`,
-  `visible_extinction_mode_not_stated`.
+  which extinction mode occurred. Four values were added rather than forcing rows into the four
+  specified ones: `disruption`; `radiative_cool_flame_not_stated` (the caption says radiative and
+  is silent on a cool flame); `radiative_no_cool_flame_evidence` (the caption says radiative and
+  reports no evidence of a cool flame: FLEX-130, 266 and 267); `visible_extinction_mode_not_stated`.
 - **D2. Schema rule (a)** is enforced in the checkable direction (no ignition means no K). Table IX
   prints no burning rate for 16 tests that did ignite; they are counted and left empty.
 - **D3. Schema rule (b)** has one documented exception, FLEX-212 (cool-flame evidence in the
@@ -76,7 +77,10 @@ sources themselves.
 - **D7. PSI "investigation dates"** are the record's own start and end dates. For several records
   they are project dates, not on-orbit dates. They are shown as "record dates".
 - **D8. BASS-II pressure** is taken as 1 atm for every test. The memo states it for the fabric
-  tests; the other tests ran in the same glovebox working volume.
+  tests; the other tests ran in the same glovebox working volume. This is an assumption, so every
+  solid point carries `pressure_stated`: true where the source prints a pressure for that test (70
+  points), false where it is assumed (242 BASS-II points, and the Saffire VI Nomex sample, which is
+  given its campaign's initial pressure).
 - **D9. Oxygen at the outcome.** Oxygen falls during a long burn in a sealed glovebox. A flame that
   quenched or blew off is placed at the end-of-test oxygen reading (which is what the memo plots on
   its flammability boundary); sustained and no-ignition points keep the initial reading.
@@ -86,18 +90,29 @@ sources themselves.
 
 ### Presentation rules
 - **D11. "D² versus time" for a single test** is a d²-law line rebuilt from D0, average K and burn
-  time. Table IX has no time series, so it is never called a measured trace.
+  time. Table IX has no time series, so it is never called a measured trace. For 31 tests the
+  printed K and burn time would take the line below zero, which a diameter squared cannot do; the
+  line then stops at zero and `aggregates.d2_line` reports the time it gets there.
 - **D12. Shares carry Wilson 95% intervals.**
 - **D13. The end marker of that line** is called an extinction diameter only when the outcome is
   Extinction; 24 Disruption and 15 Completion rows also print a value in that column.
 - **D14. Environment filter.** Tags are computed from each investigation's own tested ranges by a
   stated rule. Station: tested near 21% O2. Rover: tested at 30% O2 or more, or at 70.3 kPa or
   less. Lunar: the rover rule, or tested in partial gravity. Spacecraft: vehicle-scale burn or
-  smoke detection. A planned investigation has no tested range, so only its gravity can tag it.
+  smoke detection. A planned investigation has no tested range, so only its gravity can tag it,
+  and it earns no relevance to any scenario: every term reads "planned, not tested".
+- **D14a. Relevance in still gas.** An investigation that ran in still gas only is a full match for
+  a still-gas scenario, and the match fades to zero over 20 cm/s of flow, like any other range.
+- **D14b. Nearest tests and missing values.** A test that does not state one of the compared
+  quantities (FLEX-114 has no pressure, 12 FLEX tests no initial diameter, 100 solid points no flow
+  speed) is compared on the quantities it does state, is ranked after every test that states them
+  all, and says which quantity was not compared.
 - **D15. Search is retrieval and extraction only.** TF-IDF over catalogue rows and sourced
   statements. The answer is the matching statements with their sources. No text is generated, so
   no number can be invented. An oxygen limit stated in the question is applied as a filter on the
-  recorded ambient range, and the filter is echoed back.
+  recorded ambient range, of statements and of investigations alike, and the filter is echoed back.
+  A fuel class is applied only when the question's words point to one class; a question that names
+  two ("which materials did the smoke detector miss") is answered by text match alone.
 - **D16. The two SAME tables stay two tables,** never averaged.
 
 ### Triage score
@@ -145,10 +160,10 @@ sources themselves.
 
 ### Process
 - **D31. Layers and stack.** Python owns the data: loading, checking, aggregating and fitting
-  (pandas, numpy, scikit-learn; versions pinned to the ones the tests ran on). The front end is a
-  separate React app that reads what Python exports and never re-derives a source value. Models
-  are trained offline and stored as JSON; an estimate is computed from the stored coefficients,
-  never by re-fitting.
+  (pandas, numpy, scikit-learn; versions pinned to the ones the tests ran on). A front end is a
+  separate layer that reads what Python exports and never re-derives a source value; none is part
+  of this change. Models are trained offline and stored as JSON; an estimate is computed from the
+  stored coefficients, never by re-fitting.
 - **D32. Research agents.** Four background agents read sources in parallel and reported verbatim
   quotes with page and read level. LUCI, the 2026 Saffire table, the SoFIE-GEL table, the BASS-II
   poster and the lunar-gravity ignition paper were then re-read directly before use. Statements
