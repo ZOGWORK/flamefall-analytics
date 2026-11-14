@@ -143,8 +143,8 @@ Text from the API contains U+FFFD characters where PSI's source had dashes or qu
 keep PSI's bytes; `flamefall/psi.py::fix_text` repairs them for display only.
 
 Cross-check against the core dataset: PSI's own FLEX table (PSI-69) lists 274 tests. Aligned on
-CIR identifier and time, all 274 match `flex-table-ix.csv` on every value; the only difference is
-the documented cleaning of FLEX-114. PSI numbers its rows 1 to 274 in sequence rather than by FLEX
+CIR identifier and time, all 274 rows find their Table IX partner, and every value agrees except
+one documented cell: PSI prints FLEX-114's pressure as 0, which this dataset leaves empty. PSI numbers its rows 1 to 274 in sequence rather than by FLEX
 test number, and does not list FLEX-216 or FLEX-230 (`tests/test_psi.py`).
 
 ## `bass2/` — BASS-II test tables (126 tests, 290 labelled test points)
@@ -167,9 +167,10 @@ The memo is a primary source found by the builder; it is not a link on the chall
 ## `solid_test_points.csv` — every solid-fuel test point with a stated outcome (313 rows)
 
 Built by `scripts/build_solid_points.py` from `bass2/bass2_test_points.csv` plus 23 rows typed from
-four sources, each named per row: PSI experimental tables PSI-98 and PSI-99 (Saffire-I, -II), Olson
-et al. 2023 Table 1, ICES-2024-365 Table 1, ICES-2025-156 Table 1, and NTRS 20240007628 Table 1
-(SoFIE-GEL). 179 rows have oxygen, pressure, a velocity in cm/s and an unambiguous outcome.
+five sources, each named per row: the PSI-99 experimental table (Saffire-II, 10 rows), Olson et al.
+2023 Table 1 (Saffire-I and -III, 2 rows), ICES-2024-365 Table 1 (Saffire-IV, -V and -VI, 5 rows),
+ICES-2025-156 Table 1 (the Saffire-VI Nomex sample, 1 row) and NTRS 20240007628 Table 1 (SoFIE-GEL,
+5 rows). 179 rows have oxygen, pressure, a velocity in cm/s and an unambiguous outcome.
 
 ## `evidence.json` — 66 sourced statements
 
