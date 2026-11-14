@@ -46,6 +46,14 @@ def rng(series: pd.Series, scale: float = 1.0) -> tuple[float | None, float | No
     return round(float(v.min()) * scale, 2), round(float(v.max()) * scale, 2)
 
 
+def count(table: pd.DataFrame, what: str) -> tuple[int, str]:
+    """Number of distinct rows, and a source note that says so when PSI's file repeats rows."""
+    d = psi.distinct_rows(table)
+    dup = psi.duplicate_count(table)
+    note = f"{what}" + (f" ({dup} exact repeats of earlier rows in PSI's file are not counted)" if dup else "")
+    return len(d), note
+
+
 def numbers(text: str) -> list[float]:
     return [float(x) for x in re.findall(r"\d+(?:\.\d+)?", text)]
 
@@ -76,8 +84,8 @@ def computed(inv_id: str) -> dict:
     if inv_id == "CFI":
         d = t("PSI-39_Experimental table_CFI.csv")
         p = [x * KPA_PER_ATM for row in d["Pressure"] for x in numbers(row)]
-        return dict(o2=rng(d["Oxygen"], 100), p=(round(min(p), 1), round(max(p), 1)), n=len(d),
-                    n_src="rows of the PSI-39 experimental table",
+        n, n_src = count(d, "distinct rows of the PSI-39 experimental table")
+        return dict(o2=rng(d["Oxygen"], 100), p=(round(min(p), 1), round(max(p), 1)), n=n, n_src=n_src,
                     src="PSI-39 experimental table, columns Oxygen and Pressure (atm converted to kPa)")
     if inv_id == "BASS":
         d = t("PSI-26_Experimental table_BASS.csv")
@@ -92,7 +100,8 @@ def computed(inv_id: str) -> dict:
     if inv_id == "SPICE":
         d = t("PSI-107_Experimental table_Spice.csv")
         lo, hi = rng(d["Air Rate (cm/s)"])
-        return dict(flow=(max(lo, 0.0), hi), n=len(d), n_src="rows of the PSI-107 experimental table",
+        n, n_src = count(d, "distinct rows of the PSI-107 experimental table")
+        return dict(flow=(max(lo, 0.0), hi), n=n, n_src=n_src,
                     src="PSI-107 experimental table, column 'Air Rate (cm/s)' (coflow air; negative entries "
                         "in the table are not shown as a minimum)")
     if inv_id == "SLICE":
@@ -132,7 +141,7 @@ def computed(inv_id: str) -> dict:
                         "25 cm/s for the same flight; both are shown, neither is preferred. The PSI table has "
                         "no oxygen column")
     if inv_id == "ACME-BRE":
-        d = t("PSI-20_Experimental table_ACME BRE.csv")
+        d = psi.distinct_rows(t("PSI-20_Experimental table_ACME BRE.csv"))
         o2 = []
         for row in d["Oxygen Conc (percent)"]:
             # two cells read '3400%' and '2100%': a spreadsheet percent-format artefact for 34 and 21
@@ -142,15 +151,18 @@ def computed(inv_id: str) -> dict:
                     src="PSI-20 experimental table, column 'Oxygen Conc (percent)' (nominal). The table states "
                         "that chamber pressure was varied but does not list it")
     if inv_id == "ACME-CLD":
-        d = t("PSI-21_Experimental table_CLD Flame.csv")
+        d = psi.distinct_rows(t("PSI-21_Experimental table_CLD Flame.csv"))
         return dict(n=int(psi.numeric(d["Flames ignited"]).sum()),
                     n_src="sum of 'Flames ignited' in the PSI-21 experimental table", src="")
     if inv_id == "ACME-EFIELD":
-        d = t("PSI-22_Experimental table_ACME E-FIELD Flames.csv")
+        raw = t("PSI-22_Experimental table_ACME E-FIELD Flames.csv")
+        d = psi.distinct_rows(raw)
         return dict(n=int(psi.numeric(d["Flames Ignited"]).sum()),
-                    n_src="sum of 'Flames Ignited' in the PSI-22 experimental table (rows with a count)", src="")
+                    n_src="sum of 'Flames Ignited' over the distinct rows of the PSI-22 experimental table "
+                          f"({psi.duplicate_count(raw)} exact repeats of earlier rows in PSI's file are not counted)",
+                    src="")
     if inv_id == "ACME-sFlame":
-        d = t("PSI-23_Experimental table_ACME s-Flame.csv")
+        d = psi.distinct_rows(t("PSI-23_Experimental table_ACME s-Flame.csv"))
         o2 = [x for row in d["Atmosphere*"] for x in numbers(row.split("O2")[0])]
         return dict(o2=(min(o2), max(o2)), p=(101.3, 101.3), n=int(psi.numeric(d["Flames Ignited*"]).sum()),
                     n_src="sum of 'Flames Ignited' in the PSI-23 experimental table",
@@ -167,7 +179,8 @@ def computed(inv_id: str) -> dict:
         d = t("PSI-159_Experimental table_CFI-G_Normal Flames.csv")
         inv = t("PSI-159_Experimental table_CFI-G_Inverse Flames.csv")
         return dict(o2=rng(d["XO2 before test"], 100), p=rng(d["approx p (bar)"], KPA_PER_BAR), n=len(d) + len(inv),
-                    n_src=f"rows of the two PSI-159 experimental tables ({len(d)} normal, {len(inv)} inverse)",
+                    n_src=f"tests in the two PSI-159 experimental tables ({len(d)} normal, {len(inv)} inverse; "
+                          "the inverse file's comma-only padding rows are not tests and are not counted)",
                     src="Normal flames only: PSI-159 table, chamber 'XO2 before test' and 'approx p (bar)'. "
                         "Inverse-flame oxygen (up to 0.85) is a burner feed and is deliberately not part of this range")
     return {}

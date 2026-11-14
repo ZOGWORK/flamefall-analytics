@@ -102,6 +102,26 @@ def test_cfig_cool_flame_rows():
     assert (psi.numeric(yes["approx p (bar)"]) == 2.0266).all()
 
 
+def test_psi_tables_are_counted_without_padding_or_repeats():
+    """PSI files carry comma-only padding rows and repeated blocks; neither is a test."""
+    inverse = psi.read_table("PSI-159_Experimental table_CFI-G_Inverse Flames.csv")
+    assert len(inverse) == 154 and inverse["Test"].str.strip().ne("").all()      # the raw file has 1,015 lines
+    assert inverse["Test"].is_unique
+    for name in psi.table_names():
+        t = psi.read_table(name)
+        assert not (t.apply(lambda col: col.str.strip()) == "").all(axis=1).any(), name
+    repeats = {name: psi.duplicate_count(psi.read_table(name)) for name in psi.table_names()}
+    assert {k: v for k, v in repeats.items() if v} == {
+        "PSI-107_Experimental table_Spice.csv": 34,
+        "PSI-22_Experimental table_ACME E-FIELD Flames.csv": 8,
+        "PSI-39_Experimental table_CFI.csv": 8,
+    }
+    cfi = psi.read_table("PSI-39_Experimental table_CFI.csv")
+    assert len(cfi) == 87 and len(psi.distinct_rows(cfi)) == 79
+    efield = psi.distinct_rows(psi.read_table("PSI-22_Experimental table_ACME E-FIELD Flames.csv"))
+    assert int(psi.numeric(efield["Flames Ignited"]).sum()) == 219               # 230 if the repeat is counted
+
+
 def test_bass2_psi_table_oxygen_range():
     t = psi.read_table("PSI-25_Experimental table_BASS-II.csv")
     o2 = psi.numeric(t["Calibrated  initial O2 % by vol"])
