@@ -10,6 +10,7 @@ Needs scikit-learn and scipy; the dashboard itself only reads the JSON.
 from __future__ import annotations
 
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -33,8 +34,20 @@ def sensitivity_without_disruption() -> dict:
             "note": "Disruption rows removed; y = 1 Extinction, y = 0 Completion."}
 
 
+def strict(obj):
+    """Replace NaN and infinity with None, recursively, so the output is valid RFC 8259 JSON."""
+    if isinstance(obj, float):
+        return obj if math.isfinite(obj) else None
+    if isinstance(obj, dict):
+        return {k: strict(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [strict(v) for v in obj]
+    return obj
+
+
 def write_json(path: Path, obj) -> None:
-    path.write_text(json.dumps(obj, indent=1) + "\n", encoding="utf-8")
+    # allow_nan=False makes the writer fail loudly if a non-finite value ever slips through
+    path.write_text(json.dumps(strict(obj), indent=1, allow_nan=False) + "\n", encoding="utf-8")
 
 
 def main() -> int:
