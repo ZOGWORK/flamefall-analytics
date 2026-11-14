@@ -18,7 +18,7 @@ export function TestMatrix() {
           key={r.test_id}
           title={`${r.test_id} · ${r.outcome}`}
           className="cell aspect-square rounded-[2px]"
-          style={{ background: OUTCOME_COLOR[r.outcome], boxShadow: `0 0 6px ${OUTCOME_COLOR[r.outcome]}`, animationDelay: `${300 + i * 4}ms` }}
+          style={{ background: OUTCOME_COLOR[r.outcome], animationDelay: `${300 + i * 4}ms` }}
         />
       ))}
     </div>
