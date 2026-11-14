@@ -16,7 +16,7 @@ sources themselves.
 | C3 | "26 PSI combustion investigations" | The PSI search for "combustion" returns 26 records, but 2 are not combustion science (PSI-181, a solder study; PSI-108, a fluid-physics experiment). 24 carry Research Area = Combustion Science | Shows "26 search results, 24 combustion science"; the two others are listed and never ranked |
 | C4 | Saffire: "IV-1 SIBAL, peak HRR 3,150 W, 409 kJ" and "V-2 2,800 W" | In ICES-2024-365 Table 2 those are **average** heat release from fuel-consumption calorimetry. Peak heat release by oxygen-consumption calorimetry exists only for VI-2, VI-3 and VI-4 (3,217 / 3,080 / 1,507 W) | Two separate evidence rows, each with its method and "average" or "peak" in the text |
 | C5 | "The 85% O2 figure belongs to Flame Design inverse flames, never to CFI-G" | PSI's own CFI-G inverse-flame table (PSI-159, 154 tests) has burner oxygen up to 0.85, and so does PSI's Flame Design inverse-flame table (PSI-10). The challenge page says the same: an oxygen-nitrogen mixture of up to 85% oxygen "flowed from the spherical burner creating an inside-out flame". Chamber-ambient oxygen in both normal-flame tables stops at 0.40 | The essential point stands and is enforced: 85% is a **burner feed, not an ambient**. It is attributed to the inverse flames of both investigations. `o2_is_ambient = False`; `test_inverse_flame_oxygen_is_a_burner_feed_not_an_ambient` |
-| C6 | "LUCI has NO published quantitative results as of 14 Nov 2026. Do not present LUCI spread rates" | A conference presentation is on NTRS (20250010653, ASGSR, Dec 2025) with spread rates for both samples in simulated lunar gravity and in normal gravity, and chamber oxygen histories. Read in full | Recorded as the nearest real tests to partial gravity, labelled as preliminary slides, one flight, centrifuge-simulated gravity, not a PSI dataset. No limiting oxygen value is claimed, because the slides state none. See QUESTIONS.md Q3 |
+| C6 | "LUCI has NO published quantitative results as of 14 Nov 2026. Do not present LUCI spread rates" | A conference presentation is on NTRS (20250010653, ASGSR, Dec 2025) with spread rates for both samples in simulated lunar gravity and in normal gravity, and chamber oxygen histories. Read in full | Shown on *What We Don't Know* and in the Scenario Lab as the nearest real tests to partial gravity, labelled as preliminary slides, one flight, centrifuge-simulated gravity, not a PSI dataset. No limiting oxygen value is claimed, because the slides state none. See QUESTIONS.md Q3 |
 | C7 | "There is NO Saffire VI-vs-IV spread-rate comparison in the literature. Do not present one" | ICES-2026-577 (NTRS 20260001992) Table 1 lists thin-fuel spread rates side by side: IV-1 3.6 mm/s, V-2 3.4 mm/s, VI-2 4.05 mm/s. Read in full | The three rates are shown together with their pressures and source. No ratio or trend is derived from them. See QUESTIONS.md Q3 |
 | C8 | "CO/CO2 molar ratio 0.01 to 0.1" (ICES-2015-196) | The paper states no such range. It gives 550 ppm CO per 1% CO2 for concurrent rods and 370 ppm for thick slabs, about ten times efficient flue gas | The stated slopes are shown instead |
 | C9 | "Buoyant velocities: 1 g 24 cm/s, lunar about 10 cm/s, Martian about 15 cm/s" | These come from ICES-2019-101, which could not be re-read (QUESTIONS.md Q2). A 2025 paper by the same group takes 35 cm/s as a high estimate for normal gravity and says the lunar value "is not known"; a 2004 paper expects more than 20 cm/s on the Moon and Mars | Shown as disagreeing estimates. The 24 / 10 / 15 figures are greyed as not re-verified |
@@ -113,7 +113,8 @@ sources themselves.
 - **D20. The formula disagrees with one real test.** By partial pressure
   the Saffire VI fabric burn (31% O2 at 54 kPa, 16.8 kPa of oxygen) scores zero on the oxygen term,
   yet the fabric burned. A limit measured at 1 atm does not transfer to low pressure by partial
-  pressure alone.
+  pressure alone. The Scenario Lab raises this whenever the oxygen term is zero next to a real
+  sustained test.
 - **D21. The gravity term** (lunar scored highest) follows the specification. The LUCI slides show
   slower spread in simulated lunar gravity for both samples, with a longer burn for the fabric. The
   term is a design choice, not a finding.
@@ -146,7 +147,8 @@ sources themselves.
 ### Process
 - **D31. Layers and stack.** Python owns the data: loading, checking, aggregating and fitting
   (pandas, numpy, scikit-learn; versions pinned to the ones the tests ran on). The front end is a
-  separate React app that reads what Python exports and never re-derives a source value. Models
+  separate React app (`web/`: Next.js App Router, shadcn/ui, Recharts, Framer Motion) that reads
+  what Python exports and never re-derives a source value. Models
   are trained offline and stored as JSON; an estimate is computed from the stored coefficients,
   never by re-fitting.
 - **D32. Research agents.** Four background agents read sources in parallel and reported verbatim
@@ -160,4 +162,28 @@ sources themselves.
   current.
 - **D34. Tied scores keep corpus order.** Search results are sorted with a stable sort, so two
   statements with the same score always come back in the same order, in Python and in the browser.
+
+### Web app
+- **D35. A static export on Render, not a server.** Every route is prerendered and the site is
+  published as files. Nothing in the app needs a server, and a free server process on Render
+  sleeps when idle and takes most of a minute to wake, which a judge would meet first. Moving
+  between pages uses client-side links; a filter rewrites the query string in place
+  (`history.replaceState`), so neither reloads the page, and a filtered view can still be shared
+  as a link.
+- **D36. First build replaced.** The first build was a Streamlit app. It was replaced, at the team
+  lead's request, by this React app; the Python that fed it is unchanged and now feeds the export.
+- **D37. Design rules.** Space Grotesk for headings, IBM Plex Sans for text, JetBrains Mono for
+  every number; four text sizes; flat colour with one meaning per colour (amber accent, cyan data,
+  red extinction, green completion, violet disruption, grey for not verified and no data); no
+  gradients, no emoji, Lucide icons. The biggest type on each page is that page's most important
+  number, and each page leads with numbers and charts; long evidence text is folded behind its
+  count and opens in place.
+- **D38. Solid-fuel outcome colours.** Amber is a sustained flame, red is a flame that went out
+  (quenched, or blown off, drawn as a cross), grey is no ignition. Red means "the flame went out"
+  for droplets and for solids alike.
+- **D39. Review fixes carried over from the first build.** A featured scenario sets every input
+  the triage score reads, including the size of the burning item and the free volume, so it scores
+  exactly as the same preset in the ranking table. A solid scenario's flow is checked against the
+  tested range at both ends, so still gas is reported as untested. Both are tested in
+  `web/src/lib/__tests__/scenario.test.ts`.
 
