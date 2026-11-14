@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 /** Each page settles in when it is navigated to. The frame around it never reloads. */
 export default function Template({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="stagger space-y-8">
       {children}
     </motion.div>
   );
