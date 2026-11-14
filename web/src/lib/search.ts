@@ -101,12 +101,12 @@ export class SearchIndex {
       const below = BELOW.exec(q);
       if (below) out.o2_at_most = Number(below[2]);
     }
+    const classes = new Set<string>();
     for (const [word, cls] of Object.entries(this.data.class_words)) {
-      if (new RegExp(`\\b${word}s?\\b`).test(q)) {
-        out.evidence_class = cls;
-        break;
-      }
+      if (new RegExp(`\\b${word}s?\\b`).test(q)) classes.add(cls);
     }
+    // words of two classes ("materials ... smoke detector") name no single class
+    if (classes.size === 1) out.evidence_class = [...classes][0];
     return out;
   }
 
@@ -114,6 +114,7 @@ export class SearchIndex {
    * Extractive answer: the retrieved, sourced statements.
    * If the question states an oxygen limit, the evidence is first filtered on its recorded
    * ambient-oxygen range (a burner feed is never matched), and the filter is reported back.
+   * The same limit is applied to the investigations listed with the answer, on their tested ranges.
    */
   answer(query: string, k = 6): Answer {
     const filters = this.parseFilters(query);
@@ -147,6 +148,17 @@ export class SearchIndex {
         .sort((a, b) => b.score - a.score || a.i - b.i)
         .slice(0, k)
         .map(({ doc, score }) => ({ doc, score }));
+      if (hasO2) {
+        const matching = new Set(docs.map((h) => h.doc.doc_id));
+        const inRange = (id: string) => {
+          const range = this.data.investigation_o2[id];
+          if (!range) return false; // no tested range: cannot match a limit
+          if (filters.o2_at_least !== undefined && range[1] < filters.o2_at_least) return false;
+          if (filters.o2_at_most !== undefined && range[0] > filters.o2_at_most) return false;
+          return true;
+        };
+        hits = hits.filter((h) => (h.doc.kind === "evidence" ? matching.has(h.doc.doc_id) : inRange(h.doc.investigation_id)));
+      }
       if (wanted) {
         const w = wanted;
         const keep = new Set(statements.map((s) => s.doc.investigation_id));
