@@ -87,7 +87,6 @@ with y:
 ui.rule()
 st.markdown("### 2 · Solid materials above the tested oxygen range")
 env = cat.solid_envelope()
-top = decided.sort_values("o2_at_outcome_pct", ascending=False).head(6)
 fig = go.Figure()
 for outcome, color in [("sustained", theme.FLAME), ("quenched", theme.CYAN), ("blowoff", theme.VIOLET), ("no_ignition", theme.GREY)]:
     d = decided[decided["outcome"] == outcome]
