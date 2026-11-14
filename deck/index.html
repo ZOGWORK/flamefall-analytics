@@ -340,7 +340,9 @@ a{color:var(--cyan);text-decoration:none}a:hover{text-decoration:underline}
   document.getElementById('next').onclick=function(){show(i+1);};
   document.getElementById('prev').onclick=function(){show(i-1);};
   document.addEventListener('keydown',function(e){
-    if(['ArrowRight','PageDown',' ','Enter'].indexOf(e.key)>-1){e.preventDefault();show(i+1);}
+    // Leave links, buttons and fields alone: Enter and Space must keep activating the focused control.
+    if(e.ctrlKey||e.metaKey||e.altKey||(e.target.closest&&e.target.closest('a,button,input,textarea,select'))){return;}
+    if(['ArrowRight','PageDown',' '].indexOf(e.key)>-1){e.preventDefault();show(i+1);}
     else if(['ArrowLeft','PageUp','Backspace'].indexOf(e.key)>-1){e.preventDefault();show(i-1);}
     else if(e.key==='Home'){show(0);}else if(e.key==='End'){show(slides.length-1);}
   });
