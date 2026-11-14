@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
+import { Gauge, Orbit, RotateCcw, Wind } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Field, Pick, Segments, SliderField } from "@/components/console/controls";
@@ -8,6 +8,7 @@ import { DataTable, n, type Column } from "@/components/console/data-table";
 import { Callout, HeroBand, NoData, Num, OutcomeBadge, Panel, Prose, Quote, Readout, Section, Source, Tag } from "@/components/console/primitives";
 import { ScenarioMap } from "@/components/charts/console-charts";
 import { EvidenceGroup } from "@/components/console/evidence-group";
+import { Dial, Meter } from "@/components/console/viz";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -172,16 +173,17 @@ export function Lab() {
             <span className="ml-2 text-heading font-medium text-muted-foreground">kPa</span>
           </>
         }
-        source={`computed from the inputs: ${g(s.o2)}% × ${g(s.p)} kPa. Sea-level air is 21.2 kPa.`}
+        dial={{ value: po2 / 65, tick: 21.2 / 65, caption: "mark: sea-level air" }}
+        source={`computed from the inputs: ${g(s.o2)}% × ${g(s.p)} kPa. Sea-level air is 21.2 kPa. Dial scale 0 to 65 kPa, the highest in the droplet tests.`}
         readouts={
           <>
-            <Readout className="border-0" value={(s.p / KPA_PER_PSI).toFixed(1)} unit="psi" tone="data" label="total pressure" source={`${g(s.p)} kPa = ${(s.p / 101.325).toFixed(2)} atm`} />
-            <Readout className="border-0" value={g(s.flow)} unit="cm/s" tone="data" label="ventilation flow" source={s.flow === 0 ? "still gas" : "forced flow past the fuel"} />
-            <Readout className="border-0" value={`${g(s.g)} g`} tone={s.g === 0 ? "done" : "disrupt"} label="gravity" source={gravityLabel} />
+            <Readout className="border-0" icon={Gauge} meter={s.p / 310} value={(s.p / KPA_PER_PSI).toFixed(1)} unit="psi" tone="data" label="total pressure" source={`${g(s.p)} kPa = ${(s.p / 101.325).toFixed(2)} atm`} />
+            <Readout className="border-0" icon={Wind} meter={s.flow / 80} value={g(s.flow)} unit="cm/s" tone="data" label="ventilation flow" source={s.flow === 0 ? "still gas" : "forced flow past the fuel"} />
+            <Readout className="border-0" icon={Orbit} meter={s.g} value={`${g(s.g)} g`} tone={s.g === 0 ? "done" : "disrupt"} label="gravity" source={gravityLabel} />
           </>
         }
       >
-        of oxygen for {droplet ? `a ${m.label.replace("n-H", "n-h").replace("Methanol", "methanol")}` : m.label} in this atmosphere.
+        of oxygen for {droplet ? (m.code === "Heptane" ? "an n-heptane droplet" : "a methanol droplet") : m.label} in this atmosphere.
       </HeroBand>
 
       {(s.g === 0.16 || s.g === 0.38) && (
@@ -307,8 +309,13 @@ export function Lab() {
       <Section title="Triage score" explainer="A stated formula for ordering scenarios by how much attention they deserve. It is not a risk rating.">
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
           <Panel className="xl:col-span-2" title="Your scenario">
-            <p className="num text-[clamp(2.5rem,6vw,3.5rem)] leading-none font-bold text-amber">{score.toFixed(3)}</p>
-            <p className="mt-2 text-body text-foreground">triage score, from 0 to 1</p>
+            <div className="flex items-center gap-5">
+              <Dial value={score} tone="amber" size={148} label={`Triage score ${score.toFixed(3)} on a scale of 0 to 1`}>
+                <span className="glow num text-heading font-bold text-amber">{score.toFixed(3)}</span>
+                <span className="kicker text-dim">of 1</span>
+              </Dial>
+              <p className="text-body text-foreground">triage score, from 0 to 1</p>
+            </div>
             <p className="mt-1 text-note text-muted-foreground">Hazard = Σ weight × term. A design choice, for ordering only.</p>
             {t.flags.map((flag) => (
               <p key={flag} className="mt-2 text-note text-amber">
@@ -330,9 +337,7 @@ export function Lab() {
                 <li key={k} className="border-b border-line py-2 last:border-b-0">
                   <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 sm:grid-cols-[11rem_1fr_auto]">
                     <span className="text-body text-foreground">{R.term_label[k]}</span>
-                    <span className="col-span-2 row-start-2 mt-1 h-1.5 bg-secondary sm:col-span-1 sm:row-start-1 sm:mt-0" aria-hidden>
-                      <span className="block h-full bg-amber transition-[width] duration-300" style={{ width: `${t.values[k] * 100}%` }} />
-                    </span>
+                    <Meter value={t.values[k]} tone="amber" segments={28} label={`${R.term_label[k]}: ${t.values[k].toFixed(2)}`} className="col-span-2 row-start-2 mt-1 sm:col-span-1 sm:row-start-1 sm:mt-0" />
                     <span className="num text-note text-muted-foreground">
                       {weights[k].toFixed(2)} × <span className="text-foreground">{t.values[k].toFixed(2)}</span> = {(weights[k] * t.values[k]).toFixed(3)}
                     </span>
