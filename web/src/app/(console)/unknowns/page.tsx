@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import { CountBars, DiluentChart, LuciChart, SolidEnvelopeChart } from "@/components/charts/unknown-charts";
 import { EvidenceGroup } from "@/components/console/evidence-group";
 import { HeroBand, NoData, NoDataTag, PageHeader, Panel, Prose, Quote, Readout, Section, Source, Tile, TileRow } from "@/components/console/primitives";
-import { catalogue, ev, flex, panels, solid } from "@/lib/data";
+import { partialGravityRecords } from "@/lib/catalogue";
+import { catalogue, ev, flex, panels, solid, SOLID_O2_LIMIT } from "@/lib/data";
 import { SmokeTabs } from "./smoke-tabs";
 
 export const metadata: Metadata = { title: "What We Don't Know" };
@@ -14,7 +15,8 @@ export default function Page() {
   const c = s.cool_flame;
   const env = solid.envelope_all;
   const decided = solid.points.filter((p) => p.outcome !== "ambiguous");
-  const partialG = catalogue.investigations.filter((r) => r.in_psi_search && typeof r.gravity_g === "number" && r.gravity_g > 0.05 && r.gravity_g < 0.5).length;
+  const partialG = partialGravityRecords(catalogue.investigations).length;
+  const aboveLimit = decided.filter((p) => (p.o2_at_outcome_pct ?? 0) > SOLID_O2_LIMIT).length;
   const luci = panels.luci.rows;
   const kapton = panels.smoke.flights[0].rows[0];
   const alarm = ev("saffire-alarm-981");
@@ -45,7 +47,7 @@ export default function Page() {
 
       <Section kicker="Gap 1" title="Partial gravity" explainer="No repository dataset. The nearest real evidence is one suborbital flight and a few short ground tests.">
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-          <Panel className="xl:col-span-3" title="Spread rate: simulated lunar gravity against normal gravity" explainer="One flight, preliminary slides. Lunar gravity came from spinning the capsule at 11 RPM, so Coriolis force bends the flames.">
+          <Panel className="xl:col-span-3" title="Spread rate: simulated lunar gravity against normal gravity" explainer="One flight, preliminary slides. Lunar gravity came from spinning the capsule, so Coriolis force affects the flames.">
             <LuciChart rows={luci} unit={panels.luci.unit} />
             <Source href={panels.luci.source_url} verification={panels.luci.verification}>
               {`${panels.luci.source_ref}. The PMMA values are printed as 0.15 and 0.40 cm/s.`}
@@ -69,13 +71,13 @@ export default function Page() {
 
       <Section kicker="Gap 2" title="Solid materials above the tested oxygen range" explainer="Each mark is one test point. The shaded band has no test; the dashed box is where future cabins are expected to sit.">
         <Panel>
-          <SolidEnvelopeChart points={decided} />
+          <SolidEnvelopeChart points={decided} limit={SOLID_O2_LIMIT} />
           <Source href="https://ntrs.nasa.gov/citations/20210011385">
-            {`${decided.length} solid-fuel test points with a stated outcome: NASA/TM-20210011385 (BASS-II), PSI-99 table, Olson et al. 2023, ICES-2024-365, ICES-2025-156, NTRS 20240007628. Solid fuels only; droplet and gas tests are not on this chart.`}
+            {`${decided.length} solid-fuel test points with a stated outcome: NASA/TM-20210011385 (BASS-II), PSI-99 table, Olson et al. 2023, ICES-2024-365, ICES-2025-156, NTRS 20240007628. Solid fuels only; droplet and gas tests are not on this chart. ${solid.n_total - solid.n_pressure_stated} of the ${solid.n_total} points have an assumed pressure: ${solid.pressure_note}`}
           </Source>
         </Panel>
         <TileRow className="mt-4 xl:grid-cols-3">
-          <Tile icon={Flame} value="0" tone="dim" tag={<NoDataTag />} label="solid-material test points above 34% oxygen, at any pressure" source={`${decided.length} solid-fuel test points`} />
+          <Tile icon={Flame} value={aboveLimit} tone="dim" tag={<NoDataTag />} label={`solid-material test points above ${SOLID_O2_LIMIT}% oxygen, at any pressure`} source={`${decided.length} solid-fuel test points`} />
           <Tile value={`${top.o2_at_outcome_pct?.toFixed(1)}%`} tone="data" label={`highest oxygen with a recorded outcome: ${top.investigation_id} ${top.material_class}, ${top.outcome.replace("_", " ")}`} source={top.source_ref} />
           <Tile value={`${topSustained.o2_at_outcome_pct?.toFixed(1)}%`} tone="amber" label={`highest oxygen with a sustained flame: ${topSustained.investigation_id} ${topSustained.material_class} at ${topSustained.pressure_kPa?.toFixed(1)} kPa`} source={topSustained.source_ref} />
         </TileRow>
@@ -123,7 +125,7 @@ export default function Page() {
         </div>
       </Section>
 
-      <Section kicker="What you can't see · 2" title="Smoke too fine for the detector" explainer="Geometric mean particle diameter by material, fresh and after 720 s, against the 500 nm mark.">
+      <Section kicker="What you can't see · 2" title="Smoke too fine for the detector" explainer={`Geometric mean particle diameter by material, fresh and after 720 s, against the ${panels.smoke.threshold_nm} ${panels.smoke.unit} mark.`}>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
           <Panel className="xl:col-span-3">
             <SmokeTabs />
@@ -172,7 +174,7 @@ export default function Page() {
         </ul>
       </Section>
 
-      <NoData title="Nothing on this page is filled in" note="Spacesuits use 100% oxygen at 4.3 psi; nothing in this data set speaks to that condition.">
+      <NoData title="Nothing on this page is filled in" note={`${ev("brief-atmospheres").statement} Nothing in this data set speaks to the spacesuit condition. Source: ${ev("brief-atmospheres").source_ref}.`}>
         Every gap above is shown as a gap. No value is interpolated, scaled for gravity, or carried from one kind of fuel to another.
       </NoData>
     </>
