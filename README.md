@@ -24,7 +24,7 @@ Sciences Informatics (PSI) repository. Three rules hold throughout:
 |---|---|---|
 | Data and models | `flamefall/`, `scripts/`, `data/` (Python) | Loads and checks the source tables, builds the catalogue, fits and validates the models |
 | Export | `scripts/export_web.py` | Writes everything the web app reads as JSON, plus reference answers for its tests |
-| Web app | `web/` (Next.js App Router, shadcn/ui, Recharts, Framer Motion) | Six pages and the slide deck, exported as a static site and hosted on Render |
+| Web app | `web/` (Next.js App Router, shadcn/ui, Recharts, Motion, react-countup) | Six pages and the slide deck, exported as a static site and hosted on Render |
 
 Python runs at build time only. The web app never opens a CSV and never fits a model. Moving
 between pages, or changing a filter, happens in the browser with no page reload.
@@ -107,4 +107,6 @@ original extraction and compares every cell with the CSV.
 ## Licence and branding
 
 MIT licence (see `LICENSE`). The project uses publicly released NASA data. It is not affiliated
-with or endorsed by NASA and uses no NASA logos, insignia or mission marks.
+with or endorsed by NASA and uses no NASA logos, insignia or mission marks. The liquid-glass surface on
+the Overview is adapted from Sera UI (MIT licence, copyright Sera UI); the notice is in
+`web/src/components/ui/liquid-glass.tsx`.
