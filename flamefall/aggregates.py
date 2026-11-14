@@ -1,7 +1,6 @@
 """Aggregates of the FLEX (droplet) evidence. Droplet data only: never mixed with solids.
 
-These are the reference calculations. The web front end repeats them in the browser so that
-filters respond at once, and its tests compare its results with the ones computed here.
+These are the reference calculations: anything that presents these numbers must agree with them.
 """
 from __future__ import annotations
 
@@ -70,11 +69,20 @@ def d2_line(row: pd.Series) -> dict | None:
 
     Returns the two ends of the line and, when Table IX prints an end diameter, the marker with the
     name it must carry. None when any of the three inputs is missing.
+
+    A diameter squared cannot be negative. For some tests the printed average K and burn time take
+    the straight line below zero before the burn ends: the three printed numbers do not fit one
+    line over the whole burn. The line is then drawn down to zero and no further; `t_zero` is the
+    time it gets there and `t_line_end` is where the line stops. `t_end` is always the printed
+    burn time.
     """
     d0, k, t_end = row["d0_mm"], row["burning_rate_mm2_s"], row["burn_time_s"]
     if pd.isna(d0) or pd.isna(k) or pd.isna(t_end):
         return None
-    line = dict(t_end=float(t_end), d2_start=float(d0 ** 2), d2_end=float(d0 ** 2 - k * t_end), marker=None)
+    d2_start, d2_end = float(d0 ** 2), float(d0 ** 2 - k * t_end)
+    t_zero = float(d0 ** 2 / k) if d2_end < 0 else None
+    line = dict(t_end=float(t_end), d2_start=d2_start, d2_end=max(d2_end, 0.0), t_zero=t_zero,
+                t_line_end=float(t_end) if t_zero is None else t_zero, marker=None)
     dext = row["extinction_diameter_mm"]
     if not pd.isna(dext):
         # Table IX prints a value in this column for some Disruption and Completion tests too.
