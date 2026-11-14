@@ -1,6 +1,8 @@
 """The PSI snapshot: what the official repository returns, and how it cross-checks our data."""
 from __future__ import annotations
 
+import json
+
 import pandas as pd
 import pytest
 
@@ -33,10 +35,37 @@ def test_every_record_and_table_is_on_disk():
     assert len(psi.table_names()) == 25
 
 
+def _fetch_script():
+    import importlib.util
+
+    path = psi.PSI_DIR.parents[1] / "scripts" / "fetch_psi.py"
+    spec = importlib.util.spec_from_file_location("fetch_psi", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_snapshot_carries_no_contact_details():
-    for path in (psi.PSI_DIR / "records").glob("*.json"):
-        text = path.read_text(encoding="utf-8")
-        assert '"email"' not in text and '"phone"' not in text, path.name
+    """Every file of the snapshot, not only the records: no e-mail address and no contact field."""
+    fetch = _fetch_script()
+    files = [p for p in psi.PSI_DIR.rglob("*") if p.is_file()]
+    assert len(files) > 50
+    for path in files:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        assert not fetch.EMAIL.search(text), path.name
+        if path.suffix == ".json":
+            stored = json.loads(text)
+            assert fetch.strip_contacts(stored) == stored, path.name      # the fetch step would change nothing
+
+
+def test_fetch_step_removes_contact_details_and_keeps_names():
+    fetch = _fetch_script()
+    record = {"contacts": [{"firstName": "Ada", "lastName": "Lovelace", "roles": ["PI"], "email": "ada@example.org",
+                            "phoneNumber": "555 0100", "Fax": "555 0101", "mailingAddress": "1 Main St"}],
+              "description": "Write to ada@example.org for the data.", "version": 3}
+    cleaned = fetch.strip_contacts(record)
+    assert cleaned["contacts"] == [{"firstName": "Ada", "lastName": "Lovelace", "roles": ["PI"]}]
+    assert cleaned["description"] == "Write to [e-mail removed] for the data." and cleaned["version"] == 3
 
 
 def test_fix_text_repairs_replacement_characters():

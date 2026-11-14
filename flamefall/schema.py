@@ -12,7 +12,8 @@ ALLOWED_EXTINCTION_MODES = {
     # from the research schema
     "radiative_then_diffusive", "diffusive_only", "no_extinction_burnout", "no_ignition",
     # added so that Table IX outcomes are never forced into a category the source does not state
-    "disruption", "radiative_cool_flame_not_stated", "visible_extinction_mode_not_stated",
+    "disruption", "radiative_cool_flame_not_stated", "radiative_no_cool_flame_evidence",
+    "visible_extinction_mode_not_stated",
 }
 ALLOWED_VERIFICATION = {"verified_live", "index", "unverified"}
 ALLOWED_SUPPORT = {"tethered_fibre", "free_floated", "deployment_fibre"}

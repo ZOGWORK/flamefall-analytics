@@ -1,17 +1,17 @@
-"""Build-time export: everything the React app reads, written as JSON.
+"""Build-time export: everything a web front end reads, written as JSON.
 
     python scripts/export_web.py            # rewrite the files
     python scripts/export_web.py --check    # exit 1 if any committed file differs from a fresh export
 
-Python owns the data. The front end imports these files and never opens a CSV, never re-fits a
-model and never re-derives a source value. Where the front end must compute something at once
+Python owns the data. A front end imports these files and never opens a CSV, never re-fits a
+model and never re-derives a source value. Where a front end must compute something at once
 (a filter, a slider), it repeats a calculation that lives here in Python, and `golden.json` holds
-this layer's answers so the front end's tests can compare.
+this layer's answers for that front end's tests to compare against.
 
 Outputs
-  web/src/data/*.json                    bundled with the app
+  web/src/data/*.json                    data files
   web/public/psi/*.json                  PSI experimental tables, fetched only when a reader opens one
-  web/src/lib/__fixtures__/golden.json   reference answers for the front end's tests
+  web/src/lib/__fixtures__/golden.json   reference answers for a front end's tests
 """
 from __future__ import annotations
 
@@ -44,10 +44,13 @@ FLEX_COLUMNS = [
 ]
 SOLID_COLUMNS = [
     "point_id", "investigation_id", "test_no", "material_class", "material_verbatim", "geometry", "flow_direction",
-    "flow_cm_s", "o2_at_outcome_pct", "pressure_kPa", "outcome", "outcome_quote", "source_ref", "source_url",
+    "flow_cm_s", "o2_at_outcome_pct", "pressure_kPa", "pressure_stated", "outcome", "outcome_quote", "source_ref", "source_url",
     "verification", "usable_for_model",
 ]
-MODEL_DROP = ("oof",)      # per-row out-of-fold predictions stay in data/models; the app shows the curves built from them
+MODEL_DROP = ("oof",)      # per-row out-of-fold predictions stay in data/models; the curves built from them are exported
+PRESSURE_NOTE = ("A pressure marked as assumed is not printed for that test. BASS-II tests outside the fabric table are "
+                 "taken as 1 atm (the memo states 1 atm for the fabric tests; the others ran in the same glovebox), and "
+                 "the Saffire VI Nomex sample is given its campaign's initial pressure.")
 
 
 def clean(value):
@@ -123,12 +126,14 @@ def solid_export() -> dict:
         "envelope_all": clean(cat.solid_envelope()),
         "envelopes": {m: clean(cat.solid_envelope(m)) for m in materials},
         "n_decided": int((s["outcome"] != "ambiguous").sum()),
+        "n_pressure_stated": int(s["pressure_stated"].sum()),
+        "pressure_note": PRESSURE_NOTE,
         "n_total": int(len(s)),
     }
 
 
 def search_export() -> dict:
-    """The TF-IDF index as plain numbers, so the browser scores a question exactly as Python does."""
+    """The TF-IDF index as plain numbers, so a browser can score a question exactly as Python does."""
     vec, matrix = cat._index()
     docs = cat.corpus().merge(cat._evidence_facets(), on="doc_id", how="left")
     vocab = sorted(vec.vocabulary_, key=vec.vocabulary_.get)
@@ -158,7 +163,8 @@ def ranking_export() -> dict:
         "hrr_scale_w": {k: {"watts": v[0], "why": v[1]} for k, v in ranking.HRR_SCALE_W.items()},
         "detection": {k: {"score": v[0], "why": v[1]} for k, v in ranking.DETECTION.items()},
         "detection_default": {"score": ranking.DETECTION_DEFAULT[0], "why": ranking.DETECTION_DEFAULT[1]},
-        "large_volume_m3": ranking.LARGE_VOLUME_M3,
+        "large_volume_m3": ranking.LARGE_VOLUME_M3, "large_volume_bonus": ranking.LARGE_VOLUME_BONUS,
+        "hrr_log_range_w": list(ranking.HRR_LOG_RANGE_W), "cool_flame_min_d0_mm": ranking.COOL_FLAME_MIN_D0_MM,
         "gravity_score": [{"g": g, "score": s, "name": ranking.GRAVITY_NAME[g]} for g, s in ranking.GRAVITY_SCORE.items()],
         "presets": [asdict(p) for p in ranking.PRESETS],
     }
@@ -207,8 +213,10 @@ def golden() -> dict:
         {"fuels": fuels, "o2_pct": o2, "pressure_atm": p,
          "ids": aggregates.nearest_tests(f[f["fuel"].isin(fuels)], o2, p)["test_id"].tolist()}
         for fuels, o2, p in [(["Methanol", "Heptane"], 23.0, 1.875), (["Heptane"], 40.0, 0.5), (["Methanol"], 21.0, 1.0)]]
-    g["d2_line"] = [{"test_id": t, "line": aggregates.d2_line(f.set_index("test_id").loc[t])}
-                    for t in ("FLEX-001", "FLEX-002", "FLEX-051", "FLEX-212")]
+    by_id = f.set_index("test_id")
+    lines = {t: aggregates.d2_line(row) for t, row in by_id.iterrows()}
+    stops_at_zero = [t for t, line in lines.items() if line and line["t_zero"] is not None][:2]
+    g["d2_line"] = [{"test_id": t, "line": lines[t]} for t in ["FLEX-001", "FLEX-002", "FLEX-051", "FLEX-212", *stops_at_zero]]
 
     # ---- catalogue: relevance, retrieval
     g["rank_investigations"] = []
@@ -218,12 +226,14 @@ def golden() -> dict:
             "scenario": asdict(p),
             "top": [{"id": row["investigation_id"], "relevance": row["relevance"],
                      "terms": {k: row[f"rel_{k}"] for k in cat.RELEVANCE_WEIGHTS},
-                     "why": {k: row[f"why_{k}"] for k in cat.RELEVANCE_WEIGHTS}} for _, row in r.head(12).iterrows()]})
+                     "why": {k: row[f"why_{k}"] for k in cat.RELEVANCE_WEIGHTS}} for _, row in r.iterrows()]})
     questions = [
         "Which experiments tested solid materials above 25% oxygen?", "Did the smoke detector miss anything?",
         "What do we know about fire in lunar gravity?", "Does turning off ventilation put a flame out?",
         "which droplets burned in CO2 above 30%?", "cool flames after extinction", "oxygen below 15 percent for solids",
         "zxqv nonsense words", "", "helium dilution", "Kapton wire smoke particle size", "tests with o2 above 30%",
+        "Which materials did the smoke detector miss?", "Which experiments ran above 80% oxygen?",
+        "fabric at least 25% oxygen",
     ]
     g["answer"] = []
     for q in questions:
@@ -236,17 +246,23 @@ def golden() -> dict:
 
     # ---- nearest real tests
     g["nearest_flex"] = []
-    for fuel, o2, p, co2, he, d0 in [("Heptane", 21.0, 101.3, 0.0, 0.0, 3.0), ("Methanol", 30.0, 70.3, 0.0, 0.0, None),
-                                     ("Heptane", 18.0, 101.3, 20.0, 0.0, 2.5), ("Methanol", 45.0, 56.5, 0.0, 30.0, 4.0)]:
-        n = cat.nearest_flex(fuel, o2, p, co2, he, d0)
-        g["nearest_flex"].append({"args": [fuel, o2, p, co2, he, d0], "ids": n["test_id"].tolist(),
-                                  "distance": n["distance"].tolist()})
+    everything = len(f)                 # k large enough to rank every test, so the ones missing a value are in the list
+    for fuel, o2, p, co2, he, d0, k in [("Heptane", 21.0, 101.3, 0.0, 0.0, 3.0, 8), ("Methanol", 30.0, 70.3, 0.0, 0.0, None, 8),
+                                        ("Heptane", 18.0, 101.3, 20.0, 0.0, 2.5, 8), ("Methanol", 45.0, 56.5, 0.0, 30.0, 4.0, 8),
+                                        ("Heptane", 21.0, 101.3, 0.0, 0.0, 3.0, everything),
+                                        ("Methanol", 21.0, 101.3, 0.0, 0.0, None, everything),
+                                        ("Methanol", 21.0, 101.3, 0.0, 0.0, 4.0, everything)]:
+        n = cat.nearest_flex(fuel, o2, p, co2, he, d0, k)
+        g["nearest_flex"].append({"args": [fuel, o2, p, co2, he, d0], "k": k, "ids": n["test_id"].tolist(),
+                                  "distance": n["distance"].tolist(), "not_compared": n["not_compared"].tolist()})
     g["nearest_solid"] = []
-    for mat, o2, p, flow in [("PMMA", 21.0, 101.3, 10.0), ("SIBAL-cotton", 34.0, 56.5, 5.0), ("Nomex", 30.0, 70.3, 20.0),
-                             ("silicone", 21.0, 101.3, 0.0), ("PMMA", 16.0, 101.3, 0.0)]:
-        n = cat.nearest_solid(mat, o2, p, flow)
-        g["nearest_solid"].append({"args": [mat, o2, p, flow], "ids": n["point_id"].tolist(),
-                                   "distance": n["distance"].tolist(), "same_material": n["same_material"].tolist()})
+    for mat, o2, p, flow, k in [("PMMA", 21.0, 101.3, 10.0, 8), ("SIBAL-cotton", 34.0, 56.5, 5.0, 8),
+                                ("Nomex", 30.0, 70.3, 20.0, 8), ("silicone", 21.0, 101.3, 0.0, 8), ("PMMA", 16.0, 101.3, 0.0, 8),
+                                ("PMMA", 17.0, 101.3, 10.0, 400), ("SIBAL-cotton", 18.0, 101.3, 5.0, 400)]:
+        n = cat.nearest_solid(mat, o2, p, flow, k)
+        g["nearest_solid"].append({"args": [mat, o2, p, flow], "k": k, "ids": n["point_id"].tolist(),
+                                   "distance": n["distance"].tolist(), "same_material": n["same_material"].tolist(),
+                                   "not_compared": n["not_compared"].tolist()})
 
     # ---- triage score
     S = ranking.Scenario

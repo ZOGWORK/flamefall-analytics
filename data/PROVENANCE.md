@@ -164,7 +164,12 @@ sustained / quenched / blowoff / no_ignition / ambiguous, each label carrying th
 
 The memo is a primary source found by the builder; it is not a link on the challenge's Resources tab.
 
-## `solid_test_points.csv` — every solid-fuel test point with a stated outcome (313 rows)
+## `solid_test_points.csv` — every solid-fuel test point transcribed (313 rows)
+
+38 of the 313 have an outcome the source leaves ambiguous; they keep that label and are left out of
+every calculation. `pressure_stated` is true for the 70 points whose source prints a pressure for
+that test and false for the 243 where it is assumed (242 BASS-II tests outside the fabric table,
+taken as 1 atm, and the Saffire VI Nomex sample, given its campaign's initial pressure).
 
 Built by `scripts/build_solid_points.py` from `bass2/bass2_test_points.csv` plus 23 rows typed from
 five sources, each named per row: the PSI-99 experimental table (Saffire-II, 10 rows), Olson et al.
@@ -208,7 +213,7 @@ Hand-entered, like `evidence.json`, and checked by `tests/test_export.py`:
   two tables and are never averaged.
 - **`other_gaps`**, **`blue_flame_quote`**, **`partial_gravity_wording`**: text only.
 
-## `web/src/data/`, `web/public/psi/` — what the web app reads (36 files)
+## `web/src/data/`, `web/public/psi/`, `golden.json` — the JSON export (10 + 25 + 1 = 36 files)
 
 Written by `python scripts/export_web.py`; never edited by hand. `tests/test_export.py` fails if any
 committed file differs from a fresh export (`python scripts/export_web.py --check` does the same).
@@ -218,11 +223,11 @@ committed file differs from a fresh export (`python scripts/export_web.py --chec
 | `flex.json` | `flex.load_flex()`, `flex.summary()` | 276 rows; a missing source cell is `null`, never 0 |
 | `catalogue.json` | `investigations.csv` plus the computed environment tags | planned rows carry no tested range |
 | `evidence.json` | `evidence.json` | unchanged, with the ambient-or-burner flag |
-| `solid.json` | `solid_test_points.csv` | all 313 points and the tested envelope per material |
-| `search.json` | the TF-IDF index of `catalogue.corpus()` | vocabulary, weights and document vectors as numbers, so the browser scores a question as Python does |
-| `ranking.json` | constants of `flamefall/ranking.py` | weights, lookup values and presets |
+| `solid.json` | `solid_test_points.csv` | all 313 points, whether each pressure is stated or assumed, and the tested envelope per material |
+| `search.json` | the TF-IDF index of `catalogue.corpus()` | vocabulary, weights and document vectors as numbers, so a browser can score a question as Python does |
+| `ranking.json` | constants of `flamefall/ranking.py` | weights, lookup values, the numbers inside the formula, and presets |
 | `model_*.json` | `data/models/*.json` | the cards without their per-row out-of-fold predictions |
 | `panels.json` | `data/panels.json` | unchanged |
 | `public/psi/*.json` | the 25 PSI experimental tables | fetched only when a reader opens one |
-| `src/lib/__fixtures__/golden.json` | this layer's own answers | reference values for the web app's tests |
+| `src/lib/__fixtures__/golden.json` | this layer's own answers | reference values for a front end's tests |
 

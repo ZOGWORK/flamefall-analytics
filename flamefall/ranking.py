@@ -3,8 +3,8 @@
     Hazard = 0.30 M_O2 + 0.20 M_flow + 0.15 H + 0.15 D + 0.10 G + 0.10 C
 
 Every term is in [0, 1] (1 = more hazardous). Every weight and every lookup value below is a
-DESIGN CHOICE, shown in the interface, adjustable there, and tested for whether the ordering of
-scenarios survives changing it. The score orders scenarios for attention. It does not say that
+DESIGN CHOICE, stated as one, and tested for whether the ordering of scenarios survives changing
+it. The score orders scenarios for attention. It does not say that
 any scenario is acceptable.
 """
 from __future__ import annotations
@@ -47,6 +47,9 @@ DETECTION = {   # material -> (score, reason)
 }
 DETECTION_DEFAULT = (0.3, "no detector-miss evidence for this material")
 LARGE_VOLUME_M3 = 15.0
+LARGE_VOLUME_BONUS = 0.1               # added to the detection term above that volume
+HRR_LOG_RANGE_W = (10.0, 3200.0)       # watts scored 0 and 1, on a log scale
+COOL_FLAME_MIN_D0_MM = 2.0             # an n-alkane droplet at least this large scores 1 on the last term
 GRAVITY_SCORE = {0.16: 1.0, 0.38: 0.7, 0.0: 0.5, 1.0: 0.2}
 GRAVITY_NAME = {0.0: "0 g (microgravity)", 0.16: "Lunar (0.16 g)", 0.38: "Mars (0.38 g)", 1.0: "Earth (1 g)"}
 
@@ -93,14 +96,17 @@ def m_flow(s: Scenario) -> tuple[float, str]:
 
 def h_term(s: Scenario) -> tuple[float, str]:
     watts, why = HRR_SCALE_W[s.hrr_scale]
-    value = min(1.0, max(0.0, math.log10(watts / 10) / math.log10(3200 / 10)))
+    lo, hi = HRR_LOG_RANGE_W
+    value = min(1.0, max(0.0, math.log10(watts / lo) / math.log10(hi / lo)))
     return value, why
 
 
 def d_term(s: Scenario) -> tuple[float, str]:
     score, why = DETECTION.get(s.material, DETECTION_DEFAULT)
     if s.free_volume_m3 > LARGE_VOLUME_M3:
-        score, why = min(1.0, score + 0.1), why + "; +0.1 for a free volume above 15 m3 (far-field alarm took 981 s in Saffire VI)"
+        score = min(1.0, score + LARGE_VOLUME_BONUS)
+        why += (f"; +{LARGE_VOLUME_BONUS:g} for a free volume above {LARGE_VOLUME_M3:g} m3 "
+                "(far-field alarm took 981 s in Saffire VI)")
     return score, why
 
 
@@ -111,7 +117,7 @@ def g_term(s: Scenario) -> tuple[float, str]:
 
 
 def c_term(s: Scenario) -> tuple[float, str]:
-    if s.is_droplet and s.n_alkane and s.droplet_d0_mm >= 2.0:
+    if s.is_droplet and s.n_alkane and s.droplet_d0_mm >= COOL_FLAME_MIN_D0_MM:
         return 1.0, "large n-alkane droplet: can keep burning as a cool flame after the visible flame goes out"
     return 0.0, "solid fuel, or a droplet outside the cool-flame regime"
 

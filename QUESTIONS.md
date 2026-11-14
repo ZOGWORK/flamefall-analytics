@@ -49,7 +49,7 @@ BASS-II summary memo states the same quantity, the memo is cited instead.
 
 **Q5. Sources that only an abstract could be read for** (publisher blocks automated access): the
 Flame Design journal paper (burn times 28 to 336 s) and the FLEX limiting-oxygen abstract (0.12
-methanol, 0.15 n-heptane). Both carry the level `index`. The FLARE conference paper
+methanol, 0.15 n-heptane). Both carry the verification level `index`. The FLARE conference paper
 was unreachable, so FLARE has no numbers in the catalogue.
 
 ## Decisions I made that you may want to change

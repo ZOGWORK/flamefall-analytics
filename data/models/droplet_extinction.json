@@ -11778,6 +11778,7 @@
  },
  "headline_auc": 0.7443843843843844,
  "headline_is": "leave-one-material-out",
+ "headline_note": "The worse of grouped cross-validation and the leave-one-material-out stress test.",
  "envelope": {
   "o2_pct": [
    12.0,

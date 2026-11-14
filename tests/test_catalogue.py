@@ -121,6 +121,69 @@ def test_curated_key_results_point_at_evidence():
         assert key in ("", "computed:flex") or key in ids, (c["investigation_id"], key)
 
 
+def test_key_evidence_filed_under_another_flight_is_a_table_that_names_this_one():
+    """Two multi-flight tables are filed under their first flight; each names the flight that cites it."""
+    curated = json.loads((cat.DATA / "investigations_curated.json").read_text(encoding="utf-8"))["investigations"]
+    ev = cat.load_evidence().set_index("id")
+    elsewhere = {(c["investigation_id"], c["key_evidence"]) for c in curated
+                 if c.get("key_evidence") in ev.index and ev.loc[c["key_evidence"], "investigation_id"] != c["investigation_id"]}
+    assert elsewhere == {("Saffire-III", "saffire-spread-table"), ("Saffire-V", "saffire-hrr-fuelcal")}
+    assert "Saffire III" in ev.loc["saffire-spread-table", "statement"]
+    assert "V-2" in ev.loc["saffire-hrr-fuelcal", "statement"]
+
+
+def test_a_plan_and_a_context_statement_carry_no_tested_range(ev):
+    """FM2 has not flown and the brief's expected atmosphere is not a test: neither can match an oxygen filter."""
+    by_id = ev.set_index("id")
+    for entry in ("fm2-plan", "brief-atmospheres"):
+        assert pd.isna(by_id.loc[entry, "o2_min_pct"]) and pd.isna(by_id.loc[entry, "o2_max_pct"]), entry
+        assert pd.isna(by_id.loc[entry, "pressure_kpa"]), entry
+    assert not ev.loc[ev["evidence_class"] == "context", "o2_max_pct"].notna().any()
+    assert not {"fm2-plan", "brief-atmospheres"} & set(cat.ambient_evidence()["id"])
+    for question in ("solid materials above 30% oxygen", "tests above 80% oxygen", "fabric at least 25% oxygen"):
+        res = cat.answer(question)
+        assert not {"fm2-plan", "brief-atmospheres"} & {s["doc_id"] for s in res["statements"]}, question
+        assert "FM2" not in res["investigations"], question
+
+
+def test_a_planned_investigation_earns_no_relevance(inv):
+    ranked = cat.rank_investigations(34, 56.5, 0, "solid", 0.16).set_index("investigation_id")
+    fm2 = ranked.loc["FM2"]
+    assert fm2["relevance"] == 0.0 and fm2["rel_gravity"] == 0.0 and fm2["rel_fuel type"] == 0.0
+    assert fm2["why_gravity"] == "planned, not tested"
+    assert ranked.loc["LUCI", "rel_gravity"] == 1.0                 # flown in simulated lunar gravity
+    assert "Lunar" in inv.set_index("investigation_id").loc["FM2", "environments"]   # tagged by its plan, never ranked
+    assert "planned for" in cat.ENV_RULES["Lunar"]
+
+
+def test_still_gas_relevance_fades_with_flow_instead_of_switching_off(inv):
+    row = inv.set_index("investigation_id").loc["FLEX"]
+    at = lambda flow: cat.relevance(row, 21, 101.3, flow, "droplet", 0)       # noqa: E731
+    assert at(0)["terms"]["flow"] == 1.0 and at(0)["why"]["flow"] == "still gas, as tested"
+    assert at(0.1)["terms"]["flow"] == pytest.approx(0.995)
+    assert at(10)["terms"]["flow"] == pytest.approx(0.5) and "still gas only" in at(10)["why"]["flow"]
+    assert at(20)["terms"]["flow"] == 0.0 and at(60)["terms"]["flow"] == 0.0
+
+
+def test_a_question_naming_two_classes_is_not_filtered_to_one():
+    question = "Which materials did the smoke detector miss?"
+    assert cat.parse_filters(question) == {}
+    res = cat.answer(question)
+    assert "same-detector-misses" in {s["doc_id"] for s in res["statements"]}
+    assert cat.parse_filters("solid fabric materials") == {"evidence_class": "solid"}
+
+
+def test_an_oxygen_limit_filters_the_listed_investigations_too(inv):
+    res = cat.answer("Which experiments ran above 80% oxygen?")
+    assert res["filters"] == {"o2_at_least": 80.0}
+    top = pd.to_numeric(inv.set_index("investigation_id")["o2_max_pct"], errors="coerce")
+    for investigation in res["hits"].loc[res["hits"]["kind"] == "investigation", "investigation_id"]:
+        assert top[investigation] >= 80, investigation
+    kept = set(res["hits"].loc[res["hits"]["kind"] == "evidence", "doc_id"])
+    assert kept <= {s["doc_id"] for s in cat.answer("Which experiments ran above 80% oxygen?", k=50)["statements"]}
+    assert "inverse-flame-85" not in kept
+
+
 # ------------------------------------------------------------------ solid test points
 
 def test_solid_points_never_contain_droplet_or_gas_rows():
@@ -244,3 +307,37 @@ def test_nearest_tests():
     solid = cat.nearest_solid("PMMA", 30, 55, 20)
     assert solid.iloc[0]["investigation_id"] == "Saffire-VI" and "ambiguous" not in set(solid["outcome"])
     assert cat.solid_envelope()["o2"][1] < 34                   # nothing above 34% O2 for solids
+
+
+def test_a_missing_value_is_never_a_perfect_match():
+    f = cat.flex.load_flex()
+    no_pressure = f.loc[f["pressure_kpa"].isna(), "test_id"]
+    assert list(no_pressure) == ["FLEX-114"]
+    fuel, o2, co2, he = f.loc[f["test_id"] == "FLEX-114", ["fuel", "o2_pct", "co2_pct", "he_pct"]].iloc[0]
+    n = int((f["fuel"] == fuel).sum())
+    near = cat.nearest_flex(fuel, o2, 101.3, co2, he, None, k=n)
+    assert near.iloc[-1]["test_id"] == "FLEX-114" and near.iloc[-1]["not_compared"] == "pressure"   # last, not first
+    assert (near.iloc[:-1]["not_compared"] == "").all() and near.iloc[:-1]["distance"].is_monotonic_increasing
+    with_d0 = cat.nearest_flex(fuel, o2, 101.3, co2, he, 3.0, k=n)
+    partial = with_d0[with_d0["not_compared"] != ""]
+    assert set(partial["not_compared"]) <= {"pressure", "initial diameter", "pressure, initial diameter"}
+    assert len(partial) == int((f.loc[f["fuel"] == fuel, "d0_mm"].isna() | f.loc[f["fuel"] == fuel, "pressure_kpa"].isna()).sum())
+    assert (with_d0.tail(len(partial))["not_compared"] != "").all()
+
+    s = cat.load_solid_points()
+    pool = s[(s["outcome"] != "ambiguous") & (s["material_class"] == "PMMA")]
+    solid = cat.nearest_solid("PMMA", 17, 101.3, 10, k=len(pool))
+    stated = solid[solid["not_compared"] == ""]
+    assert len(stated) == int(pool["flow_cm_s"].notna().sum()) and stated["flow_cm_s"].notna().all()
+    assert (solid.head(len(stated))["not_compared"] == "").all()
+    assert set(solid.tail(len(solid) - len(stated))["not_compared"]) == {"flow"}
+
+
+def test_solid_points_say_whether_their_pressure_is_stated():
+    s = cat.load_solid_points()
+    assert s["pressure_stated"].dtype == bool
+    assert int(s["pressure_stated"].sum()) == 70 and int((~s["pressure_stated"]).sum()) == 243
+    bass2 = s[s["investigation_id"].isin(["BASS", "BASS-II"])]
+    assert bass2.loc[bass2["pressure_stated"], "source_ref"].str.contains("Table 7.1").all()
+    assert not bass2.loc[~bass2["pressure_stated"], "source_ref"].str.contains("Table 7.1").any()
+    assert list(s.loc[~s["pressure_stated"] & ~s["investigation_id"].isin(["BASS", "BASS-II"]), "point_id"]) == ["SAF6-1"]
