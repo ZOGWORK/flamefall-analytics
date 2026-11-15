@@ -175,7 +175,7 @@
 
 /* ------------------------------------------------------------------ backdrop */
 
-/* Orange light from two corners and a faint drifting grid, fixed behind every page. */
+/* Orange light from two corners and a faint grid, fixed behind every page. Neither moves. */
 body::before,
 body::after {
   content: "";
@@ -234,6 +234,13 @@ body::after {
 /* The navigation rail and the top bars: solid, so text never shows through while scrolling. */
 .glass-rail {
   background: #0e131a;
+}
+
+/* The liquid-glass card while the page is scrolling: its distortion is off (see liquid-glass.tsx).
+   Recomputing it for every scrolled frame made scrolling stutter. */
+[data-glass-moving] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* The main readout of a page: a rounded frame, nothing more. */
