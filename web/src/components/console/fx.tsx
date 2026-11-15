@@ -33,7 +33,7 @@ export function StatusBar() {
     ["Droplet tests", flex.summary.n],
     ["Solid test points", solid.n_total],
     ["Sourced statements", n.evidence],
-    ["Verified in full text", n.evidence_verified],
+    ["Verified", n.evidence_verified],
   ];
   return (
     <div className="glass-rail sticky top-0 z-20 hidden h-10 items-center gap-6 border-b border-line px-8 lg:flex">
@@ -41,7 +41,8 @@ export function StatusBar() {
         <span className="led" aria-hidden />
         <span className="kicker text-amber">Data locked</span>
       </span>
-      <dl className="flex min-w-0 flex-1 items-center gap-6 overflow-hidden">
+      {/* one line only: an item that does not fit wraps below it and is hidden whole, never cut mid-word */}
+      <dl className="flex max-h-5 min-w-0 flex-1 flex-wrap items-baseline gap-x-6 gap-y-8 overflow-hidden">
         {items.map(([label, value]) => (
           <div key={label} className="flex shrink-0 items-baseline gap-2">
             <dt className="kicker text-dim">{label}</dt>
@@ -49,7 +50,7 @@ export function StatusBar() {
           </div>
         ))}
       </dl>
-      <span className="kicker hidden text-dim xl:inline">Estimates, never verdicts</span>
+      <span className="kicker hidden text-dim 2xl:inline">Estimates, never verdicts</span>
     </div>
   );
 }

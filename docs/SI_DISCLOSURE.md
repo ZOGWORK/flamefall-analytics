@@ -58,7 +58,8 @@ SI tools were used throughout, and are disclosed in full in the repository
 - **The data.** Every measured value comes from a public source: NASA/TP-2015-216046 (FLEX),
   NASA/TM-20210011385 (BASS-II), the PSI Data Repository records and experimental tables, and the
   papers cited per statement. No value was generated, estimated or interpolated by an SI tool.
-- **Images.** There are none other than charts computed from the data.
+- **Images.** There are none other than charts computed from the data, the app's own icon, and
+  two screenshots of the console in the README (`docs/img/`).
 
 ### How SI output was checked against primary sources
 
@@ -68,7 +69,7 @@ SI tools were used throughout, and are disclosed in full in the repository
 | FLEX cool-flame, support and extinction labels | Rule-based extraction from the report's captions, each label stored with its sentence; all labelled sentences then read one by one | 54 cool-flame statements and 87 extinction statements read |
 | BASS-II tables (126 tests) | Every transcribed row compared with the text of its PDF page; long cells also found in the NTRS full text; pipeline re-run from the PDF | 0 mismatches; output byte-identical on re-run |
 | PSI catalogue | Pulled from the repository's public endpoints and stored unedited (contact details removed) | 26 records, 25 tables |
-| Literature values (66 statements) | Each traced to a table, page or slide; a verbatim quote and the read level stored | 60 verified in full text, 2 abstract-only, 4 not re-read and marked "not verified" |
+| Literature values (66 statements) | Each traced to a table, page or slide, with the read level stored; a verbatim quote is stored for 42 of the 66 | 60 verified against the source they cite (a paper, report, table, slides or web page), 2 abstract-only, 4 not re-read and marked "not verified" |
 | Code | Automated tests, including the acceptance behaviours | More than 100 tests; run `python -m pytest` for the current count |
 
 ### Limits of that checking

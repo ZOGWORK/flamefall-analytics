@@ -24,7 +24,7 @@ source down to the table and test number; where nobody ran the test it says "no 
 the nearest real tests; and it gives estimates with their uncertainty, never a verdict. Its core is
 276 droplet-burn tests, 313 solid-material test points and 66 sourced statements. The two datasets
 were checked against their primary sources cell by cell and row by row; of the 66 statements, 60
-were verified in full text, and the six that could not be are shown greyed with the reason.
+were verified against the source they cite, and the six that could not be are shown greyed with the reason.
 Checking changed fourteen statements in our own research notes, and the console shows where its
 own model fails.
 
@@ -100,7 +100,7 @@ Paste the "Short version" from [SI_DISCLOSURE.md](SI_DISCLOSURE.md). The full ta
 - [ ] Project page has: live link, repository link, the data sources above, and the SI disclosure.
 - [ ] At least one NASA data source is linked (PSI and the two NTRS reports are).
 - [ ] The repository is public and carries the MIT licence.
-- [ ] No NASA logo, flag, insignia or mission patch anywhere (none is used; the only image file in the app is its own icon, `web/src/app/icon.svg`).
+- [ ] No NASA logo, flag, insignia or mission patch anywhere (none is used; the only image files in the repository are the app's own icon, `web/src/app/icon.svg`, and two screenshots of the console in `docs/img/`; `tests/test_wording.py` checks this).
 - [ ] Human spot-checks in [HUMAN_VERIFICATION.md](HUMAN_VERIFICATION.md) ticked.
 - [ ] Open questions in [../QUESTIONS.md](../QUESTIONS.md) answered, in particular the human spot-checks (Q8).
 - [ ] Click **Submit for Judging**.
