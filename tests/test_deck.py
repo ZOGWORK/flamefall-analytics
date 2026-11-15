@@ -1,6 +1,7 @@
 """The PowerPoint deck: seven slides, every number from the data, a source on every slide."""
 from __future__ import annotations
 
+import io
 import re
 import sys
 import zipfile
@@ -109,17 +110,17 @@ def test_two_builds_from_the_same_data_are_the_same_file(tmp_path):
         assert app == build_deck.APP_PROPERTIES
         assert "<Slides>7</Slides><Notes>7</Notes>" in app and "Widescreen" in app
         assert not any(left in app for left in ("Macintosh", "4:3", "Office Theme", "<Words>", "AppVersion"))
-    with zipfile.ZipFile(a) as z:
-        assert {(i.date_time, i.create_system, i.external_attr) for i in z.infolist()} == {
-            (build_deck.FIXED_DATE, build_deck.ZIP_SYSTEM, build_deck.ZIP_ATTR)}
-        books = [name for name in z.namelist() if name.startswith("ppt/embeddings/") and name.endswith(".xlsx")]
-        assert books                                                               # each chart's workbook carries the fixed date too
-        for name in books:
-            import io
-
-            with zipfile.ZipFile(io.BytesIO(z.read(name))) as book:
-                assert {i.date_time for i in book.infolist()} == {build_deck.FIXED_DATE}, name
-                assert "2026-11-14T00:00:00Z" in book.read("docProps/core.xml").decode("utf-8"), name
+    stamp = "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z".format(*build_deck.FIXED_DATE)
+    for path in (a, DECK):                                                         # the fresh build and the committed file
+        with zipfile.ZipFile(path) as z:
+            assert {(i.date_time, i.create_system, i.external_attr) for i in z.infolist()} == {
+                (build_deck.FIXED_DATE, build_deck.ZIP_SYSTEM, build_deck.ZIP_ATTR)}
+            books = [name for name in z.namelist() if name.startswith("ppt/embeddings/") and name.endswith(".xlsx")]
+            assert books                                                           # each chart's workbook carries the fixed date too
+            for name in books:
+                with zipfile.ZipFile(io.BytesIO(z.read(name))) as book:
+                    assert {i.date_time for i in book.infolist()} == {build_deck.FIXED_DATE}, name
+                    assert stamp in book.read("docProps/core.xml").decode("utf-8"), name
 
 
 def test_exactly_seven_slides_each_with_a_source_line_and_speaker_notes(deck):
@@ -147,7 +148,7 @@ def test_every_number_on_the_slides_is_the_one_in_the_data(n, deck):
         5: [f"{c['indicated']} of {n['heptane_extinctions']}", n["cool_temp"], "as reported for gas cool flames"],
         6: [f"{n['auc_headline']:.2f}", f"({n['auc_cv']:.2f})", f"{pct(n['fpr'], 0)} false-positive rate",
             f"{n['fp']} of {n['fp'] + n['tn']} negatives", f"{n['model_rows']} OF {n['n']} TESTS"],
-        7: [f"{n['solid_top_o2']:.1f}%", f"{n['co2_and_he']} of {n['n']}", f"above {n['solid_top_o2']:.1f}% oxygen", f"below {n['smoke_nm']} nm"],
+        7: [f"{n['solid_top_o2']:.1f}%", f"{n['co2_and_he']} of {n['n']}", f"solids in the console: no test point above {n['solid_top_o2']:.1f}% oxygen", f"below {n['smoke_nm']} nm"],
     }
     for number, strings in expected.items():
         for s in strings:
@@ -221,13 +222,14 @@ def test_the_last_slide_claims_only_what_the_data_supports(n):
 
     assert (cat.load_evidence()["evidence_class"] == "partial_g").sum() >= 5
     assert "NEVER TESTED" not in panel.upper() and "THE DATA DOES NOT HOLD" not in panel.upper()
-    # the label scopes the lines to this console's data; the first names the PSI repository, the last the FLEX tests
-    assert "WHERE THIS CONSOLE'S DATA STOPS" in panel
+    # each line carries its own scope: the PSI repository, the console's solid test points, the FLEX tests. The console
+    # does hold partial-gravity evidence, so the label must not say its data stops there.
+    assert "WHERE THE MEASUREMENTS STOP" in panel and "CONSOLE'S DATA" not in panel.upper()
     assert "lunar or Martian gravity: no data in the PSI repository" in panel and n["partial_g"] == 0
     solid = cat.load_solid_points()
-    assert f"solid materials: no test point above {n['solid_top_o2']:.1f}% oxygen" in panel       # the same number as the hero
+    assert f"solids in the console: no test point above {n['solid_top_o2']:.1f}% oxygen" in panel       # the same number as the hero
     assert solid["o2_at_outcome_pct"].max() == solid["o2_pct"].max() == n["solid_top_o2"]
-    assert "CO2 with helium: never in one FLEX test" in panel and n["co2_and_he"] == 0
+    assert "CO2 with helium: in no FLEX test" in panel and n["co2_and_he"] == 0
     assert f"{n['solid_limit']:g}% oxygen" not in panel                                           # one study's range is not a ceiling
     assert "in the PSI repository" in shapes["Hero number 1 caption"].text_frame.text
 
