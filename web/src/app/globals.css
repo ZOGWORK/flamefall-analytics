@@ -197,15 +197,12 @@ body::after {
     linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
   background-size: 56px 56px;
   mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, #000 10%, transparent 78%);
-  animation: grid-drift 36s linear infinite;
-}
-@keyframes grid-drift {
-  to {
-    background-position: 56px 56px;
-  }
+  /* Still. A drifting masked background repaints the whole screen on every frame, on every page. */
 }
 
-/* Two slow embers of light drifting in the page backdrop, behind every panel. */
+/* Two still embers of light in the page backdrop, behind every panel. They do not move: anything
+   that moves behind the liquid-glass card makes it recompute its distortion on every frame. They
+   are plain gradients, not blurred boxes, so they cost nothing to keep. */
 .ambient {
   position: fixed;
   inset: 0;
@@ -218,10 +215,7 @@ body::after {
   width: 34rem;
   height: 34rem;
   border-radius: 50%;
-  filter: blur(110px);
-  opacity: 0.2;
-  background: radial-gradient(circle, rgba(var(--glow), 0.5), transparent 65%);
-  animation: ember 26s ease-in-out infinite alternate;
+  background: radial-gradient(circle, rgba(var(--glow), 0.07), transparent 68%);
 }
 .ambient span:nth-child(1) {
   top: 12%;
@@ -232,18 +226,7 @@ body::after {
   right: 6%;
   width: 26rem;
   height: 26rem;
-  animation-duration: 34s;
-  animation-direction: alternate-reverse;
 }
-@keyframes ember {
-  from {
-    transform: translate3d(-8rem, -3rem, 0) scale(0.9);
-  }
-  to {
-    transform: translate3d(9rem, 5rem, 0) scale(1.15);
-  }
-}
-
 /* ------------------------------------------------------------------ surfaces */
 
 /* Panels, tiles, readouts and tables use the solid `bg-surface` colour: no blur, no rim light. */
@@ -260,35 +243,17 @@ body::after {
   border-radius: 14px;
 }
 
-/* A small status dot that breathes. No halo. */
+/* A small status dot. No halo, and it does not pulse: nothing on the page animates forever. */
 .led {
   display: inline-block;
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 50%;
   background: var(--amber);
-  animation: breathe 2.8s ease-in-out infinite;
 }
-@keyframes breathe {
-  50% {
-    opacity: 0.5;
-  }
-}
-
-/* One cell per test, lit in turn. */
-.cell {
-  animation: light-up 0.5s ease-out both;
-}
-@keyframes light-up {
-  from {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
+/* Cells and meter segments have no animation of their own. They arrive with their panel, as one
+   piece: animating several hundred of them one by one gave the browser several hundred layers to
+   manage while the page loaded. */
 
 /* A dial's arc sweeps up to its value, and follows it when the value changes. */
 .dial-arc {
@@ -321,15 +286,14 @@ body::after {
   animation-delay: 0.35s;
 }
 @keyframes rise {
+  /* opacity and position only: both are handled by the compositor. A blur is not. */
   from {
     opacity: 0;
     transform: translateY(18px);
-    filter: blur(8px);
   }
   to {
     opacity: 1;
     transform: none;
-    filter: none;
   }
 }
 
@@ -381,10 +345,6 @@ thead.bg-secondary {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body::after,
-  .ambient span,
-  .led,
-  .cell,
   .dial-arc,
   .stagger > * {
     animation: none;
