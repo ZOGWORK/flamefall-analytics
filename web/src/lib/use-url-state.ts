@@ -29,16 +29,21 @@ export function useUrlState<T extends Record<string, string>>(defaults: T): [T, 
 
   useEffect(() => {
     if (!ready.current) return;
-    const params = new URLSearchParams(window.location.search);
-    for (const [key, value] of Object.entries(state)) {
-      if (value === defaultsRef.current[key]) params.delete(key);
-      else params.set(key, value);
-    }
-    const query = params.toString();
-    const url = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
-    if (url !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
-      window.history.replaceState(window.history.state, "", url);
-    }
+    // The address bar follows a moment after the last change. Dragging a slider changes the state
+    // many times a second, and rewriting the address each time makes the router do work each time.
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      for (const [key, value] of Object.entries(state)) {
+        if (value === defaultsRef.current[key]) params.delete(key);
+        else params.set(key, value);
+      }
+      const query = params.toString();
+      const url = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+      if (url !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+        window.history.replaceState(window.history.state, "", url);
+      }
+    }, 250);
+    return () => window.clearTimeout(timer);
   }, [state]);
 
   const patch = useCallback((p: Partial<T>) => setState((s) => ({ ...s, ...p })), []);
