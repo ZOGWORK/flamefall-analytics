@@ -63,17 +63,26 @@ def test_readme_headline_numbers_are_the_ones_in_the_data():
         f"{c['search_hits']} records, {c['combustion_science']} of them combustion science, {c['tables']} experimental tables",
         f"{len(solid)} transcribed, {decided} with a stated outcome; the highest oxygen among them is "
         f"{solid['o2_at_outcome_pct'].max():g}%",
-        f"| up to {limit:g}%; above that there is no solid-material test point at all |",
-        f"{c['evidence']}, of which {c['evidence_verified']} were verified against their primary source",
+        f"(SoFIE-GEL). The data files hold no solid-material test point above {limit:g}% |",
+        f"{c['evidence']}, of which {c['evidence_verified']} were verified against the source they cite",
     ]
     for sentence in expected:
         assert sentence in text, sentence
     assert solid["o2_at_outcome_pct"].max() == cat.solid_envelope()["o2"][1] < limit
-    widest = cat.load_evidence()
-    widest = widest[(widest["evidence_class"] == "solid") & widest["o2_is_ambient"].astype(bool)]
-    assert widest["o2_max_pct"].max() == limit                      # no solid-fuel statement states a wider range
-    assert "T'ien et al." in cat.load_evidence().set_index("id").loc["sofie-gel-envelope", "source_ref"]
-    assert "T'ien et al., Combust. Flame 277 (2025) 114244 (SoFIE-GEL)" in text
+    # "tested", not "stated": a planned experiment (FM2) names higher oxygen levels, and it is solid fuel
+    ev = cat.load_evidence()
+    tested = ev[ev["evidence_class"].isin(["solid", "partial_g"]) & ev["o2_is_ambient"].astype(bool)]
+    assert tested["o2_max_pct"].max() == limit
+    gel = ev.set_index("id").loc["sofie-gel-envelope"]
+    assert f"| {gel['o2_min_pct']:g} to {gel['o2_max_pct']:g}% (SoFIE-GEL)" in text
+    assert "T'ien et al." in gel["source_ref"] and "Range: T'ien et al., Combust. Flame 277 (2025) 114244." in text
+    assert "37" in ev.set_index("id").loc["fm2-plan", "statement"] and "planned" in ev.set_index("id").loc["fm2-plan", "statement"]
+    assert "a solid-fuel investigation has tested" in text and "investigation states" not in text
+    # every statement counted as verified names the source it was checked against, and quotes it
+    verified = ev[ev["verification"] == "verified_live"]
+    assert len(verified) == c["evidence_verified"]
+    assert verified["source_ref"].str.len().gt(0).all() and verified["read_level"].str.len().gt(0).all()
+    assert "primary source |" not in text
 
     # the partial-gravity count sits in its own row, not just anywhere on the page
     count = sum(1 for g in gravity if g is not None and 0.05 < g < 0.5)
