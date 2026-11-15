@@ -61,9 +61,13 @@ def numbers() -> dict:
     burned = psi["fuel_type"].value_counts()
     assert set(burned.index) <= set(burned_label), set(burned.index) - set(burned_label)
     ev = cat.load_evidence().set_index("id")
-    card = json.loads((ROOT / "data" / "models" / "droplet_extinction.json").read_text(encoding="utf-8"))
     cards = {n: json.loads((ROOT / "data" / "models" / f"{n}.json").read_text(encoding="utf-8"))
              for n in ("droplet_extinction", "droplet_cool_flame", "solid_sustained")}
+    card = cards["droplet_extinction"]
+    # the tests the model could not use, and why: checked here, so the slide's note cannot be wrong
+    used = {row["row_id"] for row in card["training_rows"]}
+    left_out = f[~f["test_id"].isin(used)]
+    assert len(used) == card["n_rows"] and left_out["pressure_kpa"].isna().all(), left_out[["test_id", "pressure_kpa"]]
     cy = card["metrics"]["confusion_at_youden"]
     solid = cat.load_solid_points()
     decided = solid[solid["outcome"] != "ambiguous"]
@@ -88,9 +92,11 @@ def numbers() -> dict:
         "burned": [(burned_label[k], int(v)) for k, v in burned.items()],
         "auc_cv": card["metrics"]["roc_auc"], "auc_headline": card["headline_auc"], "headline_is": card["headline_is"],
         "fp": cy["fp"], "tn": cy["tn"], "tp": cy["tp"], "fn": cy["fn"], "fpr": cy["false_positive_rate"],
+        "model_rows": card["n_rows"], "model_left_out": list(left_out["test_id"]),
         "n_models": len(cards), "failed_models": sum(1 for m in cards.values() if m["headline_auc"] < 0.6),
         "partial_g": sum(1 for g in gravity if g is not None and 0.05 < g < 0.5),
-        "solid_top_o2": float(top["o2_at_outcome_pct"]), "solid_limit": float(ev.loc["sofie-gel-envelope", "o2_max_pct"]),
+        "solid_top_o2": float(top["o2_at_outcome_pct"]), "solid_top_source": top["source_ref"].split(" (")[0],
+        "solid_limit": float(ev.loc["sofie-gel-envelope", "o2_max_pct"]), "outside_search": c["outside_psi_search"],
         "scenario": scenario,
         "near": [dict(test=f"{r['investigation_id']} {r['test_no']}", o2=float(r["o2_at_outcome_pct"]), flow=float(r["flow_cm_s"]),
                       direction=r["flow_direction"], outcome=r["outcome"], distance=float(r["distance"])) for _, r in near.iterrows()],
@@ -280,7 +286,7 @@ def slide_problem(prs, n):
     s = new_slide(
         prs, 2, "The problem",
         f"PSI Data Repository, search “combustion”, retrieved {n['retrieved']}. {n['combustion_science']} of the {n['search_hits']} records are "
-        f"combustion science; {others} are other research areas.",
+        f"combustion science; {others} are other research areas. The console adds {n['outside_search']} related investigations the search does not return.",
         f"Fire behaves differently in space, and the rules for stopping it were written for gravity. A fire in a crewed cabin has nowhere to go. "
         f"A search of NASA's Physical Sciences Informatics repository for combustion returns {n['search_hits']} records; "
         f"{n['combustion_science']} are combustion science. The chart groups them by what each one burned.")
@@ -288,9 +294,9 @@ def slide_problem(prs, n):
          size=28, font=HEAD, bold=True, spacing=1.05, name="Title")
     text(s, LEFT, 2.5, 11.6, 0.5, "A fire in a crewed cabin or habitat has nowhere to go, and the crew cannot step outside.", size=17, color=MUTED,
          name="Stakes")
-    hero(s, LEFT, 3.35, 4.2, str(n["search_hits"]), "records returned by a search of NASA's PSI repository for “combustion”: the catalogue this console covers",
+    hero(s, LEFT, 3.35, 4.2, str(n["search_hits"]), "records returned by a search of NASA's PSI repository for “combustion”: the starting point of this console's catalogue",
          size=130, caption_w=4.3)
-    text(s, 5.75, 3.4, 6.8, 0.3, "WHAT EACH RECORD BURNED", size=11, font=MONO, color=DIM, name="Chart label")
+    text(s, 5.75, 3.4, 6.8, 0.3, f"THE {n['search_hits']} RECORDS, BY KIND", size=11, font=MONO, color=DIM, name="Chart label")
     labels = [k for k, _ in n["burned"]]
     values = [v for _, v in n["burned"]]
     bar_chart(s, 5.6, 3.65, 7.0, 2.95, labels, values, [DIM if k == "Not combustion" else CYAN for k in labels], name="Records by what they burned")
@@ -383,15 +389,16 @@ def slide_cool(prs, n):
     assert sum(v for _, v, _ in parts) == total
     s = new_slide(
         prs, 5, "What “extinction” hides",
-        f"{n['report']}, Appendix B figure captions. Cool-flame temperature: {n['cool_temp_source']}.",
+        f"{n['report']}, Appendix B figure captions. Cool-flame temperature, as reported for gas cool flames: {n['cool_temp_source']}.",
         f"In Table IX, Extinction means the visible flame went out. Of the {total} n-heptane tests logged as Extinction, the report's captions "
         f"give evidence of cool-flame burning afterwards in {c['indicated']}, no evidence in {c['not_indicated']}, are unclear in {c['unclear']} "
-        f"and say nothing in {c['']}. A cool flame burns at {n['cool_temp']}: a detector that watches for visible flame does not see it.")
+        f"and say nothing in {c['']}. Cool flames burn at {n['cool_temp']} (a figure reported for gas cool flames): a detector that watches for "
+        f"visible flame does not see one.")
     text(s, LEFT, 1.05, 11.0, 0.6, "“Extinction” only means the visible flame went out", size=28, font=HEAD, bold=True, name="Title")
     hero(s, LEFT, 1.9, 6.0, f"{c['indicated']} of {total}", "n-heptane “extinctions” show evidence that the droplet kept burning as a cool flame",
          size=110, color=RED, caption_w=5.2)
     text(s, LEFT, 5.25, 5.3, 1.1,
-         f"A sensor that watches for visible flame will miss a cool flame, and a cool flame burns at {n['cool_temp']}.", size=15, color=MUTED,
+         f"A sensor that watches for visible flame will miss a cool flame. Cool flames burn at {n['cool_temp']}.", size=15, color=MUTED,
          spacing=1.1, name="Why it matters")
     text(s, 6.75, 2.0, 5.8, 0.3, f"THE {total} N-HEPTANE TESTS LOGGED AS EXTINCTION", size=11, font=MONO, color=DIM, name="Chart label")
     bar_chart(s, 6.55, 2.3, 6.1, 3.6, [p[0] for p in parts], [p[1] for p in parts], [p[2] for p in parts], name="Cool-flame evidence in the captions")
@@ -405,23 +412,25 @@ def slide_model(prs, n):
     assumed = " Pressure taken as 1 atm." if n["near_pressure_assumed"] else ""
     s = new_slide(
         prs, 6, "The model and the Scenario Lab",
-        f"scripts/train_models.py and data/models in the repository (grouped cross-validation, seed 42). Nearest tests: {'; '.join(n['near_source'])}.{assumed}",
+        f"scripts/train_models.py and data/models in the repository (grouped cross-validation, seed 42; {', '.join(n['model_left_out'])} has no "
+        f"pressure and is left out). Nearest tests: {'; '.join(n['near_source'])}.{assumed}",
         f"Three small logistic models, each trained on one kind of evidence and scored on groups of tests it never saw. The droplet-extinction "
         f"model scores {n['auc_cv']:.2f} in grouped cross-validation and {n['auc_headline']:.2f} when a whole fuel is left out; the lower number "
         f"is the headline. At the working threshold it calls {n['fp']} of {negatives} negatives positive. The solid-fuel model does no better than "
-        f"chance and is shown failing, so for a solid the Scenario Lab gives the nearest real tests and no probability.")
+        f"chance and is shown failing, so for a solid the Scenario Lab gives the nearest real tests and no probability. The model uses "
+        f"{n['model_rows']} of the {n['n']} tests: {', '.join(n['model_left_out'])} has no pressure in the source table.")
     hero(s, LEFT, 1.0, 4.6, f"{n['auc_headline']:.2f}",
          f"headline AUC: the worse of grouped cross-validation ({n['auc_cv']:.2f}) and leave-one-fuel-out ({n['auc_headline']:.2f}). "
          "0.5 is a coin flip, 1 is perfect.", size=130, caption_w=4.7)
-    text(s, LEFT, 4.45, 4.7, 0.9, "Three small logistic models, each trained on one kind of evidence and tested on groups it never saw.",
+    text(s, LEFT, 4.45, 4.7, 0.9, "Three small logistic models, one per kind of evidence, each tested on groups it never saw.",
          size=15, color=MUTED, spacing=1.1, name="What the model is")
     text(s, LEFT, 5.6, 4.7, 0.9,
          [(f"{pct(n['fpr'], 0)} false-positive rate", {"color": RED, "bold": True}),
-          (f": {n['fp']} of {negatives} negatives called positive. One of the three models fails, and it is shown failing.", {})],
+          (f": {n['fp']} of {negatives} negatives called positive. One of the three models fails, and is shown failing.", {})],
          size=15, color=MUTED, spacing=1.1, name="The honest line")
 
     x0 = 6.1
-    text(s, x0, 1.12, 6.5, 0.3, "DROPLET EXTINCTION MODEL · OUT-OF-FOLD PREDICTIONS", size=11, font=MONO, color=DIM, name="Chart label 1")
+    text(s, x0, 1.12, 6.5, 0.3, f"DROPLET EXTINCTION MODEL · {n['model_rows']} OF {n['n']} TESTS · OUT-OF-FOLD", size=11, font=MONO, color=DIM, name="Chart label 1")
     cw, ch, lx = 1.75, 0.78, x0 + 2.35
     text(s, lx, 1.5, cw, 0.3, "called “goes out”", size=12, color=MUTED, align=PP_ALIGN.CENTER, name="Column 1")
     text(s, lx + cw + 0.08, 1.5, cw, 0.3, "called “keeps burning”", size=12, color=MUTED, align=PP_ALIGN.CENTER, name="Column 2")
@@ -441,7 +450,7 @@ def slide_model(prs, n):
             run.font.color.rgb = rgb(BG if fill == RED else TEXT)
 
     y1 = 3.95
-    text(s, x0, y1, 6.5, 0.3, "SCENARIO LAB EXAMPLE · NEAREST REAL TESTS", size=11, font=MONO, color=DIM, name="Chart label 2")
+    text(s, x0, y1, 6.5, 0.3, "SCENARIO LAB EXAMPLE · NEAREST REAL TESTS, NO PROBABILITY FOR A SOLID", size=11, font=MONO, color=DIM, name="Chart label 2")
     text(s, x0, y1 + 0.33, 6.5, 0.35,
          f"{sc['material']} · {sc['o2']:g}% O2 · {sc['pressure']:g} kPa · 0 g · {sc['flow']:g} cm/s", size=14, font=MONO, color=AMBER, name="Scenario")
     heads = ["Test", "O2", "Flow", "Outcome", "Distance"]
@@ -455,16 +464,14 @@ def slide_model(prs, n):
                   (row["outcome"].replace("_", " "), BODY, AMBER if row["outcome"] == "sustained" else RED), (f"{row['distance']:.2f}", MONO, TEXT)]
         for xv, (value, font, color), wd in zip(xs, values, widths):
             text(s, xv, y, wd, 0.3, value, size=12.5, font=font, color=color, name=f"Nearest {r + 1}")
-    text(s, x0, y1 + 1.12 + len(n["near"]) * 0.38 + 0.08, 6.5, 0.3, "For a solid, the console gives these tests and no probability.", size=12.5,
-         color=MUTED, name="Scenario note")
     return s
 
 
 def slide_unknown(prs, n):
     s = new_slide(
         prs, 7, "What we don't know, and where to look",
-        f"PSI Data Repository and the official challenge brief; {n['report']}, Table IX; NASA/TM-20210011385; SAME Final Report; "
-        "T'ien et al., Combust. Flame 277 (2025).",
+        f"PSI Data Repository and the official challenge brief; {n['report']}, Table IX; {n['solid_top_source']}; NASA/TM-20210011385; "
+        "SAME Final Report; T'ien et al., Combust. Flame 277 (2025).",
         f"The most useful thing the console shows is where the measurements stop. There are {n['partial_g']} combustion tests in lunar or Martian "
         f"gravity in the repository. The highest oxygen level of any solid-fuel test point is {n['solid_top_o2']:.1f}%, and no solid-fuel "
         f"investigation maps beyond {n['solid_limit']:g}%. {n['co2_and_he']} of {n['n']} droplet tests contain both carbon dioxide and helium. "
@@ -493,10 +500,10 @@ def slide_unknown(prs, n):
     text(s, px + 0.25, py + 1.0, pw - 0.5, 1.0,
          f"cool flames after the visible flame goes out\npale-blue flames near the limit\nsmoke particles below {n['smoke_nm']} nm", size=13.5,
          color=TEXT, spacing=1.12, name="Cannot see")
-    text(s, px + 0.25, py + 2.12, pw - 0.5, 0.3, "WHAT WAS NEVER TESTED", size=11, font=MONO, color=DIM, name="Panel label 2")
+    text(s, px + 0.25, py + 2.12, pw - 0.5, 0.3, "WHAT THE DATA DOES NOT HOLD", size=11, font=MONO, color=DIM, name="Panel label 2")
     text(s, px + 0.25, py + 2.4, pw - 0.5, 1.0,
-         f"lunar or Martian gravity\nsolid materials above {n['solid_limit']:g}% oxygen\nCO2 and helium together", size=13.5, color=TEXT,
-         spacing=1.12, name="Never tested")
+         f"combustion in lunar or Martian gravity\nsolid materials above {n['solid_limit']:g}% oxygen\nCO2 and helium in one droplet test",
+         size=13.5, color=TEXT, spacing=1.12, name="Not in the data")
 
     text(s, LEFT, 4.75, 7.0, 0.7, SITE, size=30, font=MONO, color=AMBER, bold=True, link=SITE_URL, name="Live link")
     text(s, LEFT, 5.5, 7.0, 0.4, "Every number in this deck is in the console, with its source.", size=16, name="Last line")
@@ -509,7 +516,8 @@ def build(path: Path = OUT) -> Path:
     prs.slide_width, prs.slide_height = Inches(W), Inches(H)
     prs.core_properties.title = "Flamefall Analytics"
     prs.core_properties.subject = "Flame in Freefall: what microgravity combustion experiments actually measured"
-    prs.core_properties.author = "Team Flamefall Analytics"
+    prs.core_properties.author = prs.core_properties.last_modified_by = "Team Flamefall Analytics"
+    prs.core_properties.comments = ""
     for make in (slide_title, slide_problem, slide_flex, slide_fuel, slide_cool, slide_model, slide_unknown):
         make(prs, n)
     assert len(prs.slides) == 7
@@ -522,8 +530,33 @@ def build(path: Path = OUT) -> Path:
     return path
 
 
+FIXED_DATE = (2026, 11, 14, 0, 0, 0)
+
+
+def fixed_workbook(data: bytes) -> bytes:
+    """A chart's embedded workbook with its creation time and zip dates fixed, so a rebuild changes nothing."""
+    import io
+    import re
+    import zipfile
+
+    out = io.BytesIO()
+    with zipfile.ZipFile(io.BytesIO(data)) as src, zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst:
+        for item in src.infolist():
+            inner = src.read(item.filename)
+            if item.filename == "docProps/core.xml":
+                inner = re.sub(rb"(<dcterms:(?:created|modified)[^>]*>)[^<]*(</dcterms:)", rb"\g<1>2026-11-14T00:00:00Z\g<2>", inner)
+            info = zipfile.ZipInfo(item.filename, date_time=FIXED_DATE)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            dst.writestr(info, inner)
+    return out.getvalue()
+
+
 def set_theme_fonts(path: Path) -> None:
-    """Write the heading and body fonts into the file's theme, so text with no font of its own uses them too."""
+    """Write the heading and body fonts into the file's theme, and fix every date inside the file.
+
+    Text with no font of its own then uses the deck's fonts too, and two builds from the same data
+    are the same file, byte for byte.
+    """
     import re
     import shutil
     import zipfile
@@ -538,7 +571,9 @@ def set_theme_fonts(path: Path) -> None:
                     xml, n = re.subn(rf'(<a:{block}>\s*<a:latin typeface=")[^"]*(")', rf"\g<1>{font}\g<2>", xml)
                     assert n == 1, (item.filename, block, n)
                 data = xml.encode("utf-8")
-            info = zipfile.ZipInfo(item.filename, date_time=(2026, 11, 14, 0, 0, 0))
+            if item.filename.startswith("ppt/embeddings/") and item.filename.endswith(".xlsx"):
+                data = fixed_workbook(data)
+            info = zipfile.ZipInfo(item.filename, date_time=FIXED_DATE)
             info.compress_type = zipfile.ZIP_DEFLATED
             dst.writestr(info, data)
     shutil.move(str(tmp), str(path))
