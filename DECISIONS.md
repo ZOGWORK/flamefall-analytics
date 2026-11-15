@@ -222,6 +222,24 @@ sources themselves.
 - **D38. Solid-fuel outcome colours.** Amber is a sustained flame, red is a flame that went out
   (quenched, or blown off, drawn as a cross), grey is no ignition. Red means "the flame went out"
   for droplets and for solids alike.
+- **D44. The PowerPoint deck (14 Nov).** The team lead asked for the seven slides as a PowerPoint
+  file as well as the page at `/deck/`. `scripts/build_deck.py` builds it with python-pptx and reads
+  every number from the data files at build time; `tests/test_deck.py` checks the committed file
+  against a fresh build, the slide count, a source line and speaker notes on every slide, the
+  numbers, the wording rules, and that the file holds no image. Charts are native PowerPoint
+  charts, so they can be restyled; the 276-cell matrix is 276 shapes. Three things differ from
+  the slide guidelines, each for a stated reason:
+  - The guidelines call the hero number of slide 2 "26 PSI investigations". The data says 26
+    records come back from the repository search and 24 of them are combustion science, so the
+    slide says "26 records" and its source line gives the 24.
+  - The guidelines give cool flames as 600 to 800 K. The one sourced figure in the data is 600
+    to 1000 K (a University of Maryland release on the CFI-G cool flames), so the slide uses
+    that range and cites it.
+  - The file has no animations or transitions. The guidelines allow them only where removing
+    one would lose something, and python-pptx does not write them.
+  The fonts are named in the file (Space Grotesk, IBM Plex Sans, JetBrains Mono) and are not
+  embedded: a machine without them shows PowerPoint's substitute. The page at `/deck/` keeps its
+  own seven slides, which cover the same ground in a different order.
 - **D43. Performance (14 Nov).** The team lead reported the site as very laggy. Measured in
   headless Chrome with `web/scripts/measure.mjs`, old build and new build back to back, four causes
   were found and fixed:
