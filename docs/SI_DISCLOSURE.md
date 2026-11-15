@@ -58,7 +58,8 @@ SI tools were used throughout, and are disclosed in full in the repository
 - **The data.** Every measured value comes from a public source: NASA/TP-2015-216046 (FLEX),
   NASA/TM-20210011385 (BASS-II), the PSI Data Repository records and experimental tables, and the
   papers cited per statement. No value was generated, estimated or interpolated by an SI tool.
-- **Images.** There are none other than charts computed from the data.
+- **Images.** There are none other than charts computed from the data, the app's own icon, and
+  two screenshots of the console in the README (`docs/img/`).
 
 ### How SI output was checked against primary sources
 
