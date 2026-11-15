@@ -2,7 +2,7 @@
 
 // Charts added so that each page leads with a picture of the numbers, not a paragraph.
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 
 import { FUEL_COLOR, OUTCOME_COLOR } from "@/components/console/primitives";
@@ -127,6 +127,14 @@ export function SolidMark({ cx = 0, cy = 0, outcome }: { cx?: number; cy?: numbe
   return <circle cx={cx} cy={cy} r={4} fill={s.color} fillOpacity={0.7} />;
 }
 
+// One mark-drawing function per outcome, made once. A new function on every render would make the
+// chart treat every series as changed.
+type MarkProps = { cx?: number; cy?: number };
+const SOLID_SHAPE: Record<string, (props: MarkProps) => React.ReactElement> = Object.fromEntries(
+  Object.keys(SOLID_STYLE).map((outcome) => [outcome, (props: MarkProps) => <SolidMark cx={props.cx} cy={props.cy} outcome={outcome} />]),
+);
+const crosshairShape = (props: MarkProps) => <Crosshair cx={props.cx} cy={props.cy} />;
+
 function Crosshair({ cx = 0, cy = 0 }: { cx?: number; cy?: number }) {
   return (
     <g>
@@ -137,7 +145,7 @@ function Crosshair({ cx = 0, cy = 0 }: { cx?: number; cy?: number }) {
 }
 
 /** Where a scenario sits among the tests that were actually run: oxygen against pressure. */
-export function ScenarioMap({
+export const ScenarioMap = memo(function ScenarioMap({
   o2,
   pressure,
   flexRows,
@@ -170,10 +178,20 @@ export function ScenarioMap({
         .map((p) => ({ x: p.o2_at_outcome_pct as number, y: p.pressure_kPa as number, id: `${p.investigation_id} ${p.test_no}`, what: style.label })),
     }));
   }, [flexRows, solidPoints]);
-  const xs = series.flatMap((s) => s.data.map((d) => d.x));
-  const ys = series.flatMap((s) => s.data.map((d) => d.y));
-  const xDomain: [number, number] = [Math.floor(Math.min(o2, ...xs) - 2), Math.ceil(Math.max(o2, ...xs) + 2)];
-  const yDomain: [number, number] = [Math.floor(Math.min(pressure, ...ys) / 10) * 10 - 10, Math.ceil(Math.max(pressure, ...ys) / 10) * 10 + 10];
+  // the extent of the tests is worked out once per set of tests, not on every move of a slider
+  const extent = useMemo(() => {
+    const xs = series.flatMap((s) => s.data.map((d) => d.x));
+    const ys = series.flatMap((s) => s.data.map((d) => d.y));
+    return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+  }, [series]);
+  const x0 = Math.floor(Math.min(o2, extent.x0) - 2);
+  const x1 = Math.ceil(Math.max(o2, extent.x1) + 2);
+  const y0 = Math.floor(Math.min(pressure, extent.y0) / 10) * 10 - 10;
+  const y1 = Math.ceil(Math.max(pressure, extent.y1) / 10) * 10 + 10;
+  // the same array for the same numbers, so the axes are not rebuilt while the scenario stays inside them
+  const xDomain = useMemo<[number, number]>(() => [x0, x1], [x0, x1]);
+  const yDomain = useMemo<[number, number]>(() => [y0, y1], [y0, y1]);
+  const scenario = useMemo(() => [{ x: o2, y: pressure, id: "Your scenario", what: "not a test" }], [o2, pressure]);
   return (
     <div>
       <Chart height={340} label="The scenario's oxygen and pressure against every test of this kind">
@@ -190,15 +208,15 @@ export function ScenarioMap({
           />
           {series.map((s) =>
             s.solid ? (
-              <Scatter key={s.key} data={s.data} fill={s.color} shape={(props: { cx?: number; cy?: number }) => <SolidMark cx={props.cx} cy={props.cy} outcome={s.key} />} />
+              <Scatter isAnimationActive={false} key={s.key} data={s.data} fill={s.color} shape={SOLID_SHAPE[s.key]} />
             ) : (
-              <Scatter key={s.key} data={s.data} fill={s.color} fillOpacity={0.6} />
+              <Scatter isAnimationActive={false} key={s.key} data={s.data} fill={s.color} fillOpacity={0.6} />
             ),
           )}
-          <Scatter data={[{ x: o2, y: pressure, id: "Your scenario", what: "not a test" }]} shape={(props: { cx?: number; cy?: number }) => <Crosshair cx={props.cx} cy={props.cy} />} />
+          <Scatter isAnimationActive={false} data={scenario} shape={crosshairShape} />
         </ScatterChart>
       </Chart>
       <Legend items={[...series.map((s) => ({ label: s.name, color: s.color, shape: s.shape })), { label: "your scenario (not a test)", color: "var(--foreground)", shape: "ring" as const }]} />
     </div>
   );
-}
+});
