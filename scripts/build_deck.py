@@ -493,7 +493,7 @@ def slide_unknown(prs, n):
     for i, (value, caption) in enumerate(heroes):
         hero(s, LEFT + i * 2.35, 2.45, 2.2, value, caption, size=44, color=AMBER if i == 1 else TEXT, caption_w=2.1, name=f"Hero number {i + 1}")
 
-    px, py, pw, ph = 7.95, 2.4, 4.7, 3.55
+    px, py, pw, ph = 7.95, 2.4, 4.7, 4.1          # tall enough for two of the last three lines to wrap
     rect(s, px, py, pw, ph, None, line=DIM, dash=True, name="No data panel")
     tag = rect(s, px + 0.25, py + 0.25, 1.05, 0.3, TEXT, name="No data tag")
     tag.text_frame.margin_left = tag.text_frame.margin_right = tag.text_frame.margin_top = tag.text_frame.margin_bottom = 0
@@ -508,10 +508,10 @@ def slide_unknown(prs, n):
     text(s, px + 0.25, py + 1.0, pw - 0.5, 1.0,
          f"cool flames after the visible flame goes out\npale-blue flames near the limit\nsmoke particles below {n['smoke_nm']} nm", size=13.5,
          color=TEXT, spacing=1.12, name="Cannot see")
-    text(s, px + 0.25, py + 2.12, pw - 0.5, 0.3, "WHERE THIS CONSOLE'S DATA STOPS", size=11, font=MONO, color=DIM, name="Panel label 2")
+    text(s, px + 0.25, py + 2.12, pw - 0.5, 0.3, "WHERE THE MEASUREMENTS STOP", size=11, font=MONO, color=DIM, name="Panel label 2")
     text(s, px + 0.25, py + 2.4, pw - 0.5, 1.0,
-         f"lunar or Martian gravity: no data in the PSI repository\nsolid materials: no test point above {n['solid_top_o2']:.1f}% oxygen\n"
-         "CO2 with helium: never in one FLEX test", size=13.5, color=TEXT, spacing=1.12, name="Where it stops")
+         f"lunar or Martian gravity: no data in the PSI repository\nsolids in the console: no test point above {n['solid_top_o2']:.1f}% oxygen\n"
+         "CO2 with helium: in no FLEX test", size=13.5, color=TEXT, spacing=1.12, name="Where it stops")
 
     text(s, LEFT, 4.75, 7.0, 0.7, SITE, size=30, font=MONO, color=AMBER, bold=True, link=SITE_URL, name="Live link")
     text(s, LEFT, 5.5, 7.0, 0.4, "Every number in this deck is in the console, with its source.", size=16, name="Last line")
