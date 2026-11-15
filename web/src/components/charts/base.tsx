@@ -3,11 +3,12 @@
 // Shared chart frame and axis styling, so every chart reads the same way.
 
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 
 const EMPTY: ChartConfig = {};
-/** How many charts have asked for a timer slot, so that timers are spread out. */
+/** How many charts are waiting on a timer right now, so that their timers are spread out. */
 let waiting = 0;
 
 export function Chart({
@@ -40,17 +41,23 @@ export function Chart({
     );
     observer.observe(el);
     // one chart per idle period: a callback that overruns its period pushes the rest to the next one.
-    // Where there is no idle callback (Safari), the charts are spaced out on a timer instead.
-    const idle =
-      typeof window.requestIdleCallback === "function"
-        ? window.requestIdleCallback(build, { timeout: 4000 })
-        : window.setTimeout(build, 400 + 150 * waiting++);
-    window.addEventListener("beforeprint", build); // a printed page shows every chart
+    // Where there is no idle callback (Safari), the charts still waiting are spaced out on a timer.
+    // The count goes down again when this chart is built or leaves the page, so it never grows
+    // from one page to the next.
+    const hasIdle = typeof window.requestIdleCallback === "function";
+    const idle = hasIdle ? window.requestIdleCallback(build, { timeout: 4000 }) : window.setTimeout(build, 400 + 150 * waiting);
+    if (!hasIdle) waiting += 1;
+    // a printed page shows every chart: the render is forced before the browser lays the page out
+    const beforePrint = () => flushSync(build);
+    window.addEventListener("beforeprint", beforePrint);
     return () => {
-      window.removeEventListener("beforeprint", build);
+      window.removeEventListener("beforeprint", beforePrint);
       observer.disconnect();
-      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle);
-      else window.clearTimeout(idle);
+      if (hasIdle) window.cancelIdleCallback(idle);
+      else {
+        window.clearTimeout(idle);
+        waiting = Math.max(0, waiting - 1);
+      }
     };
   }, [built]);
   return (
