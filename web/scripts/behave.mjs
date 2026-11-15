@@ -145,9 +145,15 @@ const HERO = `document.querySelector("section.beam p.num, .beam p.num")?.innerTe
     const wanted = [...Object.values(slide.words), slide.source,
       ...(slide.matrix ? [...slide.matrix.columns, ...slide.matrix.rows.flatMap((r) => [r.label, ...r.cells.map((c) => c.text)])] : []),
       ...(slide.nearest ? [...slide.nearest.heads, ...slide.nearest.rows.flat().map((c) => c.text)] : [])];
-    const shown = squash(await p.ev(`document.querySelector("main section").textContent`));
+    let shown = squash(await p.ev(`document.querySelector("main section").textContent`));
     const counter = squash(await p.ev(`document.querySelector("header p").textContent`));
-    const missing = wanted.flatMap((t) => t.split("\n")).map(squash).filter((t) => !shown.includes(t));
+    // Longest first, and each piece is taken out of the text once found: a hero number that also
+    // appears inside a caption has to be on the slide a second time to count.
+    const missing = [];
+    for (const t of wanted.flatMap((t) => t.split("\n")).map(squash).sort((a, b) => b.length - a.length)) {
+      const at = shown.indexOf(t);
+      if (at < 0) missing.push(t); else shown = `${shown.slice(0, at)}\u0000${shown.slice(at + t.length)}`;
+    }
     check(`deck: slide ${i + 1} of ${deck.order.length} shows the words of the PowerPoint slide`, missing.length === 0 && counter.endsWith(`${i + 1} / ${deck.order.length}`), `${counter} ${missing.join(" | ").slice(0, 160)}`);
   }
   await p.ev(`location.hash = "#3"; location.reload(); true`).catch(() => {});      // a slide opened from a link
