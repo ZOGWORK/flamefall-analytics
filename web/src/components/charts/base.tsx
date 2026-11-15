@@ -28,11 +28,17 @@ export function Chart({
   // only when it scrolls into view makes scrolling hitch. The box keeps its height, so nothing
   // moves when the chart appears, and it keeps its label, so a screen reader finds it either way.
   const box = useRef<HTMLDivElement>(null);
-  const [built, setBuilt] = useState(false);
+  // The size of the box at the moment the chart is built. The chart is drawn at that size on its
+  // very first render, with no placeholder size in between. null: not built yet.
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const built = size !== null;
   useEffect(() => {
     const el = box.current;
     if (!el || built) return;
-    const build = () => setBuilt(true);
+    const build = () => {
+      const rect = el.getBoundingClientRect();
+      setSize({ width: Math.round(rect.width), height: Math.round(rect.height) });
+    };
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) build();
@@ -47,7 +53,8 @@ export function Chart({
     const hasIdle = typeof window.requestIdleCallback === "function";
     const idle = hasIdle ? window.requestIdleCallback(build, { timeout: 4000 }) : window.setTimeout(build, 400 + 150 * waiting);
     if (!hasIdle) waiting += 1;
-    // a printed page shows every chart: the render is forced before the browser lays the page out
+    // A printed page shows every chart. The render is forced before the browser lays the page out,
+    // and because the chart starts at the size of its box, that one render is already the real one.
     const beforePrint = () => flushSync(build);
     window.addEventListener("beforeprint", beforePrint);
     return () => {
@@ -63,7 +70,8 @@ export function Chart({
   return (
     <div ref={box} role="img" aria-label={label} className={cn("w-full", className)} style={{ height }}>
       {built && (
-        <ChartContainer config={EMPTY} className="aspect-auto h-full w-full">
+        // a box that is hidden when its chart is built (a closed tab) has no width yet: the chart then takes its default and resizes itself
+        <ChartContainer config={EMPTY} className="aspect-auto h-full w-full" initialDimension={size.width > 0 && size.height > 0 ? size : undefined}>
           {children}
         </ChartContainer>
       )}
