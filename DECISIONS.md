@@ -248,6 +248,18 @@ sources themselves.
   Behaviour was re-checked in a real browser with `web/scripts/behave.mjs` (controls, shared
   links, in-place navigation, the glass card). The numbers are from one machine and move from run
   to run; the scripts are in the repository so they can be measured again.
+- **D45. One deck in two places (15 Nov).** The team lead asked for the page at `/deck/` to
+  show the same seven slides as the PowerPoint file. The page now types no words of its own.
+  `scripts/build_deck.py` builds the slides, and its `web_content()` reads back from them the text
+  of every box, the accent colour it is set in and the numbers the drawings need;
+  `scripts/export_web.py` writes that to `web/src/data/deck.json`. A change to a slide's wording
+  therefore reaches both, and the tests fail until the file is exported again. The page draws the
+  charts itself, in the console's type and layout (bars, the 276-cell matrix, the scatter, the two
+  tables), so it is the same content and not a picture of the slides. Speaker notes stay in the
+  PowerPoint file. The earlier web slides are gone: the cabin atmospheres, the three steps of the
+  intelligence layer and the use of SI tools. The first two are in the console's own pages
+  (Overview and Gaps; Scenario Lab and Models). The SI disclosure was on no other page, so the
+  sidebar now links `docs/SI_DISCLOSURE.md`.
 - **D44. The PowerPoint deck (14 Nov).** The team lead asked for the seven slides as a PowerPoint
   file as well as the page at `/deck/`. `scripts/build_deck.py` builds it with python-pptx and reads
   every number from the data files at build time; `tests/test_deck.py` checks the committed file
@@ -278,8 +290,8 @@ sources themselves.
   helium fractions as printed, whatever the pressure) were run with both fuels, of 41 for
   methanol and 33 for n-heptane.
   The fonts are named in the file (Space Grotesk, IBM Plex Sans, JetBrains Mono) and are not
-  embedded: a machine without them shows PowerPoint's substitute. The page at `/deck/` keeps its
-  own seven slides, which cover the same ground in a different order.
+  embedded: a machine without them shows PowerPoint's substitute. The page at `/deck/` at first
+  kept its own seven slides; D45 changed that.
 - **D42. Self-review after the review bot stopped (14 Nov).** The review bot stopped before any
   pull request reached its top score (QUESTIONS.md Q10), so the team lead asked for the pull
   requests to be merged on their tests after a self-review. It ran in passes. First, for each of
