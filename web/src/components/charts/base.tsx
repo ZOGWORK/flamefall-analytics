@@ -7,6 +7,8 @@ import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 
 const EMPTY: ChartConfig = {};
+/** How many charts have asked for a timer slot, so that timers are spread out. */
+let waiting = 0;
 
 export function Chart({
   children,
@@ -37,12 +39,15 @@ export function Chart({
       { rootMargin: "300px 0px" },
     );
     observer.observe(el);
-    // one chart per idle period: a callback that overruns its period pushes the rest to the next one
+    // one chart per idle period: a callback that overruns its period pushes the rest to the next one.
+    // Where there is no idle callback (Safari), the charts are spaced out on a timer instead.
     const idle =
       typeof window.requestIdleCallback === "function"
         ? window.requestIdleCallback(build, { timeout: 4000 })
-        : window.setTimeout(build, 600);
+        : window.setTimeout(build, 400 + 150 * waiting++);
+    window.addEventListener("beforeprint", build); // a printed page shows every chart
     return () => {
+      window.removeEventListener("beforeprint", build);
       observer.disconnect();
       if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle);
       else window.clearTimeout(idle);
