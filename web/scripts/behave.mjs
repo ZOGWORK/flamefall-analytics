@@ -19,7 +19,7 @@ const ws = new WebSocket(version.webSocketDebuggerUrl);
 await new Promise((r) => ws.addEventListener("open", r));
 let nextId = 1; const pending = new Map(); const listeners = [];
 ws.addEventListener("message", (e) => { const m = JSON.parse(e.data);
-  if (m.id && pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); m.error ? p.reject(new Error(m.error.message)) : p.resolve(m.result); } else for (const l of listeners) l(m); });
+  if (m.id && pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); if (m.error) p.reject(new Error(m.error.message)); else p.resolve(m.result); } else for (const l of listeners) l(m); });
 const send = (method, params = {}, sessionId) => new Promise((resolve, reject) => { const id = nextId++; pending.set(id, { resolve, reject }); ws.send(JSON.stringify({ id, method, params, sessionId })); });
 const once = (method, sessionId) => new Promise((resolve) => { const l = (m) => { if (m.method === method && m.sessionId === sessionId) { listeners.splice(listeners.indexOf(l), 1); resolve(m.params); } }; listeners.push(l); });
 
@@ -58,6 +58,27 @@ const HERO = `document.querySelector("section.beam p.num, .beam p.num")?.innerTe
   check("scenario: no page errors", p.errors.length === 0, p.errors.join(" | "));
   await p.close();
 }
+// 1b. controls that sit among the results answer at once, and fast typing is not undone
+{
+  const p = await open("/scenario/");
+  const box = `document.querySelector('input[aria-label="Free volume of the cabin, cubic metres"]')`;
+  await p.ev(`${box}.scrollIntoView({ block: "center" }); ${box}.focus(); ${box}.select(); true`);
+  for (const ch of "25") {
+    await send("Input.dispatchKeyEvent", { type: "keyDown", key: ch, text: ch, code: `Digit${ch}`, windowsVirtualKeyCode: 48 + Number(ch) }, p.s);
+    await send("Input.dispatchKeyEvent", { type: "keyUp", key: ch, code: `Digit${ch}`, windowsVirtualKeyCode: 48 + Number(ch) }, p.s);
+  }
+  const typed = await p.ev(`${box}.value`);
+  await sleep(700);
+  const later = await p.ev(`${box}.value`);
+  check("scenario: fast typing in the volume box is kept", typed === "25" && later === "25", `typed=${typed} later=${later}`);
+  const pressed = `[...document.querySelectorAll("button")].filter((b) => b.innerText.includes("sample (")).map((b) => b.innerText + ":" + (b.getAttribute("aria-pressed") ?? b.dataset.pressed ?? b.getAttribute("data-state")))`;
+  const before = await p.ev(pressed);
+  await p.ev(`[...document.querySelectorAll('button')].find((b) => b.innerText.includes("Large sample")).click(); new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))`);
+  const after = await p.ev(pressed);
+  check("scenario: the size control answers within two frames", JSON.stringify(before) !== JSON.stringify(after), `${before} -> ${after}`);
+  check("scenario controls: no page errors", p.errors.length === 0, p.errors.join(" | "));
+  await p.close();
+}
 // 2. a shared link still sets the state, and the deferred results show it
 {
   const p = await open("/scenario/?g=0.16&material=sibal&o2=34&p=56.5");
@@ -85,7 +106,8 @@ const HERO = `document.querySelector("section.beam p.num, .beam p.num")?.innerTe
 // 4. Overview: the glass distortion is off while scrolling and back when it stops; nothing animates at rest
 {
   const p = await open("/");
-  const glass = `(() => { const el = [...document.querySelectorAll("*")].find((e) => (e.style.backdropFilter || "").includes("url(") || e.style.backdropFilter === "none"); return el ? el.style.backdropFilter : "not found"; })()`;
+  // what the browser actually applies, not what a style attribute says
+  const glass = `(() => { const el = document.querySelector('[data-slot="liquid-glass"]'); return el ? getComputedStyle(el).backdropFilter : "not found"; })()`;
   const atRest = await p.ev(glass);
   await p.ev(`window.scrollTo(0, 200); new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))`);
   const moving = await p.ev(glass);
