@@ -1,11 +1,11 @@
 "use client";
 
-// Light and motion that are decoration only: the status strip, the lit test matrix and the embers.
+// Decoration only: the status strip, the matrix of test cells and the embers in the backdrop. None of it moves.
 
 import { OUTCOME_COLOR } from "@/components/console/primitives";
 import { catalogue, flex, solid } from "@/lib/data";
 
-/** One lit cell per FLEX test, in test order, coloured by how the test ended. */
+/** One cell per FLEX test, in test order, coloured by how the test ended. */
 export function TestMatrix() {
   return (
     <div
