@@ -12,5 +12,13 @@ npm run lint
 npm run build      # writes the static site to out/
 ```
 
+Two scripts drive a real browser against a built copy of the site. They need Chrome (set
+`CHROME_PATH` if it is not in the default Windows location) and the built site served locally:
+
+```bash
+node scripts/behave.mjs http://localhost:3211     # controls, shared links, in-place navigation; fails on error
+node scripts/measure.mjs http://localhost:3211    # load, idle, scrolling and slider cost per page
+```
+
 The app reads only the JSON in `src/data/` and `public/psi/`. Those files are written by
 `python scripts/export_web.py` in the repository root and are committed; do not edit them by hand.
