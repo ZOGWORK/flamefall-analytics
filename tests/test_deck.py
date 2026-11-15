@@ -112,6 +112,14 @@ def test_two_builds_from_the_same_data_are_the_same_file(tmp_path):
     with zipfile.ZipFile(a) as z:
         assert {(i.date_time, i.create_system, i.external_attr) for i in z.infolist()} == {
             (build_deck.FIXED_DATE, build_deck.ZIP_SYSTEM, build_deck.ZIP_ATTR)}
+        books = [name for name in z.namelist() if name.startswith("ppt/embeddings/") and name.endswith(".xlsx")]
+        assert books                                                               # each chart's workbook carries the fixed date too
+        for name in books:
+            import io
+
+            with zipfile.ZipFile(io.BytesIO(z.read(name))) as book:
+                assert {i.date_time for i in book.infolist()} == {build_deck.FIXED_DATE}, name
+                assert "2026-11-14T00:00:00Z" in book.read("docProps/core.xml").decode("utf-8"), name
 
 
 def test_exactly_seven_slides_each_with_a_source_line_and_speaker_notes(deck):
@@ -139,7 +147,7 @@ def test_every_number_on_the_slides_is_the_one_in_the_data(n, deck):
         5: [f"{c['indicated']} of {n['heptane_extinctions']}", n["cool_temp"], "as reported for gas cool flames"],
         6: [f"{n['auc_headline']:.2f}", f"({n['auc_cv']:.2f})", f"{pct(n['fpr'], 0)} false-positive rate",
             f"{n['fp']} of {n['fp'] + n['tn']} negatives", f"{n['model_rows']} OF {n['n']} TESTS"],
-        7: [f"{n['solid_top_o2']:.1f}%", f"{n['co2_and_he']} of {n['n']}", f"above {n['solid_limit']:g}% oxygen", f"below {n['smoke_nm']} nm"],
+        7: [f"{n['solid_top_o2']:.1f}%", f"{n['co2_and_he']} of {n['n']}", f"above {n['solid_top_o2']:.1f}% oxygen", f"below {n['smoke_nm']} nm"],
     }
     for number, strings in expected.items():
         for s in strings:
@@ -176,8 +184,13 @@ def test_the_confusion_matrix_has_each_count_in_its_own_cell(n):
     slide = pptx.Presentation(str(DECK)).slides[5]
     shapes = by_name(slide)
     cell = lambda name: shapes[name].text_frame.text                                       # noqa: E731
-    assert shapes["Row 1"].text_frame.text == "flame went out" and shapes["Row 2"].text_frame.text == "flame did not go out"
-    assert "goes out" in shapes["Column 1"].text_frame.text and "keeps burning" in shapes["Column 2"].text_frame.text
+    # the rows are named by outcome: the model's second class holds Disruption and Completion, and the slide says so
+    assert shapes["Row 1"].text_frame.text == "Extinction" and shapes["Row 2"].text_frame.text == "Disruption or Completion"
+    assert shapes["Column 1"].text_frame.text == "called “Extinction”" and shapes["Column 2"].text_frame.text == "called “not Extinction”"
+    outcomes = build_deck.flex.load_flex()["outcome"].value_counts()
+    assert n["fp"] + n["tn"] == outcomes["Disruption"] + outcomes["Completion"]            # FLEX-114, left out, is an Extinction
+    assert n["tp"] + n["fn"] == outcomes["Extinction"] - len(n["model_left_out"])
+    assert "Disruption and Completion" in slide.notes_slide.notes_text_frame.text
     assert (cell("Matrix cell 1.1"), cell("Matrix cell 1.2")) == (str(n["tp"]), str(n["fn"]))      # went out: called so, missed
     assert (cell("Matrix cell 2.1"), cell("Matrix cell 2.2")) == (str(n["fp"]), str(n["tn"]))      # did not: false alarm, right
     assert n["tp"] + n["fn"] + n["fp"] + n["tn"] == n["model_rows"] == n["n"] - len(n["model_left_out"])
@@ -208,12 +221,14 @@ def test_the_last_slide_claims_only_what_the_data_supports(n):
 
     assert (cat.load_evidence()["evidence_class"] == "partial_g").sum() >= 5
     assert "NEVER TESTED" not in panel.upper() and "THE DATA DOES NOT HOLD" not in panel.upper()
-    # each line carries its own scope: the first is about the PSI repository, the other two about every test in the data
+    # the label scopes the lines to this console's data; the first names the PSI repository, the last the FLEX tests
+    assert "WHERE THIS CONSOLE'S DATA STOPS" in panel
     assert "lunar or Martian gravity: no data in the PSI repository" in panel and n["partial_g"] == 0
     solid = cat.load_solid_points()
-    assert f"solid materials: no test above {n['solid_limit']:g}% oxygen" in panel
-    assert solid["o2_at_outcome_pct"].max() <= n["solid_limit"] and solid["o2_pct"].max() <= n["solid_limit"]
-    assert "CO2 with helium: never in one droplet test" in panel and n["co2_and_he"] == 0
+    assert f"solid materials: no test point above {n['solid_top_o2']:.1f}% oxygen" in panel       # the same number as the hero
+    assert solid["o2_at_outcome_pct"].max() == solid["o2_pct"].max() == n["solid_top_o2"]
+    assert "CO2 with helium: never in one FLEX test" in panel and n["co2_and_he"] == 0
+    assert f"{n['solid_limit']:g}% oxygen" not in panel                                           # one study's range is not a ceiling
     assert "in the PSI repository" in shapes["Hero number 1 caption"].text_frame.text
 
 
