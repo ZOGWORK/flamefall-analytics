@@ -24,7 +24,7 @@ export function ev(id: string): Evidence {
 }
 
 /**
- * The top of the oxygen range any solid-fuel investigation states (SoFIE-GEL, up to 34% O2).
+ * The top of the widest oxygen range a solid-fuel investigation has tested (SoFIE-GEL, up to 34% O2).
  * Above it there is no solid-material test point at all, so the app answers NO DATA.
  */
 export const SOLID_O2_LIMIT = ev("sofie-gel-envelope").o2_max_pct as number;
