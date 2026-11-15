@@ -264,9 +264,10 @@ sources themselves.
   - The file has no animations or transitions. The guidelines allow them only where removing
     one would lose something, and python-pptx does not write them.
   The slides also say only what the data supports where the guidelines' wording went further:
-  slide 7 lists what the repository does not hold, not what "was never tested" (partial-gravity
-  combustion has been tested in drop towers, on parabolic flights and on one suborbital flight,
-  all in `data/evidence.json`; none of it is in the repository), and slide 6 says the model uses
+  slide 7 lists where the measurements stop, each line with its own scope, not what "was never
+  tested" (partial-gravity combustion has been tested in drop towers, on parabolic flights and on
+  one suborbital flight, all in `data/evidence.json`; none of it is in the PSI repository), and
+  slide 6 says the model uses
   275 of the 276 tests, because the source prints FLEX-114's pressure as 0 mmHg and it is treated
   as missing.
   The fonts are named in the file (Space Grotesk, IBM Plex Sans, JetBrains Mono) and are not
