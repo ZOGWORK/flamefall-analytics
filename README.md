@@ -6,7 +6,7 @@ spacecraft, stations, surface habitats and pressurised rovers.**
 Space Apps Challenge 2026 · *Flame in Freefall: SI-Powered Fire Safety Insights from Microgravity
 Combustion Data* · team Flamefall Analytics.
 
-- **Live console:** https://flamefall-analytics.onrender.com
+- **Live console, hosted on Render:** https://flamefall-analytics.onrender.com
 - **Slide deck (7 slides):** https://flamefall-analytics.onrender.com/deck/
 
 ![The Overview page: 276 droplet burns, how they ended, and the other evidence in the console](docs/img/overview.png)
@@ -31,9 +31,9 @@ Each number below is recomputed from the data files by the tests (`tests/test_do
 | "No visible flame" is not "fire out" | 39 of 60 n-heptane extinctions show evidence of cool-flame burning afterwards | Same report, Appendix B captions |
 | Repository search for "combustion" | 26 records, 24 of them combustion science, 25 experimental tables | PSI Data Repository |
 | Solid-fuel test points | 313 transcribed, 275 with a stated outcome; the highest oxygen among them is 31.9% | NASA/TM-20210011385, PSI-99 and four papers |
-| Widest oxygen range any solid-fuel investigation states | up to 34%; above that there is no solid-material test point at all | T'ien et al., Combust. Flame 277 (2025) 114244 (SoFIE-GEL) |
+| Widest oxygen range a solid-fuel investigation has tested | 13 to 34% (SoFIE-GEL). The data files hold no solid-material test point above 34% | Range: T'ien et al., Combust. Flame 277 (2025) 114244. Points: `data/solid_test_points.csv` |
 | Combustion tests in lunar or Martian gravity in the repository | 0 | Official challenge brief; PSI search |
-| Sourced statements | 66, of which 60 were verified against their primary source | `data/evidence.json` |
+| Sourced statements | 66, of which 60 were verified against the source they cite | `data/evidence.json` |
 
 Three small models were fitted, each on one kind of evidence, and reported as they scored on
 groups they had never seen:
@@ -55,7 +55,7 @@ groups they had never seen:
 | [Model Lab](https://flamefall-analytics.onrender.com/models/) | How far can a model be trusted here? |
 | [What We Don't Know](https://flamefall-analytics.onrender.com/unknowns/) | Where does the data stop? |
 
-![The Scenario Lab set to a lunar-base cabin: oxygen partial pressure, and no data at lunar gravity](docs/img/scenario-lab.png)
+![The Scenario Lab with a fabric at 34% oxygen, 56.5 kPa and lunar gravity: the oxygen partial pressure, and no data at that gravity](docs/img/scenario-lab.png)
 
 ## How it is put together
 
