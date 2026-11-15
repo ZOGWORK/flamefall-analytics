@@ -569,7 +569,7 @@ def build(path: Path = OUT) -> Path:
     return path
 
 
-# The page at /deck/ shows the same seven slides. It types none of their words: it reads them here.
+# The page at /deck/ shows the same seven slides. It has no slide text of its own: it reads the words here.
 TONE = {AMBER: "amber", CYAN: "data", DIM: "dim", RED: "ext"}
 WEB_DRAWN = ("Slide number", "Outcome counts")       # the page draws these itself, from the counts below
 TABLE_CELL = re.compile(r"(Column|Row|Matrix cell|Head|Nearest) ?(.*)")
