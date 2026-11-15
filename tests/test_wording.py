@@ -97,9 +97,23 @@ def test_no_single_burning_rate_is_quoted_for_n_heptane():
                 assert not re.search(r"\b0\.39\b|0\.378|0\.398", line), f"{p.name}: {line.strip()[:120]}"
 
 
+OWN_SCREENSHOTS = {"docs/img/overview.png", "docs/img/scenario-lab.png"}
+
+
+def test_the_only_image_files_in_the_repository_are_the_icon_and_the_two_screenshots():
+    import subprocess
+
+    tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split("\n")
+    images = {f for f in tracked if f.lower().endswith((".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp", ".ico"))}
+    assert images == OWN_SCREENSHOTS | {"web/src/app/icon.svg"}, sorted(images)
+
+
 def test_no_agency_marks_are_referenced():
     """No logo, insignia or mission-patch image is referenced anywhere."""
     for p in READER_FACING:
         text = p.read_text(encoding="utf-8")
         assert not re.search(r"<img[^>]+(nasa|meatball|insignia|patch)", text, re.I), p.name
-        assert not re.search(r"\.(png|jpg|jpeg|svg|gif)[\"')]", text, re.I), p.name
+        # the only image files a reader-facing text may point at are the two screenshots of this
+        # project's own console; anything else would have to be looked at before it is allowed
+        images = set(re.findall(r"[\w./-]+\.(?:png|jpg|jpeg|svg|gif)(?=[\"')])", text, re.I))
+        assert images <= OWN_SCREENSHOTS, f"{p.name}: {sorted(images - OWN_SCREENSHOTS)}"
