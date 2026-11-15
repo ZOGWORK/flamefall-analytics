@@ -1,7 +1,9 @@
 "use client";
 
-// The seven slides of the PowerPoint file, in the browser. Every word, number and colour here is read
-// from deck.json, which scripts/build_deck.py writes from the slides themselves: this file types none.
+// The seven slides of the PowerPoint file, in the browser. The text, numbers and colours of every slide are
+// read from deck.json, which scripts/build_deck.py writes from the slides themselves. What this file types
+// is the shell around them, the three outcome names in the legends, the axis units and the labels for
+// screen readers.
 
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -10,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { Kicker, OUTCOME_COLOR, Prose } from "@/components/console/primitives";
+import { REPO_URL } from "@/components/shell/nav";
 import { Button } from "@/components/ui/button";
 import deck from "@/data/deck.json";
 import type { Outcome } from "@/lib/types";
@@ -114,7 +117,7 @@ const steps = (from: number, to: number, step: number) => Array.from({ length: M
 function ShareScatter({ label }: { label: string }) {
   const [x0, x1, dx] = D.o2_axis;
   const [y0, y1, dy] = D.share_axis;
-  const W = 640, H = 190, L = 46, R = 14, T = 10, B = 28;
+  const W = 640, H = 172, L = 46, R = 14, T = 10, B = 28;
   const px = (v: number) => L + ((v - x0) / (x1 - x0)) * (W - L - R);
   const py = (v: number) => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
   return (
@@ -131,13 +134,13 @@ function ShareScatter({ label }: { label: string }) {
         {steps(y0, y1, dy).map((v) => (
           <g key={v}>
             <line x1={L} x2={W - R} y1={py(v)} y2={py(v)} stroke="var(--line)" />
-            <text x={L - 8} y={py(v) + 4} textAnchor="end" fontSize="11" fill="var(--muted-foreground)" className="num">
+            <text x={L - 8} y={py(v) + 4} textAnchor="end" fill="var(--muted-foreground)" className="num text-[11px] max-sm:text-[19px]">
               {Math.round(v * 100)}%
             </text>
           </g>
         ))}
         {steps(x0, x1, dx).map((v) => (
-          <text key={v} x={px(v)} y={H - 8} textAnchor="middle" fontSize="11" fill="var(--muted-foreground)" className="num">
+          <text key={v} x={px(v)} y={H - 8} textAnchor="middle" fill="var(--muted-foreground)" className="num text-[11px] max-sm:text-[19px]">
             {v}% O2
           </text>
         ))}
@@ -226,7 +229,6 @@ function SlideFlex() {
 
 function SlideFuel() {
   const { words: w, tones, source } = S.fuel;
-  const labels = ["Methanol label", "n-Heptane label"] as const;      // one per fuel, in the order of the drawing
   return (
     <>
       <Kicker>{w.Kicker}</Kicker>
@@ -243,9 +245,9 @@ function SlideFuel() {
         <div>
           <Label className={tone(tones, "Chart label 1")}>{w["Chart label 1"]}</Label>
           <div className="space-y-3">
-            {D.fuels.map((f, i) => (
+            {D.fuels.map((f) => (
               <div key={f.label} className="grid grid-cols-[6.5rem_1fr] items-start gap-x-3">
-                <p className={`text-panel font-bold ${tone(tones, labels[i])}`}>{w[labels[i]]}</p>
+                <p className={`text-panel font-bold ${TEXT_TONE[f.tone]}`}>{w[`${f.label} label` as "Methanol label" | "n-Heptane label"]}</p>
                 <Outcomes counts={f.counts} height={20} />
               </div>
             ))}
@@ -479,7 +481,7 @@ export function Deck() {
   return (
     <>
       <div
-        className="flex min-h-dvh flex-col print:hidden"
+        className="flex min-h-dvh flex-col bg-background print:hidden"
         onTouchStart={(e) => { touch.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
           if (touch.current === null) return;
@@ -513,7 +515,7 @@ export function Deck() {
               animate="centre"
               exit="exit"
               transition={{ duration: 0.26 }}
-              className="mx-auto flex min-h-[calc(100dvh-6.5rem)] w-full max-w-[1200px] flex-col px-4 py-8 sm:px-8"
+              className="mx-auto flex min-h-[calc(100dvh-8.25rem)] w-full max-w-[1200px] flex-col px-4 py-6 sm:px-8"
             >
               <Current />
             </motion.section>
@@ -543,6 +545,14 @@ export function Deck() {
             <span className="hidden sm:inline">Next</span> <ChevronRight aria-hidden />
           </Button>
         </footer>
+        {/* Outside the slides: what the console's sidebar says on every other page. */}
+        <p className="h-7 shrink-0 px-4 text-center text-note leading-7 text-dim sm:px-8">
+          Not affiliated with or endorsed by NASA
+          {" · "}
+          <a href={`${REPO_URL}/blob/main/docs/SI_DISCLOSURE.md`} target="_blank" rel="noopener" className="underline decoration-line hover:text-foreground">
+            Use of SI tools
+          </a>
+        </p>
       </div>
 
       {/* Printing gives every slide, one per page. The copies exist only while printing. */}
