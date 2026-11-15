@@ -204,7 +204,7 @@ sources themselves.
   an orange halo on every number, cell and control, and a later one made every panel blurred
   glass; the team lead judged, rightly, that the light competed with the data. Nothing now carries
   a halo: no number, data mark, cell or control. Glass is used in one place only (D41). Motion is
-  decoration only: big numbers count up, cells light in turn, charts draw in, sections settle. Entrance animations are plain CSS, so content never waits on a script, and all of it
+  decoration only: big numbers count up, dials sweep, small charts draw in, sections settle. Nothing animates forever (D43). Entrance animations are plain CSS, so content never waits on a script, and all of it
   stops for readers who ask for reduced motion.
 - **D40. Instruments instead of sentences.** A share or a score is drawn as well as printed: a dial
   beside each page's main number, a segmented meter under a readout, and a matrix with one lit
@@ -213,15 +213,39 @@ sources themselves.
   source line. No instrument shows a value that is not also printed.
 - **D41. Animation libraries, and liquid glass in one place.** Motion (`motion/react`) drives
   page and section entrances, the scroll reveals, the navigation marker and the slide changes.
-  react-countup counts the big single numbers up when they scroll into view. Charts use Recharts'
-  own animation, left on its automatic setting so it is off while the page is prerendered; no
-  chart here has more than 313 points. GSAP is not installed: it was reserved for one
+  react-countup counts the big single numbers up when they scroll into view. The small static
+  bar and line charts use Recharts' own animation. A chart with hundreds of marks, or one that a
+  filter or slider redraws, does not animate (D43). GSAP is not installed: it was reserved for one
   choreographed piece, and none was built. Lenis and React Spring are not used. The liquid-glass
   surface (adapted from Sera UI, MIT) is used once, on the Overview's hero card, in its subtle
   variant; data panels, stat cards and charts never use it.
 - **D38. Solid-fuel outcome colours.** Amber is a sustained flame, red is a flame that went out
   (quenched, or blown off, drawn as a cross), grey is no ignition. Red means "the flame went out"
   for droplets and for solids alike.
+- **D43. Performance (14 Nov).** The team lead reported the site as very laggy. Measured in
+  headless Chrome with `web/scripts/measure.mjs`, old build and new build back to back, four causes
+  were found and fixed:
+  - Two backdrop animations never stopped (a drifting masked grid and two blurred embers), so the
+    whole screen was repainted on every frame on every page. The backdrop is now still, and the
+    status dot no longer pulses. Animations left running on a page at rest: 4 before, 0 after.
+  - The liquid-glass card recomputes its distortion on every frame in which anything behind it
+    changes. With the backdrop moving, the Overview ran at about 24 frames a second at rest and
+    30 while scrolling; it now runs at the display's rate at rest and close to it while scrolling.
+    The distortion is switched off while the page scrolls and returns when it stops; the rim
+    light, sheen and tint stay. The card is still the one liquid-glass surface.
+  - Every step of a slider or filter redrew every chart and table at once. In a 30-step drag the
+    page was blocked for about 1.1 s in the FLEX Explorer and 0.35 s in the Scenario Lab; it is
+    now about 0.07 s and 0.02 s. The controls render on their own; the results wait until the
+    control has paused for a tenth of a second and are then rendered as a deferred update. Table
+    rows and charts whose inputs did not change are not rendered again, and these charts do not
+    animate.
+  - At load, several hundred cells each ran their own entrance animation, every section entered
+    through a blur, and every chart on the page was built at once. Cells now arrive with their
+    panel, entrances use opacity and position only, and a chart below the fold is built in an
+    idle moment after load or when it nears the viewport.
+  Behaviour was re-checked in a real browser with `web/scripts/behave.mjs` (controls, shared
+  links, in-place navigation, the glass card). The numbers are from one machine and move from run
+  to run; the scripts are in the repository so they can be measured again.
 - **D42. Self-review after the review bot stopped (14 Nov).** The review bot stopped before any
   pull request reached its top score (QUESTIONS.md Q10), so the team lead asked for the pull
   requests to be merged on their tests after a self-review. It ran in passes. First, for each of
