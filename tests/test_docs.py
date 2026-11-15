@@ -95,6 +95,7 @@ def test_readme_headline_numbers_are_the_ones_in_the_data():
     disclosure = (ROOT / "docs" / "SI_DISCLOSURE.md").read_text(encoding="utf-8")
     assert f"a verbatim quote is stored for {quoted} of the {len(ev)}" in disclosure
     assert "a verbatim quote and the read level stored" not in disclosure
+    assert "the others are values read from a table" not in disclosure     # untrue of six of them
 
     # the partial-gravity count sits in its own row, not just anywhere on the page
     count = sum(1 for g in gravity if g is not None and 0.05 < g < 0.5)
