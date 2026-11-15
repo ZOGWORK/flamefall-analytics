@@ -24,7 +24,7 @@ source down to the table and test number; where nobody ran the test it says "no 
 the nearest real tests; and it gives estimates with their uncertainty, never a verdict. Its core is
 276 droplet-burn tests, 313 solid-material test points and 66 sourced statements. The two datasets
 were checked against their primary sources cell by cell and row by row; of the 66 statements, 60
-were verified in full text, and the six that could not be are shown greyed with the reason.
+were verified against their primary source, and the six that could not be are shown greyed with the reason.
 Checking changed fourteen statements in our own research notes, and the console shows where its
 own model fails.
 
