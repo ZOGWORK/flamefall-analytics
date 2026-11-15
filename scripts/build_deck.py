@@ -413,22 +413,23 @@ def slide_model(prs, n):
     assumed = " Pressure taken as 1 atm." if n["near_pressure_assumed"] else ""
     s = new_slide(
         prs, 6, "The model and the Scenario Lab",
-        f"scripts/train_models.py and data/models in the repository (grouped cross-validation, seed 42; {', '.join(n['model_left_out'])} is left out: "
-        f"its pressure is printed as 0 mmHg and treated as missing). Nearest tests: {'; '.join(n['near_source'])}.{assumed}",
+        f"Model: scripts/train_models.py and data/models in the project's code (grouped cross-validation, seed 42), on {n['report']}, Table IX; "
+        f"{', '.join(n['model_left_out'])} is left out: its pressure is printed as 0 mmHg and treated as missing. "
+        f"Nearest tests: {'; '.join(n['near_source'])}.{assumed}",
         f"Three small logistic models, each trained on one kind of evidence and scored on groups of tests it never saw. The droplet-extinction "
         f"model scores {n['auc_cv']:.2f} in grouped cross-validation and {n['auc_headline']:.2f} when a whole fuel is left out; the lower number "
         f"is the headline. At the working threshold it calls {n['fp']} of {negatives} negatives positive. The solid-fuel model does no better than "
         f"chance and is shown failing, so for a solid the Scenario Lab gives the nearest real tests and no probability. The model uses "
         f"{n['model_rows']} of the {n['n']} tests: the source prints the pressure of {', '.join(n['model_left_out'])} as 0 mmHg, which is treated "
-        f"as missing.")
+        f"as missing. The nearest tests are the closest in oxygen, pressure and flow speed; flow direction is shown but not compared.")
     hero(s, LEFT, 1.0, 4.6, f"{n['auc_headline']:.2f}",
          f"headline AUC: the worse of grouped cross-validation ({n['auc_cv']:.2f}) and leave-one-fuel-out ({n['auc_headline']:.2f}). "
          "0.5 is a coin flip, 1 is perfect.", size=130, caption_w=4.7)
-    text(s, LEFT, 4.45, 4.7, 0.9, "Three small logistic models, one per kind of evidence, each tested on groups it never saw.",
+    text(s, LEFT, 4.45, 4.7, 0.9, "Three small logistic models, one per kind of evidence, each tested on unseen groups.",
          size=15, color=MUTED, spacing=1.1, name="What the model is")
     text(s, LEFT, 5.6, 4.7, 0.9,
          [(f"{pct(n['fpr'], 0)} false-positive rate", {"color": RED, "bold": True}),
-          (f": {n['fp']} of {negatives} negatives called positive. One of the three models fails, and is shown failing.", {})],
+          (f": {n['fp']} of {negatives} negatives called positive. One of three models fails, and is shown failing.", {})],
          size=15, color=MUTED, spacing=1.1, name="The honest line")
 
     x0 = 6.1
@@ -452,7 +453,7 @@ def slide_model(prs, n):
             run.font.color.rgb = rgb(BG if fill == RED else TEXT)
 
     y1 = 3.95
-    text(s, x0, y1, 6.5, 0.3, "NEAREST REAL TESTS · NO PROBABILITY FOR A SOLID", size=11, font=MONO, color=DIM, name="Chart label 2")
+    text(s, x0, y1, 6.5, 0.3, "NEAREST REAL TESTS BY OXYGEN, PRESSURE AND FLOW SPEED", size=11, font=MONO, color=DIM, name="Chart label 2")
     text(s, x0, y1 + 0.33, 6.5, 0.35,
          f"{sc['material']} · {sc['o2']:g}% O2 · {sc['pressure']:g} kPa · 0 g · {sc['flow']:g} cm/s", size=14, font=MONO, color=AMBER, name="Scenario")
     heads = ["Test", "O2", "Flow", "Outcome", "Distance"]
@@ -462,7 +463,7 @@ def slide_model(prs, n):
         text(s, xh, y1 + 0.82, wd, 0.28, head.upper(), size=10, font=MONO, color=DIM, name=f"Head {head}")
     for r, row in enumerate(n["near"]):
         y = y1 + 1.12 + r * 0.38
-        values = [(row["test"], MONO, TEXT), (f"{row['o2']:.1f}%", MONO, TEXT), (f"{row['flow']:g} cm/s", MONO, TEXT),
+        values = [(row["test"], MONO, TEXT), (f"{row['o2']:.1f}%", MONO, TEXT), (f"{row['flow']:g} cm/s {row['direction']}", MONO, TEXT),
                   (row["outcome"].replace("_", " "), BODY, AMBER if row["outcome"] == "sustained" else RED), (f"{row['distance']:.2f}", MONO, TEXT)]
         for xv, (value, font, color), wd in zip(xs, values, widths):
             text(s, xv, y, wd, 0.3, value, size=12.5, font=font, color=color, name=f"Nearest {r + 1}")
@@ -481,7 +482,7 @@ def slide_unknown(prs, n):
     text(s, LEFT, 1.05, 11.9, 1.0,
          "A console that shows only what was measured would hide the most useful fact: where the measurements stop.", size=26, font=HEAD,
          bold=True, spacing=1.05, name="Title")
-    heroes = [(str(n["partial_g"]), "partial-gravity combustion tests in the repository"),
+    heroes = [(str(n["partial_g"]), "partial-gravity combustion tests in the PSI repository"),
               (f"{n['solid_top_o2']:.1f}%", "highest oxygen level of any solid-fuel test point with a stated outcome"),
               (f"{n['co2_and_he']} of {n['n']}", "droplet tests that contain both CO2 and helium")]
     for i, (value, caption) in enumerate(heroes):
@@ -502,10 +503,10 @@ def slide_unknown(prs, n):
     text(s, px + 0.25, py + 1.0, pw - 0.5, 1.0,
          f"cool flames after the visible flame goes out\npale-blue flames near the limit\nsmoke particles below {n['smoke_nm']} nm", size=13.5,
          color=TEXT, spacing=1.12, name="Cannot see")
-    text(s, px + 0.25, py + 2.12, pw - 0.5, 0.3, "WHAT THE REPOSITORY DOES NOT HOLD", size=11, font=MONO, color=DIM, name="Panel label 2")
+    text(s, px + 0.25, py + 2.12, pw - 0.5, 0.3, "WHERE THE MEASUREMENTS STOP", size=11, font=MONO, color=DIM, name="Panel label 2")
     text(s, px + 0.25, py + 2.4, pw - 0.5, 1.0,
-         f"combustion data in lunar or Martian gravity\na solid-material test above {n['solid_limit']:g}% oxygen\nCO2 and helium in one droplet test",
-         size=13.5, color=TEXT, spacing=1.12, name="Not in the repository")
+         f"lunar or Martian gravity: no data in the PSI repository\nsolid materials: no test above {n['solid_limit']:g}% oxygen\n"
+         "CO2 with helium: never in one droplet test", size=13.5, color=TEXT, spacing=1.12, name="Where it stops")
 
     text(s, LEFT, 4.75, 7.0, 0.7, SITE, size=30, font=MONO, color=AMBER, bold=True, link=SITE_URL, name="Live link")
     text(s, LEFT, 5.5, 7.0, 0.4, "Every number in this deck is in the console, with its source.", size=16, name="Last line")
@@ -533,6 +534,14 @@ def build(path: Path = OUT) -> Path:
 
 
 FIXED_DATE = (2026, 11, 14, 0, 0, 0)
+ZIP_SYSTEM, ZIP_ATTR = 0, 0o600 << 16      # what every entry of the file records, whatever machine built it
+# What the file says about itself. Written whole, in place of the library template's values.
+APP_PROPERTIES = (
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+    '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">'
+    "<Application>scripts/build_deck.py</Application><PresentationFormat>Widescreen</PresentationFormat>"
+    "<Slides>7</Slides><Notes>7</Notes><HiddenSlides>0</HiddenSlides></Properties>"
+)
 
 
 def fixed_workbook(data: bytes) -> bytes:
@@ -549,6 +558,7 @@ def fixed_workbook(data: bytes) -> bytes:
                 inner = re.sub(rb"(<dcterms:(?:created|modified)[^>]*>)[^<]*(</dcterms:)", rb"\g<1>2026-11-14T00:00:00Z\g<2>", inner)
             info = zipfile.ZipInfo(item.filename, date_time=FIXED_DATE)
             info.compress_type = zipfile.ZIP_DEFLATED
+            info.create_system, info.external_attr = ZIP_SYSTEM, ZIP_ATTR
             dst.writestr(info, inner)
     return out.getvalue()
 
@@ -556,8 +566,10 @@ def fixed_workbook(data: bytes) -> bytes:
 def set_theme_fonts(path: Path) -> None:
     """Write the heading and body fonts into the file's theme, and fix every date inside the file.
 
-    Text with no font of its own then uses the deck's fonts too, and two builds from the same data
-    are the same file, byte for byte.
+    Text with no font of its own then uses the deck's fonts too. Two builds from the same data on
+    the same machine are the same file, byte for byte; across machines the compressed bytes can
+    still differ with the version of zlib, which is why the test compares content, not bytes, with
+    the committed file.
     """
     import re
     import shutil
@@ -576,13 +588,10 @@ def set_theme_fonts(path: Path) -> None:
             if item.filename.startswith("ppt/embeddings/") and item.filename.endswith(".xlsx"):
                 data = fixed_workbook(data)
             if item.filename == "docProps/app.xml":
-                xml = data.decode("utf-8")
-                for tag, value in (("Application", "scripts/build_deck.py"), ("PresentationFormat", "Widescreen"), ("Slides", "7")):
-                    xml, n = re.subn(rf"<{tag}>[^<]*</{tag}>", f"<{tag}>{value}</{tag}>", xml)
-                    assert n == 1, (tag, n)
-                data = xml.encode("utf-8")
+                data = APP_PROPERTIES.encode("utf-8")
             info = zipfile.ZipInfo(item.filename, date_time=FIXED_DATE)
             info.compress_type = zipfile.ZIP_DEFLATED
+            info.create_system, info.external_attr = ZIP_SYSTEM, ZIP_ATTR          # the same on every operating system
             dst.writestr(info, data)
     shutil.move(str(tmp), str(path))
 
