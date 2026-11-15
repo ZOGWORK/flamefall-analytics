@@ -61,13 +61,25 @@ def test_readme_headline_numbers_are_the_ones_in_the_data():
         f"Extinction in {m['Extinction']} of {m['n']} methanol tests and {h['Extinction']} of {h['n']} n-heptane tests",
         f"{s['cool_flame']['indicated']} of {s['heptane_extinctions']} n-heptane extinctions",
         f"{c['search_hits']} records, {c['combustion_science']} of them combustion science, {c['tables']} experimental tables",
-        f"{len(solid)} transcribed, {decided} with a stated outcome; none above {limit:g}% oxygen",
-        f"| {sum(1 for g in gravity if g is not None and 0.05 < g < 0.5)} |",
-        f"{c['evidence']}, of which {c['evidence_verified']} were verified in full text",
+        f"{len(solid)} transcribed, {decided} with a stated outcome; the highest oxygen among them is "
+        f"{solid['o2_at_outcome_pct'].max():g}%",
+        f"| up to {limit:g}%; above that there is no solid-material test point at all |",
+        f"{c['evidence']}, of which {c['evidence_verified']} were verified against their primary source",
     ]
     for sentence in expected:
         assert sentence in text, sentence
-    assert cat.solid_envelope()["o2"][1] < limit                    # "none above" is true of the points
+    assert solid["o2_at_outcome_pct"].max() == cat.solid_envelope()["o2"][1] < limit
+    widest = cat.load_evidence()
+    widest = widest[(widest["evidence_class"] == "solid") & widest["o2_is_ambient"].astype(bool)]
+    assert widest["o2_max_pct"].max() == limit                      # no solid-fuel statement states a wider range
+    assert "T'ien et al." in cat.load_evidence().set_index("id").loc["sofie-gel-envelope", "source_ref"]
+    assert "T'ien et al., Combust. Flame 277 (2025) 114244 (SoFIE-GEL)" in text
+
+    # the partial-gravity count sits in its own row, not just anywhere on the page
+    count = sum(1 for g in gravity if g is not None and 0.05 < g < 0.5)
+    row = next(line for line in text.splitlines()
+               if line.startswith("| Combustion tests in lunar or Martian gravity in the repository |"))
+    assert [cell.strip() for cell in row.split("|")][2] == str(count) == "0"
 
     cards = {n: json.loads((ROOT / "data" / "models" / f"{n}.json").read_text(encoding="utf-8"))
              for n in ("droplet_extinction", "droplet_cool_flame", "solid_sustained")}
@@ -105,5 +117,6 @@ def test_readme_names_every_script_and_every_page():
     for script in sorted((ROOT / "scripts").glob("*.py")):
         assert f"`{script.name}`" in scripts, script.name
     text = _readme()
-    for route in ("", "flex/", "catalogue/", "scenario/", "models/", "unknowns/", "deck/"):
-        assert f"https://flamefall-analytics.onrender.com/{route}" in text, route
+    for route in ("", "flex/", "catalogue/", "scenario/", "models/", "unknowns/"):
+        assert f"(https://flamefall-analytics.onrender.com/{route})" in text, route     # the whole link target
+    assert "https://flamefall-analytics.onrender.com/deck/\n" in text
