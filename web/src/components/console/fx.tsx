@@ -13,12 +13,12 @@ export function TestMatrix() {
       aria-label={`${flex.rows.length} cells, one per test: ${flex.summary.outcomes.Extinction} Extinction, ${flex.summary.outcomes.Disruption} Disruption, ${flex.summary.outcomes.Completion} Completion`}
       className="grid grid-cols-[repeat(auto-fill,minmax(9px,1fr))] gap-[3px]"
     >
-      {flex.rows.map((r, i) => (
+      {flex.rows.map((r) => (
         <span
           key={r.test_id}
           title={`${r.test_id} · ${r.outcome}`}
-          className="cell aspect-square rounded-[2px]"
-          style={{ background: OUTCOME_COLOR[r.outcome], animationDelay: `${300 + i * 4}ms` }}
+          className="aspect-square rounded-[2px]"
+          style={{ background: OUTCOME_COLOR[r.outcome] }}
         />
       ))}
     </div>
@@ -55,7 +55,7 @@ export function StatusBar() {
   );
 }
 
-/** Two slow embers of light behind the glass. */
+/** Two still embers of light in the page backdrop. */
 export function Ambient() {
   return (
     <div className="ambient" aria-hidden>
