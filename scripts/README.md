@@ -29,13 +29,13 @@ for and what it writes.
 
 | Script | What it does | Writes |
 |---|---|---|
-| `export_web.py` | Writes everything the web app reads, and reference answers for its tests | `web/src/data/*.json`, `web/public/psi/*.json`, `web/src/lib/__fixtures__/golden.json` |
+| `export_web.py` | Writes everything the web app reads, and reference answers for its tests. `deck.json` is the words and numbers of the PowerPoint slides, read from `build_deck.py` | `web/src/data/*.json`, `web/public/psi/*.json`, `web/src/lib/__fixtures__/golden.json` |
 
 ## Presentation
 
 | Script | What it does | Writes |
 |---|---|---|
-| `build_deck.py` | Builds the seven-slide PowerPoint deck. Every number on it is read from the data files at build time | `docs/Flamefall-Analytics-deck.pptx` |
+| `build_deck.py` | Builds the seven-slide PowerPoint deck. Every number on it is read from the data files at build time. The page at `/deck/` shows the same slides: it reads their words from this script through the export | `docs/Flamefall-Analytics-deck.pptx` |
 
 `python scripts/export_web.py --check` writes nothing and exits with an error if any committed
 file differs from a fresh export. The tests run the same check, so a change to the data that is
