@@ -14,6 +14,7 @@ READER_FACING = (
     + sorted((ROOT / "web" / "src" / "data").glob("*.json"))          # what the web app reads
     + sorted(p for ext in ("*.ts", "*.tsx") for p in (ROOT / "web" / "src").rglob(ext))
     + sorted((ROOT / "docs").glob("*.md"))
+    + [ROOT / "CONTRIBUTING.md", ROOT / "scripts" / "README.md", ROOT / "web" / "README.md"]
 )
 VERDICT = re.compile(r"\b(safe|unsafe|certified|certification|certify)\b", re.I)
 EIGHTY_FIVE = re.compile(r"\b85\s?%|\b0\.85\b|\b85 percent")
@@ -98,14 +99,40 @@ def test_no_single_burning_rate_is_quoted_for_n_heptane():
 
 
 OWN_SCREENSHOTS = {"docs/img/overview.png", "docs/img/scenario-lab.png"}
+OWN_IMAGES = OWN_SCREENSHOTS | {"web/src/app/icon.svg"}
+IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp", ".ico", ".avif", ".bmp", ".tif", ".tiff")
+# a run of path or address characters ending in an image suffix, wherever it appears
+IMAGE_FILE = re.compile(r"[\w.:/%~+-]*\.(?:png|jpe?g|svg|gif|webp|ico|avif|bmp|tiff?)\b", re.I)
+NOT_SOURCE = {".git", ".venv", "node_modules", ".next", "out", "__pycache__", ".pytest_cache"}
+
+
+def repository_files() -> list[str]:
+    """Files git tracks; in a copy with no git history (a downloaded archive), every file outside build folders."""
+    import subprocess
+
+    try:
+        listed = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True)
+    except OSError:
+        listed = None
+    if listed is not None and listed.returncode == 0 and listed.stdout.strip():
+        return listed.stdout.split("\n")
+    return [p.relative_to(ROOT).as_posix() for p in ROOT.rglob("*")
+            if p.is_file() and not NOT_SOURCE & set(p.relative_to(ROOT).parts)]
 
 
 def test_the_only_image_files_in_the_repository_are_the_icon_and_the_two_screenshots():
-    import subprocess
+    images = {f for f in repository_files() if f.lower().endswith(IMAGE_SUFFIXES)}
+    assert images == OWN_IMAGES, sorted(images)
 
-    tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split("\n")
-    images = {f for f in tracked if f.lower().endswith((".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp", ".ico"))}
-    assert images == OWN_SCREENSHOTS | {"web/src/app/icon.svg"}, sorted(images)
+
+def test_the_image_rule_catches_an_image_however_it_is_referenced():
+    """The rule must fail for a foreign image in each way one can be written, or it proves nothing."""
+    for text in ("![](https://example.org/nasa-logo.png?x=1)", "<img src=logo.png>", "[logo]: assets/logo.png",
+                 "see patch.webp", 'src="/meatball.SVG"', "background: url(insignia.jpeg)", "favicon.ico"):
+        assert not set(IMAGE_FILE.findall(text)) <= OWN_IMAGES, text
+    for text in ("![Overview](docs/img/overview.png)", "`web/src/app/icon.svg`", "docs/img/scenario-lab.png)"):
+        assert set(IMAGE_FILE.findall(text)) <= OWN_IMAGES and IMAGE_FILE.findall(text), text
+    assert IMAGE_FILE.findall("no image here: config.json, icon={Flame}, a.pngx") == []
 
 
 def test_no_agency_marks_are_referenced():
@@ -113,7 +140,7 @@ def test_no_agency_marks_are_referenced():
     for p in READER_FACING:
         text = p.read_text(encoding="utf-8")
         assert not re.search(r"<img[^>]+(nasa|meatball|insignia|patch)", text, re.I), p.name
-        # the only image files a reader-facing text may point at are the two screenshots of this
-        # project's own console; anything else would have to be looked at before it is allowed
-        images = set(re.findall(r"[\w./-]+\.(?:png|jpg|jpeg|svg|gif)(?=[\"')])", text, re.I))
-        assert images <= OWN_SCREENSHOTS, f"{p.name}: {sorted(images - OWN_SCREENSHOTS)}"
+        # Any mention of an image file, however it is written (a link, a tag, a bare path, a web
+        # address), must be one of this project's own images. Anything else has to be looked at
+        # before it is allowed.
+        assert set(IMAGE_FILE.findall(text)) <= OWN_IMAGES, f"{p.name}: {sorted(set(IMAGE_FILE.findall(text)) - OWN_IMAGES)}"
