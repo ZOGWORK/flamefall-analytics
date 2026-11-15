@@ -44,21 +44,33 @@ def slide_texts(path: Path) -> list[list[str]]:
     return out
 
 
+A_COLOUR = "{http://schemas.openxmlformats.org/drawingml/2006/main}srgbClr"
+
+
 def signature(path: Path) -> list[list[tuple]]:
-    """Where every shape sits, what colour it is, and how every run of text is set: the look of the deck."""
+    """The look of the deck: for every shape its kind, name, place, size, every colour its XML names
+    (fill, outline, text, and for a chart each series and point), and how every run of text is set."""
     out = []
     for slide in pptx.Presentation(str(path)).slides:
         shapes = []
         for shape in slide.shapes:
-            fill = ""
-            if getattr(shape, "fill", None) is not None and shape.fill.type == 1:          # solid
-                fill = str(shape.fill.fore_color.rgb)
+            colours = tuple(el.get("val") for el in shape._element.iter(A_COLOUR))
+            if getattr(shape, "has_chart", False) and shape.has_chart:
+                colours += tuple(el.get("val") for el in shape.chart._chartSpace.iter(A_COLOUR))
             runs = ()
             if shape.has_text_frame:
-                runs = tuple((r.text, r.font.name, r.font.size, r.font.bold, str(r.font.color.rgb) if r.font.color.type else "")
-                             for para in shape.text_frame.paragraphs for r in para.runs)
-            shapes.append((shape.name, shape.left, shape.top, shape.width, shape.height, fill, runs))
+                runs = tuple((r.text, r.font.name, r.font.size, r.font.bold) for para in shape.text_frame.paragraphs for r in para.runs)
+            shapes.append((str(shape.shape_type), shape.name, shape.left, shape.top, shape.width, shape.height, colours, runs))
         out.append(shapes)
+    return out
+
+
+def scatter_points(chart) -> dict[str, list[tuple[float, float]]]:
+    """Each series of a scatter chart as its own list of (x, y) points, in the order they are stored."""
+    out = {}
+    for series in chart.plots[0].series:
+        xs = [float(v.text) for v in series._element.findall(".//c:xVal//c:v", C_NS)]
+        out[series.name] = list(zip(xs, [float(v) for v in series.values]))
     return out
 
 
@@ -78,7 +90,7 @@ def by_name(slide) -> dict:
 
 
 def test_the_committed_deck_is_what_a_fresh_build_says(tmp_path, deck):
-    """Text, chart data, speaker notes, and the position, colour and type of every shape."""
+    """Text, chart data and speaker notes, and for every shape its kind, place, size, colours and type setting."""
     fresh = build_deck.build(tmp_path / "deck.pptx")
     hint = "run `python scripts/build_deck.py` and commit the file"
     assert slide_texts(fresh) == deck, hint
@@ -92,6 +104,9 @@ def test_two_builds_from_the_same_data_are_the_same_file(tmp_path):
     assert a.read_bytes() == b.read_bytes()
     core = zipfile.ZipFile(a).read("docProps/core.xml").decode("utf-8")
     assert "Team Flamefall Analytics" in core and "Steve Canny" not in core and "python-pptx" not in core
+    app = zipfile.ZipFile(DECK).read("docProps/app.xml").decode("utf-8")           # the file describes itself, not a template
+    assert "<Slides>7</Slides>" in app and "<PresentationFormat>Widescreen</PresentationFormat>" in app
+    assert "Macintosh" not in app and "4:3" not in app
 
 
 def test_exactly_seven_slides_each_with_a_source_line_and_speaker_notes(deck):
@@ -118,7 +133,7 @@ def test_every_number_on_the_slides_is_the_one_in_the_data(n, deck):
             f"{h['Extinction']} of {h['n']}", f"Extinction {m['Extinction']}", f"Extinction {h['Extinction']}"],
         5: [f"{c['indicated']} of {n['heptane_extinctions']}", n["cool_temp"], "as reported for gas cool flames"],
         6: [f"{n['auc_headline']:.2f}", f"({n['auc_cv']:.2f})", f"{pct(n['fpr'], 0)} false-positive rate",
-            f"{n['fp']} of {n['fp'] + n['tn']} negatives", f"{n['model_rows']} OF {n['n']} TESTS"],
+            f"{n['fp']} of {n['fp'] + n['tn']} negatives", f"{n['model_rows']} OF {n['n']} TESTS", "NO PROBABILITY FOR A SOLID"],
         7: [f"{n['solid_top_o2']:.1f}%", f"{n['co2_and_he']} of {n['n']}", f"above {n['solid_limit']:g}% oxygen", f"below {n['smoke_nm']} nm"],
     }
     for number, strings in expected.items():
@@ -133,17 +148,19 @@ def test_every_number_on_the_slides_is_the_one_in_the_data(n, deck):
     assert "chart: " + " | ".join([k for k, _ in n["burned"]]) in flat[1]
     assert sum(v for _, v in n["burned"]) == n["search_hits"]
     assert f"| {c['indicated']}.0 | {c['not_indicated']}.0 | {c['unclear']}.0 | {c['']}.0" in flat[4]
-    # the scatter plots each fuel's share at each oxygen level it was tested at: x and y both
-    scatter = next(t for t in deck[3] if t.startswith("chart: "))
-    for fuel in ("Methanol", "Heptane"):
-        for level, share in n["share_by_o2"][fuel]:
-            assert f"{level:g}" in scatter.replace(".0 ", " ").split(" | ") or f"{level}" in scatter.split(" | "), (fuel, level)
-            assert str(share) in scatter.split(" | "), (fuel, share)
+    # the scatter plots, per fuel, exactly the share at each oxygen level that fuel was tested at
+    chart = next(s.chart for s in pptx.Presentation(str(DECK)).slides[3].shapes if getattr(s, "has_chart", False) and s.has_chart)
+    points = scatter_points(chart)
+    assert set(points) == {"Methanol", "n-Heptane"}
+    for label, fuel in (("Methanol", "Methanol"), ("n-Heptane", "Heptane")):
+        assert len(points[label]) == len(n["share_by_o2"][fuel]), fuel
+        for (x, y), (level, share) in zip(points[label], n["share_by_o2"][fuel]):
+            assert (x, y) == pytest.approx((level, share)), (fuel, level)
+        assert len(points[label]) == len({x for x, _ in points[label]}) >= 10, fuel          # one point per level, no repeats
     # the scenario example lists real tests, nearest first, and gives no probability for a solid
     for row in n["near"]:
         assert row["test"] in flat[5]
     assert [r["distance"] for r in n["near"]] == sorted(r["distance"] for r in n["near"])
-    assert "NO PROBABILITY FOR A SOLID" in flat[5]
 
 
 def test_the_confusion_matrix_has_each_count_in_its_own_cell(n):
@@ -159,6 +176,7 @@ def test_the_confusion_matrix_has_each_count_in_its_own_cell(n):
     assert red == ["Matrix cell 2.1"]                                                      # only the false positives are red
     source = shapes["Source"].text_frame.text
     assert all(test in source for test in n["model_left_out"]) and n["model_left_out"] == ["FLEX-114"]
+    assert "printed as 0 mmHg and treated as missing" in source                 # what the source shows, not "no pressure"
 
 
 def test_the_last_slide_claims_only_what_the_data_supports(n):
@@ -167,9 +185,16 @@ def test_the_last_slide_claims_only_what_the_data_supports(n):
     assert n["solid_top_source"] in source and "ICES-2025-156" in source       # where the 31.9% test point is printed
     for needed in ("PSI Data Repository", "challenge brief", "SAME Final Report", "T'ien et al."):
         assert needed in source, needed
-    panel = shapes["Panel label 2"].text_frame.text + "\n" + shapes["Not in the data"].text_frame.text
-    assert "NEVER TESTED" not in panel.upper()         # LUCI has flown in simulated lunar gravity; its data is not in the repository
-    assert "WHAT THE DATA DOES NOT HOLD" in panel and "lunar or Martian gravity" in panel
+    assert "Appendix B" in source                                               # where the cool-flame evidence is
+    panel = shapes["Panel label 2"].text_frame.text + "\n" + shapes["Not in the repository"].text_frame.text
+    # Partial-gravity combustion has been tested: drop towers, parabolic flights and one suborbital
+    # flight, all in the project's own evidence. What is true is that the repository holds none.
+    from flamefall import catalogue as cat
+
+    assert (cat.load_evidence()["evidence_class"] == "partial_g").sum() >= 5
+    assert "NEVER TESTED" not in panel.upper() and "THE DATA DOES NOT HOLD" not in panel.upper()
+    assert "WHAT THE REPOSITORY DOES NOT HOLD" in panel and "combustion data in lunar or Martian gravity" in panel
+    assert n["partial_g"] == 0
 
 
 def test_the_waffle_has_one_cell_per_test_in_test_order(n):
@@ -213,15 +238,15 @@ def test_the_biggest_type_on_every_slide_is_a_number():
 
 
 def test_no_slide_is_a_wall_of_text(deck):
-    """A word budget over everything a reader has to read: all text except the source line, the
-    small upper-case labels, the slide number and bare numbers. Counted from the file, whatever a
-    shape is called, so adding a paragraph to a slide fails here."""
-    budget, longest = 95, 28
+    """A word budget over everything on the slide a reader has to read: every piece of text except
+    the source line, the slide number and bare numbers. Labels count, whatever their letter case, and
+    so does anything added later, whatever its shape is called. The limits are round ceilings, not
+    the deck's own figures: a slide may carry at most 120 words, no single piece of text more than
+    22, and at most five pieces of nine words or more (a headline, the hero captions and one line)."""
     for i, texts in enumerate(deck, start=1):
         read = [t for t in texts if not t.startswith(("Source: ", "chart: ")) and not re.fullmatch(r"\d / 7", t)
-                and t != t.upper() and re.search(r"[A-Za-z]{3}", t)]
-        words = [len(t.split()) for t in read]
-        assert sum(words) <= budget, f"slide {i}: {sum(words)} words"
-        assert max(words) <= longest, f"slide {i}: {max(read, key=lambda t: len(t.split()))}"
-        sentences = [t for t in read if len(t.split()) >= 9]
-        assert len(sentences) <= 5, f"slide {i}: {len(sentences)} full lines of text"
+                and re.search(r"[A-Za-z]{3}", t)]
+        words = [len(re.findall(r"\S*[A-Za-z0-9]\S*", t)) for t in read]              # a separator dot is not a word
+        assert sum(words) <= 120, f"slide {i}: {sum(words)} words"
+        assert max(words) <= 22, f"slide {i}: {read[words.index(max(words))]}"
+        assert sum(1 for w in words if w >= 9) <= 5, f"slide {i}: too many full lines of text"
