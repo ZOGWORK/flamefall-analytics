@@ -31,6 +31,12 @@ for and what it writes.
 |---|---|---|
 | `export_web.py` | Writes everything the web app reads, and reference answers for its tests | `web/src/data/*.json`, `web/public/psi/*.json`, `web/src/lib/__fixtures__/golden.json` |
 
+## Presentation
+
+| Script | What it does | Writes |
+|---|---|---|
+| `build_deck.py` | Builds the seven-slide PowerPoint deck. Every number on it is read from the data files at build time | `docs/Flamefall-Analytics-deck.pptx` |
+
 `python scripts/export_web.py --check` writes nothing and exits with an error if any committed
 file differs from a fresh export. The tests run the same check, so a change to the data that is
 not exported fails `python -m pytest`.
@@ -40,5 +46,5 @@ not exported fails `python -m pytest`.
 1. Change the source data or the code in `flamefall/`.
 2. Re-run the build script for the file that changed.
 3. If the change touches what a model is trained on, run `python scripts/train_models.py`.
-4. Run `python scripts/export_web.py`.
+4. Run `python scripts/export_web.py` and `python scripts/build_deck.py`.
 5. Run `python -m pytest`, then the web checks in `web/`.
