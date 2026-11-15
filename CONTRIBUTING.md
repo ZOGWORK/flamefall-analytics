@@ -1,7 +1,8 @@
 # Contributing
 
 This project reports what experiments measured. A change is welcome when it keeps that true. The
-rules below are the ones the tests and reviews hold every change to.
+rules below are the main ones the tests and reviews hold every change to. The tests are the full
+statement: `tests/test_wording.py` for wording, the others for the data and the models.
 
 ## Rules about the science
 
@@ -22,11 +23,21 @@ rules below are the ones the tests and reviews hold every change to.
 7. **No verdicts.** Nothing is called acceptable, approved or the opposite. Outputs are
    measurements and estimates.
 8. **An unverified statement says so,** and never feeds a model.
-9. **Models are validated on groups they have not seen** (seed 42), report the worse of their two
-   scores, and label any estimate outside the tested ranges.
+9. **Models are validated on groups they have not seen** (seed 42), use no outcome as an input,
+   report the worse of their two scores, give the distance to the data with every estimate, and
+   label any estimate outside the tested ranges.
+10. **No single burning rate for n-heptane.** It moves with droplet size, oxygen and diluent, and
+    the constants quoted for other fuels are not attached to it.
+11. **85% oxygen is a burner feed.** It belongs to the inverse flames, is labelled as such, and is
+    never put on an ambient-oxygen axis or matched by an ambient-oxygen filter.
+12. **FM2 is planned.** It has no tested range and no launch date is given for it.
+13. **The triage formula orders scenarios.** It is a stated design choice, not a risk rating, and
+    its worked example is a unit test.
+14. **No agency marks.** No NASA logo, insignia or mission patch, and nothing that presents the
+    project as endorsed by NASA. The only image files are the app's icon and the two screenshots.
+15. **Pages change in place.** Moving between pages or changing a filter never reloads the page.
 
-The wording rules are checked by `tests/test_wording.py`. If a test there fails on your text,
-change the text.
+If a test in `tests/test_wording.py` fails on your text, change the text.
 
 ## How to make a change
 
