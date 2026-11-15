@@ -165,13 +165,25 @@ export function Lab() {
         </div>
       </Panel>
 
-      <Results s={settled} apply={apply} />
+      <Results s={settled} hrr={s.hrr} volume={s.volume} apply={apply} />
     </>
   );
 }
 
 /** Everything the scenario produces. Re-rendered only when the settled scenario changes. */
-const Results = memo(function Results({ s, apply }: { s: LabState; apply: (next: Partial<LabState>) => void }) {
+const Results = memo(function Results({
+  s,
+  hrr,
+  volume,
+  apply,
+}: {
+  /** The settled scenario: everything computed and drawn here comes from it. */
+  s: LabState;
+  /** The two controls that sit among the results show the live value, so they answer at once. */
+  hrr: string;
+  volume: number;
+  apply: (next: Partial<LabState>) => void;
+}) {
   const [rawWeights, setRawWeights] = useState<Record<TermKey, number>>({ ...R.weights });
   const m = MATERIALS[s.material];
   const droplet = m.kind === "droplet";
@@ -377,10 +389,10 @@ const Results = memo(function Results({ s, apply }: { s: LabState; apply: (next:
             ))}
             <div className="mt-4 space-y-4">
               <Field label="Size of the burning item">
-                <Segments label="Size of the burning item" value={s.hrr} onChange={(v) => apply({ hrr: v })} options={Object.keys(R.hrr_scale_w).map((k) => ({ value: k, label: capitalise(k) }))} />
+                <Segments label="Size of the burning item" value={hrr} onChange={(v) => apply({ hrr: v })} options={Object.keys(R.hrr_scale_w).map((k) => ({ value: k, label: capitalise(k) }))} />
               </Field>
               <Field label="Free volume of the cabin, m³">
-                <Input type="number" min={1} max={1000} step={1} value={s.volume} onChange={(e) => apply({ volume: Math.min(1000, Math.max(1, Number(e.target.value) || 1)) })} className="num h-8 w-32 rounded-sm border-input bg-background" aria-label="Free volume of the cabin, cubic metres" />
+                <Input type="number" min={1} max={1000} step={1} value={volume} onChange={(e) => apply({ volume: Math.min(1000, Math.max(1, Number(e.target.value) || 1)) })} className="num h-8 w-32 rounded-sm border-input bg-background" aria-label="Free volume of the cabin, cubic metres" />
               </Field>
             </div>
           </Panel>
