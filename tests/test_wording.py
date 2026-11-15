@@ -122,7 +122,7 @@ def foreign_images(name: str, text: str) -> list[str]:
 
     Caught: a file name or address ending in an image suffix; in Markdown, any `![` that is not an
     inline image of one of the two screenshots (so a reference-style image fails too) and any HTML
-    element that can show a picture, in any letter case; in TypeScript, the lower-case picture
+    element that can show a picture, in any letter case; in every other file, the lower-case picture
     elements and next/image; an inline `data:image`; a CSS `url(...)` that is not a reference to an
     element on the page. A picture loaded in some other way would need a new check here.
     """
