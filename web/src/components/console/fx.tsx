@@ -33,7 +33,7 @@ export function StatusBar() {
     ["Droplet tests", flex.summary.n],
     ["Solid test points", solid.n_total],
     ["Sourced statements", n.evidence],
-    ["Verified in full text", n.evidence_verified],
+    ["Verified against source", n.evidence_verified],
   ];
   return (
     <div className="glass-rail sticky top-0 z-20 hidden h-10 items-center gap-6 border-b border-line px-8 lg:flex">
