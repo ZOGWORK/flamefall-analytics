@@ -31,7 +31,7 @@ Each number below is recomputed from the data files by the tests (`tests/test_do
 | "No visible flame" is not "fire out" | 39 of 60 n-heptane extinctions show evidence of cool-flame burning afterwards | Same report, Appendix B captions |
 | Repository search for "combustion" | 26 records, 24 of them combustion science, 25 experimental tables | PSI Data Repository |
 | Solid-fuel test points | 313 transcribed, 275 with a stated outcome; the highest oxygen among them is 31.9% | NASA/TM-20210011385, PSI-99 and four papers |
-| Widest oxygen range a solid-fuel investigation has tested | 13 to 34% (SoFIE-GEL). The data files hold no solid-material test point above 34% | Range: T'ien et al., Combust. Flame 277 (2025) 114244. Points: `data/solid_test_points.csv` |
+| Widest oxygen range reported by a solid-fuel investigation that has flown | 13 to 34% (SoFIE-GEL, extinction limits mapped over that range). The data files hold no solid-material test point above 34% | Range: T'ien et al., Combust. Flame 277 (2025) 114244. Points: `data/solid_test_points.csv` |
 | Combustion tests in lunar or Martian gravity in the repository | 0 | Official challenge brief; PSI search |
 | Sourced statements | 66, of which 60 were verified against the source they cite | `data/evidence.json` |
 
