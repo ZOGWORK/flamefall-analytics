@@ -3,7 +3,7 @@
 // Set CHROME_PATH to the Chrome or Chromium executable if it is not in the default Windows location.
 // Exits with an error if any check fails.
 import { spawn } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -132,6 +132,32 @@ const HERO = `document.querySelector("section.beam p.num, .beam p.num")?.innerTe
     check(`navigate to ${path} in place`, state.path === path && state.marker === 42 && state.running === 0, JSON.stringify(state));
   }
   check("navigation: no page errors", p.errors.length === 0, p.errors.join(" | "));
+  await p.close();
+}
+// 6. the deck: seven slides, each showing every word of the PowerPoint slide it mirrors (src/data/deck.json)
+{
+  const deck = JSON.parse(readFileSync(new URL("../src/data/deck.json", import.meta.url), "utf8"));
+  const squash = (t) => t.replace(/\s+/g, " ").trim();
+  const p = await open("/deck/");
+  for (const [i, key] of deck.order.entries()) {
+    if (i > 0) { await p.key("ArrowRight", "ArrowRight", 39); await sleep(900); }
+    const slide = deck.slides[key];
+    const wanted = [...Object.values(slide.words), slide.source,
+      ...(slide.matrix ? [...slide.matrix.columns, ...slide.matrix.rows.flatMap((r) => [r.label, ...r.cells.map((c) => c.text)])] : []),
+      ...(slide.nearest ? [...slide.nearest.heads, ...slide.nearest.rows.flat().map((c) => c.text)] : [])];
+    const shown = squash(await p.ev(`document.querySelector("main section").textContent`));
+    const counter = squash(await p.ev(`document.querySelector("header p").textContent`));
+    const missing = wanted.flatMap((t) => t.split("\n")).map(squash).filter((t) => !shown.includes(t));
+    check(`deck: slide ${i + 1} of ${deck.order.length} shows the words of the PowerPoint slide`, missing.length === 0 && counter.endsWith(`${i + 1} / ${deck.order.length}`), `${counter} ${missing.join(" | ").slice(0, 160)}`);
+  }
+  await p.ev(`location.hash = "#3"; location.reload(); true`).catch(() => {});      // a slide opened from a link
+  await sleep(2500);
+  const linked = squash(await p.ev(`document.querySelector("header p").textContent`));
+  const waffle = await p.ev(`document.querySelectorAll('main section [role="img"] > span.aspect-square').length`);
+  check("deck: a link opens its slide, and the matrix has one cell per test", linked.endsWith(`3 / ${deck.order.length}`) && waffle === deck.draw.tests.length, `${linked} cells=${waffle}`);
+  const running = await p.ev(`document.getAnimations().filter((a) => a.playState === "running").length`);
+  check("deck: nothing animates at rest", running === 0, `running=${running}`);
+  check("deck: no page errors", p.errors.length === 0, p.errors.join(" | "));
   await p.close();
 }
 console.log(results.every(Boolean) ? "ALL OK" : "SOME FAILED");
