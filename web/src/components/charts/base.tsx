@@ -54,7 +54,8 @@ export function Chart({
     const idle = hasIdle ? window.requestIdleCallback(build, { timeout: 4000 }) : window.setTimeout(build, 400 + 150 * waiting);
     if (!hasIdle) waiting += 1;
     // A printed page shows every chart. The render is forced before the browser lays the page out,
-    // and because the chart starts at the size of its box, that one render is already the real one.
+    // and it is drawn at the box's size on screen, not at a placeholder size. Like every chart
+    // here, it prints at its screen width: the charts are not re-measured for paper.
     const beforePrint = () => flushSync(build);
     window.addEventListener("beforeprint", beforePrint);
     return () => {
