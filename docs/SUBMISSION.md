@@ -100,7 +100,7 @@ Paste the "Short version" from [SI_DISCLOSURE.md](SI_DISCLOSURE.md). The full ta
 - [ ] Project page has: live link, repository link, the data sources above, and the SI disclosure.
 - [ ] At least one NASA data source is linked (PSI and the two NTRS reports are).
 - [ ] The repository is public and carries the MIT licence.
-- [ ] No NASA logo, flag, insignia or mission patch anywhere (none is used; the only image file in the app is its own icon, `web/src/app/icon.svg`).
+- [ ] No NASA logo, flag, insignia or mission patch anywhere (none is used; the only image files in the repository are the app's own icon, `web/src/app/icon.svg`, and two screenshots of the console in `docs/img/`; `tests/test_wording.py` checks this).
 - [ ] Human spot-checks in [HUMAN_VERIFICATION.md](HUMAN_VERIFICATION.md) ticked.
 - [ ] Open questions in [../QUESTIONS.md](../QUESTIONS.md) answered, in particular the human spot-checks (Q8).
 - [ ] Click **Submit for Judging**.
