@@ -264,11 +264,12 @@ sources themselves.
   - The file has no animations or transitions. The guidelines allow them only where removing
     one would lose something, and python-pptx does not write them.
   The slides also say only what the data supports where the guidelines' wording went further:
-  slide 7 lists where this console's data stops, not what "was never tested" (partial-gravity
-  combustion has been tested in drop towers, on parabolic flights and on one suborbital flight,
-  all in `data/evidence.json`; none of it is in the PSI repository; the line on solids repeats
-  the slide's 31.9%, the highest solid test point, and the line on CO2 with helium is about the
-  276 FLEX tests), and slide 6 says the model uses 275 of the 276 tests, because the source
+  slide 7 lists where the measurements stop, each line with its own scope, not what "was never
+  tested" (partial-gravity combustion has been tested in drop towers, on parabolic flights and on
+  one suborbital flight, all in `data/evidence.json`; none of it is in the PSI repository; the
+  line on solids repeats the slide's 31.9%, the highest solid test point in the console, and the
+  line on CO2 with helium is about the 276 FLEX tests), and slide 6 says the model uses 275 of
+  the 276 tests, because the source
   prints FLEX-114's pressure as 0 mmHg and it is treated as missing. The rows of its matrix are
   named by outcome, "Extinction" and "Disruption or Completion", because the model's second class
   holds both. Violet for Disruption comes from the console's palette (the guidelines name no
