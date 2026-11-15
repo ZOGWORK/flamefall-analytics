@@ -103,11 +103,11 @@ export default function Overview() {
               ]}
             />
           </Block>
-          <Block icon={BadgeCheck} tone="data" value={<Count text={String(n.evidence)} />} label={`sourced statements, ${n.evidence_verified} verified against their primary source`} source={`evidence table · ${n.evidence_index} abstract-only, ${n.evidence_unverified} not verified and marked`}>
+          <Block icon={BadgeCheck} tone="data" value={<Count text={String(n.evidence)} />} label={`sourced statements, ${n.evidence_verified} verified against the source they cite`} source={`evidence table · ${n.evidence_index} abstract-only, ${n.evidence_unverified} not verified and marked`}>
             <CellMatrix
-              label={`${n.evidence_verified} verified against the primary source, ${n.evidence_index} abstract only, ${n.evidence_unverified} not verified`}
+              label={`${n.evidence_verified} verified against the source they cite, ${n.evidence_index} abstract only, ${n.evidence_unverified} not verified`}
               groups={[
-                { n: n.evidence_verified, color: "var(--data)", name: "verified against primary source" },
+                { n: n.evidence_verified, color: "var(--data)", name: "verified against the cited source" },
                 { n: n.evidence_index, color: "var(--amber)", name: "abstract or summary only" },
                 { n: n.evidence_unverified, color: "var(--dim)", name: "not verified" },
               ]}
