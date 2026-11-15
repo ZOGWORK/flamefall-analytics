@@ -8,6 +8,7 @@ Combustion Data* · team Flamefall Analytics.
 
 - **Live console, hosted on Render:** https://flamefall-analytics.onrender.com
 - **Slide deck (7 slides):** https://flamefall-analytics.onrender.com/deck/
+- **The same story as a PowerPoint file (7 slides):** [docs/Flamefall-Analytics-deck.pptx](docs/Flamefall-Analytics-deck.pptx)
 
 ![The Overview page: 276 droplet burns, how they ended, and the other evidence in the console](docs/img/overview.png)
 
@@ -118,7 +119,7 @@ python -m pytest
 | `data/PROVENANCE.md` | Where each file came from, cleaning rules, how to re-check it |
 | `scripts/` | Extraction, verification, build, training and export scripts. See [scripts/README.md](scripts/README.md) |
 | `tests/` | Totals recomputed from the data; schema rules (a) to (e); export checks; wording rules |
-| `docs/` | SI disclosure, human spot-check list, submission text. See [docs/README.md](docs/README.md) |
+| `docs/` | SI disclosure, human spot-check list, submission text, the PowerPoint deck. See [docs/README.md](docs/README.md) |
 | `DECISIONS.md` | Assumptions, and corrections found by checking primary sources |
 | `QUESTIONS.md` | Open items that need a human |
 | `CONTRIBUTING.md` | The rules a change must keep, and how to check it |

@@ -248,6 +248,38 @@ sources themselves.
   Behaviour was re-checked in a real browser with `web/scripts/behave.mjs` (controls, shared
   links, in-place navigation, the glass card). The numbers are from one machine and move from run
   to run; the scripts are in the repository so they can be measured again.
+- **D44. The PowerPoint deck (14 Nov).** The team lead asked for the seven slides as a PowerPoint
+  file as well as the page at `/deck/`. `scripts/build_deck.py` builds it with python-pptx and reads
+  every number from the data files at build time; `tests/test_deck.py` checks the committed file
+  against a fresh build, the slide count, a source line and speaker notes on every slide, the
+  numbers, the wording rules, and that the file holds no image. Charts are native PowerPoint
+  charts, so they can be restyled; the 276-cell matrix is 276 shapes. Three things differ from
+  the slide guidelines, each for a stated reason:
+  - The guidelines call the hero number of slide 2 "26 PSI investigations". The data says 26
+    records come back from the repository search and 24 of them are combustion science, so the
+    slide says "26 records" and its source line gives the 24.
+  - The guidelines give cool flames as 600 to 800 K. The one sourced figure in the data is 600
+    to 1000 K (a University of Maryland release on the CFI-G cool flames), so the slide uses
+    that range and cites it.
+  - The file has no animations or transitions. The guidelines allow them only where removing
+    one would lose something, and python-pptx does not write them.
+  The slides also say only what the data supports where the guidelines' wording went further:
+  slide 7 lists where the measurements stop, each line with its own scope, not what "was never
+  tested" (partial-gravity combustion has been tested in drop towers, on parabolic flights and on
+  one suborbital flight, all in `data/evidence.json`; none of it is in the PSI repository; the
+  line on solids repeats the slide's 31.9%, the highest solid test point in the console, and the
+  line on CO2 with helium is about the 276 FLEX tests), and slide 6 says the model uses 275 of
+  the 276 tests, because the source
+  prints FLEX-114's pressure as 0 mmHg and it is treated as missing. The rows of its matrix are
+  named by outcome, "Extinction" and "Disruption or Completion", because the model's second class
+  holds both. Violet for Disruption comes from the console's palette (the guidelines name no
+  colour for it), and slide 1 carries the challenge's name as a small label above the title. Slide 4 says
+  "overlapping atmospheres", not "same atmospheres": 31 gas mixtures (the oxygen, CO2 and
+  helium fractions as printed, whatever the pressure) were run with both fuels, of 41 for
+  methanol and 33 for n-heptane.
+  The fonts are named in the file (Space Grotesk, IBM Plex Sans, JetBrains Mono) and are not
+  embedded: a machine without them shows PowerPoint's substitute. The page at `/deck/` keeps its
+  own seven slides, which cover the same ground in a different order.
 - **D42. Self-review after the review bot stopped (14 Nov).** The review bot stopped before any
   pull request reached its top score (QUESTIONS.md Q10), so the team lead asked for the pull
   requests to be merged on their tests after a self-review. It ran in passes. First, for each of
