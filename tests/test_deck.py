@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import json
 import re
 import sys
 import zipfile
@@ -17,6 +18,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import build_deck  # noqa: E402
 
 DECK = ROOT / "docs" / "Flamefall-Analytics-deck.pptx"
+WEB_DECK = ROOT / "web" / "src" / "data" / "deck.json"
+WEB_PAGE = ROOT / "web" / "src" / "app" / "deck" / "deck.tsx"
 VERDICT = re.compile(r"\b(safe|unsafe|certified|certification|certify)\b", re.I)
 C_NS = {"c": "http://schemas.openxmlformats.org/drawingml/2006/chart"}
 
@@ -233,6 +236,57 @@ def test_the_last_slide_claims_only_what_the_data_supports(n):
     assert f"{n['solid_limit']:g}% oxygen" not in panel                                           # one study's range is not a ceiling
     assert "in the PSI repository" in shapes["Hero number 1 caption"].text_frame.text
 
+
+
+def test_the_page_at_deck_shows_the_slides_of_the_powerpoint_file(n):
+    """The web deck has no words of its own. deck.json holds the text of every box on every slide of
+    the committed file, under the box's name, and the page prints each one by that name. (A browser
+    check, web/scripts/behave.mjs, reads the seven slides on the built site against the same file.)"""
+    web = json.loads(WEB_DECK.read_text(encoding="utf-8"))
+    page = WEB_PAGE.read_text(encoding="utf-8")
+    prs = pptx.Presentation(str(DECK))
+    assert web["order"] == [key for key, _ in build_deck.SLIDES] and len(web["order"]) == len(prs.slides) == 7
+    assert set(web["slides"]) == set(web["order"]) and web["site"] == build_deck.SITE
+    for key, slide in zip(web["order"], prs.slides):
+        ours = web["slides"][key]
+        boxes = [s for s in slide.shapes if s.has_text_frame and s.text_frame.text.strip() and s.name not in build_deck.WEB_DRAWN]
+        cells = sorted(s.text_frame.text for s in boxes if build_deck.TABLE_CELL.fullmatch(s.name))
+        named = [(s.name, s.text_frame.text) for s in boxes if not build_deck.TABLE_CELL.fullmatch(s.name)]
+        assert len(named) == len(dict(named)), key                              # no two boxes share a name, so none is lost
+        named = dict(named)
+        assert "Source: " + ours["source"] == named.pop("Source"), key
+        assert ours["words"] == named, key                                      # every other box, word for word
+        told = []
+        if "matrix" in ours:
+            told += ours["matrix"]["columns"] + [t for row in ours["matrix"]["rows"] for t in [row["label"], *(c["text"] for c in row["cells"])]]
+            told += ours["nearest"]["heads"] + [c["text"] for row in ours["nearest"]["rows"] for c in row]
+            assert [c["red"] for row in ours["matrix"]["rows"] for c in row["cells"]] == [False, False, True, False]
+        assert sorted(told) == cells, key                                       # and every cell of the two tables
+        for name in ours["words"]:                                              # the page names each box it prints
+            assert f'"{name}"' in page or re.search(rf"\bw\.{re.escape(name)}\b", page), (key, name)
+        assert set(ours["tones"]) <= set(ours["words"]) and set(ours["lead"]) <= set(ours["words"])
+        assert all(ours["words"][name].startswith(lead) for name, lead in ours["lead"].items())
+    assert sum("matrix" in web["slides"][key] for key in web["order"]) == 1
+    # what the page draws is what the slides draw
+    draw = web["draw"]
+    assert draw["outcomes"] == {o: n["outcomes"][o] for o in ("Extinction", "Disruption", "Completion")}
+    assert draw["tests"] == n["order"] and len(draw["tests"]) == n["n"] and n["n"] % draw["waffle_columns"] == 0
+    assert [(f["label"], f["counts"]["Extinction"], sum(f["counts"].values())) for f in draw["fuels"]] == [
+        ("Methanol", n["by_fuel"]["Methanol"]["Extinction"], n["by_fuel"]["Methanol"]["n"]),
+        ("n-Heptane", n["by_fuel"]["Heptane"]["Extinction"], n["by_fuel"]["Heptane"]["n"])]
+    points = scatter_points(next(s.chart for s in prs.slides[3].shapes if s.name == "Extinction share by oxygen level"))
+    assert [f["label"] for f in draw["fuels"]] == [web["slides"]["fuel"]["words"][f"{f['label']} label"] for f in draw["fuels"]]
+    for f in draw["fuels"]:                                                       # the same marks as the slide's chart
+        assert [level for level, _ in f["share_by_o2"]] == [x for x, _ in points[f["label"]]]
+        assert [share for _, share in f["share_by_o2"]] == pytest.approx([y for _, y in points[f["label"]]], abs=1e-9)
+    assert draw["o2_axis"] == list(build_deck.O2_AXIS) and draw["share_axis"] == list(build_deck.SHARE_AXIS)
+    assert [(r["label"], r["value"]) for r in draw["records"]] == n["burned"] and sum(r["value"] for r in draw["records"]) == n["search_hits"]
+    assert [r["value"] for r in draw["cool"]] == [n["cool"]["indicated"], n["cool"]["not_indicated"], n["cool"]["unclear"], n["cool"][""]]
+    # the page keeps no sentences of its own: the only text typed between its tags is the shell's
+    code = re.sub(r"\{/\*.*?\*/\}|//.*", "", page)
+    typed = re.findall(r">([^<>{}();=\n]*[A-Za-z]{3}[^<>{}();=\n]*)</", code)          # text inside an element, on one line
+    typed += re.findall(r"^\s*([A-Z][^<>{}();=\n]*)$", code, flags=re.M)               # text on a line of its own
+    assert sorted(t.strip() for t in typed) == ["FLAMEFALL", "Next", "Previous", "Slide", "Source:"], typed
 
 def test_the_waffle_has_one_cell_per_test_in_test_order(n):
     slide = pptx.Presentation(str(DECK)).slides[2]
