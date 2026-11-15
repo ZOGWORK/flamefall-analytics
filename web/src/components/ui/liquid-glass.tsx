@@ -266,19 +266,19 @@ export function Glass(rawProps: GlassProps) {
   // The distortion is recomputed for every frame in which anything behind the surface changes.
   // While the page scrolls, that is every frame, and scrolling stutters. So the distortion is
   // switched off for as long as the page is moving and comes back when it stops; the rim light,
-  // the sheen and the tint stay throughout. The style is set on the element directly, so React
-  // does not render again on every scroll event.
+  // the sheen and the tint stay throughout. Only an attribute is set here, and one rule in
+  // globals.css reads it. The style React wrote is never touched, so the two cannot disagree, and
+  // browsers that use the plain-blur fallback are left alone.
   useEffect(() => {
     const el = containerRef.current;
     if (!el || !svgFilterSupported) return;
-    const full = `url(#${filterId}) saturate(${v.saturation})`;
     let timer: number | undefined;
     const settle = () => {
-      el.style.backdropFilter = full;
+      delete el.dataset.glassMoving;
       timer = undefined;
     };
     const onScroll = () => {
-      if (timer === undefined) el.style.backdropFilter = "none";
+      if (timer === undefined) el.dataset.glassMoving = "";
       else window.clearTimeout(timer);
       timer = window.setTimeout(settle, 180);
     };
@@ -286,9 +286,9 @@ export function Glass(rawProps: GlassProps) {
     return () => {
       window.removeEventListener("scroll", onScroll);
       if (timer !== undefined) window.clearTimeout(timer);
-      el.style.backdropFilter = full;
+      delete el.dataset.glassMoving;
     };
-  }, [filterId, svgFilterSupported, v.saturation]);
+  }, [svgFilterSupported]);
 
   const containerStyles = (): React.CSSProperties => {
     const base: React.CSSProperties = {
