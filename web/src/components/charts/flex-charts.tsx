@@ -2,7 +2,7 @@
 
 // Charts of the FLEX droplet tests. Droplet data only: never drawn with solid-fuel data.
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -39,7 +39,7 @@ const OUTCOMES: Outcome[] = ["Extinction", "Disruption", "Completion"];
 type DotProps = { cx?: number; cy?: number; payload?: Record<string, number> };
 
 /** Share of tests ending in Extinction at each tested gas level, with Wilson intervals and a per-fuel trend. */
-export function ShareChart({ rows, xcol }: { rows: FlexRow[]; xcol: GasColumn }) {
+export const ShareChart = memo(function ShareChart({ rows, xcol }: { rows: FlexRow[]; xcol: GasColumn }) {
   const { points, trends } = useMemo(() => {
     const agg = shareByLevel(rows, xcol);
     const points = FUELS.map((fuel) => ({
@@ -87,11 +87,11 @@ export function ShareChart({ rows, xcol }: { rows: FlexRow[]; xcol: GasColumn })
           />
           {trends.map((t) =>
             t.data.length ? (
-              <Line key={`trend-${t.fuel}`} data={t.data} dataKey="y" type="monotone" stroke={FUEL_COLOR[t.fuel]} strokeWidth={1.5} strokeDasharray="3 3" dot={false} activeDot={false} tooltipType="none" />
+              <Line isAnimationActive={false} key={`trend-${t.fuel}`} data={t.data} dataKey="y" type="monotone" stroke={FUEL_COLOR[t.fuel]} strokeWidth={1.5} strokeDasharray="3 3" dot={false} activeDot={false} tooltipType="none" />
             ) : null,
           )}
           {points.map((s) => (
-            <Scatter
+            <Scatter isAnimationActive={false}
               key={s.fuel}
               data={s.data}
               fill={FUEL_COLOR[s.fuel]}
@@ -99,7 +99,7 @@ export function ShareChart({ rows, xcol }: { rows: FlexRow[]; xcol: GasColumn })
                 <circle cx={props.cx} cy={props.cy} r={3 + 1.6 * Math.sqrt(props.payload?.n ?? 1)} fill={FUEL_COLOR[s.fuel]} fillOpacity={0.85} stroke="var(--background)" strokeWidth={1} />
               )}
             >
-              <ErrorBar dataKey="err" direction="y" width={0} strokeWidth={1} stroke={FUEL_COLOR[s.fuel]} />
+              <ErrorBar isAnimationActive={false} dataKey="err" direction="y" width={0} strokeWidth={1} stroke={FUEL_COLOR[s.fuel]} />
             </Scatter>
           ))}
         </ComposedChart>
@@ -113,10 +113,10 @@ export function ShareChart({ rows, xcol }: { rows: FlexRow[]; xcol: GasColumn })
       />
     </div>
   );
-}
+});
 
 /** Counts of the three outcomes at each tested level. The three stay separate. */
-export function MixChart({ rows, xcol }: { rows: FlexRow[]; xcol: GasColumn }) {
+export const MixChart = memo(function MixChart({ rows, xcol }: { rows: FlexRow[]; xcol: GasColumn }) {
   const data = useMemo(() => {
     const byLevel = new Map<number, Record<string, number>>();
     for (const r of rows) {
@@ -144,14 +144,14 @@ export function MixChart({ rows, xcol }: { rows: FlexRow[]; xcol: GasColumn }) {
             }
           />
           {OUTCOMES.map((o) => (
-            <Bar key={o} dataKey={o} stackId="a" fill={OUTCOME_COLOR[o]} />
+            <Bar isAnimationActive={false} key={o} dataKey={o} stackId="a" fill={OUTCOME_COLOR[o]} />
           ))}
         </BarChart>
       </Chart>
       <Legend items={OUTCOMES.map((o) => ({ label: o, color: OUTCOME_COLOR[o] }))} />
     </div>
   );
-}
+});
 
 const SHAPE: Record<Outcome, "dot" | "x" | "diamond"> = { Extinction: "dot", Disruption: "x", Completion: "diamond" };
 
@@ -168,7 +168,7 @@ function Mark({ cx = 0, cy = 0, outcome, color }: { cx?: number; cy?: number; ou
 export type RateColumn = "d0_mm" | "o2_pct" | "co2_pct" | "he_pct" | "pressure_atm";
 
 /** Average burning-rate constant K against a chosen condition. Rows without K or x are not drawn. */
-export function RateChart({ rows, xcol }: { rows: FlexRow[]; xcol: RateColumn }) {
+export const RateChart = memo(function RateChart({ rows, xcol }: { rows: FlexRow[]; xcol: RateColumn }) {
   const series = useMemo(
     () =>
       FUELS.flatMap((fuel) =>
@@ -208,7 +208,7 @@ export function RateChart({ rows, xcol }: { rows: FlexRow[]; xcol: RateColumn })
             }}
           />
           {series.map((s) => (
-            <Scatter
+            <Scatter isAnimationActive={false}
               key={`${s.fuel}-${s.outcome}`}
               data={s.data}
               fill={FUEL_COLOR[s.fuel]}
@@ -227,10 +227,10 @@ export function RateChart({ rows, xcol }: { rows: FlexRow[]; xcol: RateColumn })
       />
     </div>
   );
-}
+});
 
 /** The d²-law line of one test, rebuilt from three printed numbers. Not the measured trace. */
-export function D2Chart({ line, row }: { line: D2Line; row: FlexRow }) {
+export const D2Chart = memo(function D2Chart({ line, row }: { line: D2Line; row: FlexRow }) {
   const color = FUEL_COLOR[row.fuel];
   const data = [
     { t: 0, d2: line.d2_start },
@@ -252,7 +252,7 @@ export function D2Chart({ line, row }: { line: D2Line; row: FlexRow }) {
               ) : null
             }
           />
-          <Line dataKey="d2" stroke={color} strokeWidth={2.5} dot={false} animationDuration={500} />
+          <Line isAnimationActive={false} dataKey="d2" stroke={color} strokeWidth={2.5} dot={false} />
           <ReferenceDot x={0} y={line.d2_start} r={5} fill="var(--background)" stroke="var(--foreground)" strokeWidth={1.5} />
           {line.marker && (
             <ReferenceDot
@@ -277,4 +277,4 @@ export function D2Chart({ line, row }: { line: D2Line; row: FlexRow }) {
       )}
     </div>
   );
-}
+});
