@@ -239,7 +239,7 @@ def test_the_last_slide_claims_only_what_the_data_supports(n):
 
 
 def test_the_page_at_deck_shows_the_slides_of_the_powerpoint_file(n):
-    """The web deck has no words of its own. deck.json holds the text of every box on every slide of
+    """The web deck has no slide text of its own. deck.json holds the text of every box on every slide of
     the committed file, under the box's name, and the page prints each one by that name. (A browser
     check, web/scripts/behave.mjs, reads the seven slides on the built site against the same file.)"""
     web = json.loads(WEB_DECK.read_text(encoding="utf-8"))
@@ -262,8 +262,24 @@ def test_the_page_at_deck_shows_the_slides_of_the_powerpoint_file(n):
             told += ours["nearest"]["heads"] + [c["text"] for row in ours["nearest"]["rows"] for c in row]
             assert [c["red"] for row in ours["matrix"]["rows"] for c in row["cells"]] == [False, False, True, False]
         assert sorted(told) == cells, key                                       # and every cell of the two tables
-        for name in ours["words"]:                                              # the page names each box it prints
-            assert f'"{name}"' in page or re.search(rf"\bw\.{re.escape(name)}\b", page), (key, name)
+        if "matrix" in ours:                                                    # each in its own place
+            shapes, m = by_name(slide), ours["matrix"]
+            assert m["columns"] == [shapes["Column 1"].text_frame.text, shapes["Column 2"].text_frame.text]
+            for r, row in enumerate(m["rows"], start=1):
+                assert row["label"] == shapes[f"Row {r}"].text_frame.text
+                for k, cell in enumerate(row["cells"], start=1):
+                    assert cell["text"] == shapes[f"Matrix cell {r}.{k}"].text_frame.text
+                    assert cell["red"] == (str(shapes[f"Matrix cell {r}.{k}"].fill.fore_color.rgb) == build_deck.RED)
+            assert ours["nearest"]["heads"] == [s.text_frame.text for s in slide.shapes if s.name.startswith("Head ")]
+            for r, row in enumerate(ours["nearest"]["rows"], start=1):
+                assert [c["text"] for c in row] == [s.text_frame.text for s in slide.shapes if s.name == f"Nearest {r}"]
+        # the part of the page that draws this slide names each box it prints
+        body = re.search(rf"\nfunction Slide{key.capitalize()}\(\) \{{\n(.*?)\n\}}\n", page, flags=re.S).group(1)
+        for name in ours["words"]:
+            assert f'"{name}"' in body or re.search(rf"\bw\.{re.escape(name)}\b", body), (key, name)
+        for name, value in ours["tones"].items():                               # the accent colour is the slide's
+            box = next(s for s in slide.shapes if s.name == name)
+            assert build_deck.TONE[str(box.text_frame.paragraphs[0].runs[0].font.color.rgb)] == value, (key, name)
         assert set(ours["tones"]) <= set(ours["words"]) and set(ours["lead"]) <= set(ours["words"])
         assert all(ours["words"][name].startswith(lead) for name, lead in ours["lead"].items())
     assert sum("matrix" in web["slides"][key] for key in web["order"]) == 1
@@ -286,7 +302,8 @@ def test_the_page_at_deck_shows_the_slides_of_the_powerpoint_file(n):
     code = re.sub(r"\{/\*.*?\*/\}|//.*", "", page)
     typed = re.findall(r">([^<>{}();=\n]*[A-Za-z]{3}[^<>{}();=\n]*)</", code)          # text inside an element, on one line
     typed += re.findall(r"^\s*([A-Z][^<>{}();=\n]*)$", code, flags=re.M)               # text on a line of its own
-    assert sorted(t.strip() for t in typed) == ["FLAMEFALL", "Next", "Previous", "Slide", "Source:"], typed
+    assert sorted(t.strip() for t in typed) == [
+        "FLAMEFALL", "Next", "Not affiliated with or endorsed by NASA", "Previous", "Slide", "Source:", "Use of SI tools"], typed
 
 def test_the_waffle_has_one_cell_per_test_in_test_order(n):
     slide = pptx.Presentation(str(DECK)).slides[2]
