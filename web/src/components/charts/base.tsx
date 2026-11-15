@@ -2,6 +2,7 @@
 
 // Shared chart frame and axis styling, so every chart reads the same way.
 
+import { useEffect, useRef, useState } from "react";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 
@@ -18,10 +19,43 @@ export function Chart({
   className?: string;
   label: string;
 }) {
+  // A chart on screen is built at once. One further down is built in an idle moment after the page
+  // has loaded, or as soon as it comes near the viewport, whichever is first. Building every chart
+  // of a long page in one go kept the page busy for a second or more while it loaded; building one
+  // only when it scrolls into view makes scrolling hitch. The box keeps its height, so nothing
+  // moves when the chart appears, and it keeps its label, so a screen reader finds it either way.
+  const box = useRef<HTMLDivElement>(null);
+  const [built, setBuilt] = useState(false);
+  useEffect(() => {
+    const el = box.current;
+    if (!el || built) return;
+    const build = () => setBuilt(true);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) build();
+      },
+      { rootMargin: "300px 0px" },
+    );
+    observer.observe(el);
+    // one chart per idle period: a callback that overruns its period pushes the rest to the next one
+    const idle =
+      typeof window.requestIdleCallback === "function"
+        ? window.requestIdleCallback(build, { timeout: 4000 })
+        : window.setTimeout(build, 600);
+    return () => {
+      observer.disconnect();
+      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle);
+      else window.clearTimeout(idle);
+    };
+  }, [built]);
   return (
-    <ChartContainer config={EMPTY} role="img" aria-label={label} className={cn("aspect-auto w-full", className)} style={{ height }}>
-      {children}
-    </ChartContainer>
+    <div ref={box} role="img" aria-label={label} className={cn("w-full", className)} style={{ height }}>
+      {built && (
+        <ChartContainer config={EMPTY} className="aspect-auto h-full w-full">
+          {children}
+        </ChartContainer>
+      )}
+    </div>
   );
 }
 
