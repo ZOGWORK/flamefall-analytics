@@ -63,6 +63,10 @@ function Fineprint() {
         <a href={REPO_URL} target="_blank" rel="noopener" className="text-foreground underline decoration-line">
           Code and data
         </a>
+        {" · "}
+        <a href={`${REPO_URL}/blob/main/docs/SI_DISCLOSURE.md`} target="_blank" rel="noopener" className="text-foreground underline decoration-line">
+          Use of SI tools
+        </a>
       </p>
     </div>
   );

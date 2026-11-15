@@ -30,6 +30,9 @@ sys.path.insert(0, str(ROOT))
 from flamefall import aggregates, flex, model, psi, ranking  # noqa: E402
 from flamefall import catalogue as cat  # noqa: E402
 
+sys.path.insert(0, str(ROOT / "scripts"))
+import build_deck  # noqa: E402
+
 WEB = ROOT / "web"
 DATA_OUT = WEB / "src" / "data"
 PSI_OUT = WEB / "public" / "psi"
@@ -316,6 +319,7 @@ def build() -> dict[Path, str]:
         DATA_OUT / "search.json": search_export(),
         DATA_OUT / "ranking.json": ranking_export(),
         DATA_OUT / "panels.json": panels_export(),
+        DATA_OUT / "deck.json": build_deck.web_content(),      # the seven slides: the words and numbers of the PowerPoint file
         GOLDEN_OUT: golden(),
     }
     for name in model.SPECS:

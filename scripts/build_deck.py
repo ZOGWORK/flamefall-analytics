@@ -14,6 +14,7 @@ for extinction, green for completion, violet for disruption; no logos, images or
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -264,6 +265,28 @@ def outcome_bar(slide, x, y, w, h, counts: dict, *, label_size=13):
     text(slide, x, y + h + 0.1, w, 0.3, runs, size=label_size, name="Outcome counts")
 
 
+# =============================================================================== what the drawings show
+
+WAFFLE_COLUMNS = 23
+FUELS = [("Methanol", "Methanol", CYAN), ("n-Heptane", "Heptane", AMBER)]      # label, name in the data, colour
+O2_AXIS = (10, 36, 4)             # the scatter's oxygen axis: from, to, step, in % O2
+SHARE_AXIS = (0, 1, 0.25)         # and its share axis
+
+
+def burned_parts(n):
+    """The records of the repository search by kind: label, count, colour."""
+    return [(label, value, DIM if label == "Not combustion" else CYAN) for label, value in n["burned"]]
+
+
+def cool_parts(n):
+    """The n-heptane tests logged as Extinction, by what their caption says: label, count, colour."""
+    c = n["cool"]
+    parts = [("Cool-flame evidence", c["indicated"], AMBER), ("No evidence", c["not_indicated"], CYAN), ("Unclear", c["unclear"], DIM),
+             ("Caption silent", c[""], DIM)]
+    assert sum(v for _, v, _ in parts) == n["heptane_extinctions"]
+    return parts
+
+
 # =============================================================================== the seven slides
 
 def slide_title(prs, n):
@@ -301,9 +324,8 @@ def slide_problem(prs, n):
     hero(s, LEFT, 3.35, 4.2, str(n["search_hits"]), "records returned by a search of NASA's PSI repository for “combustion”: the starting point of this console's catalogue",
          size=130, caption_w=4.3)
     text(s, 5.75, 3.4, 6.8, 0.3, f"THE {n['search_hits']} RECORDS, BY KIND", size=11, font=MONO, color=DIM, name="Chart label")
-    labels = [k for k, _ in n["burned"]]
-    values = [v for _, v in n["burned"]]
-    bar_chart(s, 5.6, 3.65, 7.0, 2.95, labels, values, [DIM if k == "Not combustion" else CYAN for k in labels], name="Records by what they burned")
+    parts = burned_parts(n)
+    bar_chart(s, 5.6, 3.65, 7.0, 2.95, [p[0] for p in parts], [p[1] for p in parts], [p[2] for p in parts], name="Records by what they burned")
     return s
 
 
@@ -319,7 +341,7 @@ def slide_flex(prs, n):
          size=15, color=MUTED, spacing=1.1, name="What it is")
     text(s, LEFT, 5.6, 4.6, 0.8, "Every total here was recomputed from the table, not copied from the report's text.", size=15, color=MUTED,
          spacing=1.1, name="Method")
-    cols, size, gap = 23, 0.255, 0.05
+    cols, size, gap = WAFFLE_COLUMNS, 0.255, 0.05
     assert len(n["order"]) == n["n"] and n["n"] % cols == 0
     x0, y0 = 5.75, 1.15
     text(s, x0, y0 - 0.33, 7.0, 0.3, "EVERY TEST, IN TEST ORDER · ONE CELL EACH", size=11, font=MONO, color=DIM, name="Chart label")
@@ -347,16 +369,17 @@ def slide_fuel(prs, n):
 
     x0 = 6.15
     text(s, x0, 1.95, 6.5, 0.3, "HOW EACH FUEL'S TESTS ENDED", size=11, font=MONO, color=DIM, name="Chart label 1")
-    for row, (label, fuel, color) in enumerate([("Methanol", m, CYAN), ("n-Heptane", h, AMBER)]):
+    for row, (label, key, color) in enumerate(FUELS):
+        fuel = n["by_fuel"][key]
         y = 2.3 + row * 0.85
         text(s, x0, y, 1.3, 0.3, label, size=13, color=color, bold=True, name=f"{label} label")
         outcome_bar(s, x0 + 1.35, y - 0.02, 5.1, 0.3, {k: fuel[k] for k in ("Extinction", "Disruption", "Completion")}, label_size=11)
 
     text(s, x0, 4.05, 6.5, 0.3, "SHARE ENDING IN EXTINCTION, BY OXYGEN LEVEL TESTED", size=11, font=MONO, color=DIM, name="Chart label 2")
     data = XyChartData()
-    for fuel, label in (("Methanol", "Methanol"), ("Heptane", "n-Heptane")):
+    for label, key, _ in FUELS:
         series = data.add_series(label)
-        for level, share in n["share_by_o2"][fuel]:
+        for level, share in n["share_by_o2"][key]:
             series.add_data_point(level, share)
     frame = s.shapes.add_chart(XL_CHART_TYPE.XY_SCATTER, Inches(x0 - 0.1), Inches(4.25), Inches(6.7), Inches(2.45), data)
     frame.name = "Extinction share by oxygen level"
@@ -368,7 +391,7 @@ def slide_fuel(prs, n):
     chart.legend.font.color.rgb = rgb(MUTED)
     from pptx.enum.chart import XL_LEGEND_POSITION
     chart.legend.position = XL_LEGEND_POSITION.TOP
-    for series, color in zip(chart.plots[0].series, (CYAN, AMBER)):
+    for series, (_, _, color) in zip(chart.plots[0].series, FUELS):
         series.format.line.fill.background()
         series.marker.style = XL_MARKER_STYLE.CIRCLE
         series.marker.size = 8
@@ -376,11 +399,11 @@ def slide_fuel(prs, n):
         series.marker.format.fill.fore_color.rgb = rgb(color)
         series.marker.format.line.fill.background()
     quiet_axis(chart.value_axis, gridlines=True)
-    chart.value_axis.minimum_scale, chart.value_axis.maximum_scale, chart.value_axis.major_unit = 0, 1, 0.25
+    chart.value_axis.minimum_scale, chart.value_axis.maximum_scale, chart.value_axis.major_unit = SHARE_AXIS
     chart.value_axis.tick_labels.number_format = "0%"
     chart.value_axis.tick_labels.number_format_is_linked = False
     quiet_axis(chart.category_axis)
-    chart.category_axis.minimum_scale, chart.category_axis.maximum_scale, chart.category_axis.major_unit = 10, 36, 4
+    chart.category_axis.minimum_scale, chart.category_axis.maximum_scale, chart.category_axis.major_unit = O2_AXIS
     chart.category_axis.tick_labels.number_format = '0"% O2"'
     chart.category_axis.tick_labels.number_format_is_linked = False
     return s
@@ -388,9 +411,7 @@ def slide_fuel(prs, n):
 
 def slide_cool(prs, n):
     c, total = n["cool"], n["heptane_extinctions"]
-    parts = [("Cool-flame evidence", c["indicated"], AMBER), ("No evidence", c["not_indicated"], CYAN), ("Unclear", c["unclear"], DIM),
-             ("Caption silent", c[""], DIM)]
-    assert sum(v for _, v, _ in parts) == total
+    parts = cool_parts(n)
     s = new_slide(
         prs, 5, "What “extinction” hides",
         f"{n['report']}, Appendix B figure captions. Cool-flame temperature, as reported for gas cool flames: {n['cool_temp_source']}.",
@@ -518,7 +539,12 @@ def slide_unknown(prs, n):
     return s
 
 
-def build(path: Path = OUT) -> Path:
+SLIDES = [("title", slide_title), ("problem", slide_problem), ("flex", slide_flex), ("fuel", slide_fuel), ("cool", slide_cool),
+          ("model", slide_model), ("unknown", slide_unknown)]
+
+
+def presentation():
+    """The seven slides, not yet saved, and the numbers they print."""
     n = numbers()
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(W), Inches(H)
@@ -526,16 +552,94 @@ def build(path: Path = OUT) -> Path:
     prs.core_properties.subject = "Flame in Freefall: what microgravity combustion experiments actually measured"
     prs.core_properties.author = prs.core_properties.last_modified_by = "Team Flamefall Analytics"
     prs.core_properties.comments = ""
-    for make in (slide_title, slide_problem, slide_flex, slide_fuel, slide_cool, slide_model, slide_unknown):
+    for _, make in SLIDES:
         make(prs, n)
     assert len(prs.slides) == 7
     import datetime as dt
 
     prs.core_properties.created = prs.core_properties.modified = dt.datetime(2026, 11, 14)
+    return prs, n
+
+
+def build(path: Path = OUT) -> Path:
+    prs, _ = presentation()
     path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(path))
     set_theme_fonts(path)
     return path
+
+
+# The page at /deck/ shows the same seven slides. It has no slide text of its own: it reads the words here.
+TONE = {AMBER: "amber", CYAN: "data", DIM: "dim", RED: "ext"}
+WEB_DRAWN = ("Slide number", "Outcome counts")       # the page draws these itself, from the counts below
+TABLE_CELL = re.compile(r"(Column|Row|Matrix cell|Head|Nearest) ?(.*)")
+
+
+def _tone(run) -> str | None:
+    """The name of a run's colour, if it is one of the deck's accent colours; None for plain text."""
+    return TONE.get(str(run.font.color.rgb))
+
+
+def web_content() -> dict:
+    """The words of every slide, read back from the slides themselves, and the numbers its drawings need.
+
+    For each slide: `words` by the name of the box that holds them, `tones` for the boxes set in an accent
+    colour, `lead` for a box that opens with a bold coloured phrase, the source line, and on the model
+    slide the two tables, cell by cell. Nothing is typed again here.
+    """
+    prs, n = presentation()
+    slides = {}
+    for (key, _), slide in zip(SLIDES, prs.slides):
+        words, tones, lead = {}, {}, {}
+        table = {"Column": [], "Row": [], "Matrix cell": [], "Head": [], "Nearest": {}}
+        red_cells, source = [], None
+        for shape in slide.shapes:
+            if not shape.has_text_frame or not shape.text_frame.text.strip() or shape.name in WEB_DRAWN:
+                continue
+            value = shape.text_frame.text
+            runs = shape.text_frame.paragraphs[0].runs
+            cell = TABLE_CELL.fullmatch(shape.name)
+            if shape.name == "Source":
+                assert value.startswith("Source: "), value
+                source = value[len("Source: "):]
+            elif cell and cell.group(1) == "Nearest":
+                table["Nearest"].setdefault(cell.group(2), []).append({"text": value, "tone": _tone(runs[0])})
+            elif cell:
+                if cell.group(1) == "Matrix cell":
+                    red_cells.append(str(shape.fill.fore_color.rgb) == RED)
+                table[cell.group(1)].append(value)
+            else:
+                assert shape.name not in words, (key, shape.name)       # a second box of the same name would be lost
+                words[shape.name] = value
+                if _tone(runs[0]):
+                    tones[shape.name] = _tone(runs[0])
+                if len(runs) > 1 and runs[0].font.bold and not runs[1].font.bold:
+                    lead[shape.name] = runs[0].text                       # the phrase the slide sets in bold colour
+        assert source and words, key
+        slides[key] = {"words": words, "tones": tones, "lead": lead, "source": source}
+        if table["Matrix cell"]:
+            cells = table["Matrix cell"]
+            assert len(table["Column"]) == 2 and len(table["Row"]) == 2 and len(cells) == 4, table
+            slides[key]["matrix"] = {
+                "columns": table["Column"],
+                "rows": [{"label": table["Row"][r], "cells": [{"text": cells[2 * r + k], "red": red_cells[2 * r + k]} for k in range(2)]}
+                         for r in range(2)]}
+            rows = list(table["Nearest"].values())
+            assert rows and all(len(row) == len(table["Head"]) for row in rows), table
+            slides[key]["nearest"] = {"heads": table["Head"], "rows": rows}
+    outcomes = ("Extinction", "Disruption", "Completion")
+    return {
+        "site": SITE, "order": [key for key, _ in SLIDES], "slides": slides,
+        "draw": {
+            "outcomes": {o: n["outcomes"][o] for o in outcomes},
+            "tests": n["order"], "waffle_columns": WAFFLE_COLUMNS,
+            "fuels": [{"label": label, "tone": TONE[color], "counts": {o: n["by_fuel"][key][o] for o in outcomes},
+                       "share_by_o2": [list(point) for point in n["share_by_o2"][key]]} for label, key, color in FUELS],
+            "o2_axis": list(O2_AXIS), "share_axis": list(SHARE_AXIS),
+            "records": [{"label": label, "value": value, "tone": TONE[color]} for label, value, color in burned_parts(n)],
+            "cool": [{"label": label, "value": value, "tone": TONE[color]} for label, value, color in cool_parts(n)],
+        },
+    }
 
 
 FIXED_DATE = (2026, 11, 14, 0, 0, 0)
