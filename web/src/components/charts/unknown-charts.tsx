@@ -63,7 +63,7 @@ export function SolidEnvelopeChart({ points, limit }: { points: SolidPoint[]; li
             }}
           />
           {series.map((s) => (
-            <Scatter key={s.outcome} data={s.data} fill={SOLID_STYLE[s.outcome].color} shape={(props: { cx?: number; cy?: number }) => <SolidMark cx={props.cx} cy={props.cy} outcome={s.outcome} />} />
+            <Scatter isAnimationActive={false} key={s.outcome} data={s.data} fill={SOLID_STYLE[s.outcome].color} shape={(props: { cx?: number; cy?: number }) => <SolidMark cx={props.cx} cy={props.cy} outcome={s.outcome} />} />
           ))}
         </ScatterChart>
       </Chart>
@@ -91,7 +91,7 @@ export function DiluentChart({ rows, both }: { rows: FlexRow[]; both: number }) 
             }}
           />
           {series.map((s) => (
-            <Scatter key={s.fuel} data={s.data} fill={FUEL_COLOR[s.fuel]} fillOpacity={0.55} />
+            <Scatter isAnimationActive={false} key={s.fuel} data={s.data} fill={FUEL_COLOR[s.fuel]} fillOpacity={0.55} />
           ))}
         </ScatterChart>
       </Chart>
