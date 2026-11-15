@@ -32,3 +32,78 @@ def test_readme_gives_an_activation_command_for_each_platform():
     text = "\n".join(readme_code_lines())
     assert ".venv/bin/activate" in text              # macOS / Linux
     assert ".venv\\Scripts\\activate" in text        # Windows
+
+
+# ---------------------------------------------------------------- the README's numbers and links
+
+def _readme() -> str:
+    return (ROOT / "README.md").read_text(encoding="utf-8")
+
+
+def test_readme_headline_numbers_are_the_ones_in_the_data():
+    """Every number in the README's two findings tables is recomputed here from the data files."""
+    import json
+
+    from flamefall import catalogue as cat
+    from flamefall import flex
+
+    text = _readme()
+    s, c = flex.summary(), cat.counts()
+    o, m, h = s["outcomes"], s["by_fuel"]["Methanol"], s["by_fuel"]["Heptane"]
+    solid = cat.load_solid_points()
+    decided = int((solid["outcome"] != "ambiguous").sum())
+    limit = cat.load_evidence().set_index("id").loc["sofie-gel-envelope", "o2_max_pct"]
+    partial_g = cat.load_investigations()
+    partial_g = partial_g[partial_g["in_psi_search"] & (partial_g["status"] != "planned")]
+    gravity = [cat._num(v) for v in partial_g["gravity_g"]]
+    expected = [
+        f"{s['n']} tests: {o['Extinction']} Extinction, {o['Disruption']} Disruption, {o['Completion']} Completion",
+        f"Extinction in {m['Extinction']} of {m['n']} methanol tests and {h['Extinction']} of {h['n']} n-heptane tests",
+        f"{s['cool_flame']['indicated']} of {s['heptane_extinctions']} n-heptane extinctions",
+        f"{c['search_hits']} records, {c['combustion_science']} of them combustion science, {c['tables']} experimental tables",
+        f"{len(solid)} transcribed, {decided} with a stated outcome; none above {limit:g}% oxygen",
+        f"| {sum(1 for g in gravity if g is not None and 0.05 < g < 0.5)} |",
+        f"{c['evidence']}, of which {c['evidence_verified']} were verified in full text",
+    ]
+    for sentence in expected:
+        assert sentence in text, sentence
+    assert cat.solid_envelope()["o2"][1] < limit                    # "none above" is true of the points
+
+    cards = {n: json.loads((ROOT / "data" / "models" / f"{n}.json").read_text(encoding="utf-8"))
+             for n in ("droplet_extinction", "droplet_cool_flame", "solid_sustained")}
+    ext, cool, sol = cards["droplet_extinction"], cards["droplet_cool_flame"], cards["solid_sustained"]
+    rows = [
+        f"| {ext['n_rows']} | {ext['metrics']['roc_auc']:.2f} grouped cross-validation, {ext['headline_auc']:.2f} on an unseen fuel",
+        f"| {cool['n_rows']} | {cool['headline_auc']:.2f}, exploratory",
+        f"| {sol['n_rows']} | {sol['headline_auc']:.2f}, no better than chance",
+    ]
+    for row in rows:
+        assert row in text, row
+    assert ext["headline_is"] == "leave-one-material-out" and sol["headline_auc"] < 0.6
+
+
+def test_every_local_link_in_the_readme_files_points_at_something_that_exists():
+    import re
+
+    files = [ROOT / "README.md", ROOT / "CONTRIBUTING.md", ROOT / "docs" / "README.md", ROOT / "scripts" / "README.md",
+             ROOT / "web" / "README.md"]
+    checked = 0
+    for path in files:
+        text = path.read_text(encoding="utf-8")
+        for target in re.findall(r"\]\(([^)#]+)\)", text):
+            if target.startswith(("http://", "https://")):
+                continue
+            assert (path.parent / target).exists(), f"{path.relative_to(ROOT)} links to {target}"
+            checked += 1
+    assert checked >= 15
+    for name in ("overview.png", "scenario-lab.png"):
+        assert (ROOT / "docs" / "img" / name).stat().st_size > 50_000, name
+
+
+def test_readme_names_every_script_and_every_page():
+    scripts = (ROOT / "scripts" / "README.md").read_text(encoding="utf-8")
+    for script in sorted((ROOT / "scripts").glob("*.py")):
+        assert f"`{script.name}`" in scripts, script.name
+    text = _readme()
+    for route in ("", "flex/", "catalogue/", "scenario/", "models/", "unknowns/", "deck/"):
+        assert f"https://flamefall-analytics.onrender.com/{route}" in text, route
