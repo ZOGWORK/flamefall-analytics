@@ -63,26 +63,38 @@ def test_readme_headline_numbers_are_the_ones_in_the_data():
         f"{c['search_hits']} records, {c['combustion_science']} of them combustion science, {c['tables']} experimental tables",
         f"{len(solid)} transcribed, {decided} with a stated outcome; the highest oxygen among them is "
         f"{solid['o2_at_outcome_pct'].max():g}%",
-        f"(SoFIE-GEL). The data files hold no solid-material test point above {limit:g}% |",
+        f"extinction limits mapped over that range). The data files hold no solid-material test point above {limit:g}% |",
         f"{c['evidence']}, of which {c['evidence_verified']} were verified against the source they cite",
     ]
     for sentence in expected:
         assert sentence in text, sentence
     assert solid["o2_at_outcome_pct"].max() == cat.solid_envelope()["o2"][1] < limit
-    # "tested", not "stated": a planned experiment (FM2) names higher oxygen levels, and it is solid fuel
+    # "an investigation that has flown": a planned experiment (FM2) names higher oxygen levels, and it
+    # is solid fuel. It is left out here by its status, not by whether its range happens to be recorded.
     ev = cat.load_evidence()
-    tested = ev[ev["evidence_class"].isin(["solid", "partial_g"]) & ev["o2_is_ambient"].astype(bool)]
-    assert tested["o2_max_pct"].max() == limit
+    inv = cat.load_investigations()
+    planned = set(inv.loc[inv["status"] == "planned", "investigation_id"])
+    assert planned == {"FM2"}
+    flown = ev[ev["evidence_class"].isin(["solid", "partial_g"]) & ev["o2_is_ambient"].astype(bool)
+               & ~ev["investigation_id"].isin(planned)]
+    assert len(flown) > 20 and flown["o2_max_pct"].max() == limit
     gel = ev.set_index("id").loc["sofie-gel-envelope"]
-    assert f"| {gel['o2_min_pct']:g} to {gel['o2_max_pct']:g}% (SoFIE-GEL)" in text
+    assert f"| {gel['o2_min_pct']:g} to {gel['o2_max_pct']:g}% (SoFIE-GEL, extinction limits mapped over that range)" in text
+    assert "mapped" in gel["statement"]                             # the README uses the statement's own word
     assert "T'ien et al." in gel["source_ref"] and "Range: T'ien et al., Combust. Flame 277 (2025) 114244." in text
     assert "37" in ev.set_index("id").loc["fm2-plan", "statement"] and "planned" in ev.set_index("id").loc["fm2-plan", "statement"]
-    assert "a solid-fuel investigation has tested" in text and "investigation states" not in text
-    # every statement counted as verified names the source it was checked against, and quotes it
+    assert "reported by a solid-fuel investigation that has flown" in text
+    assert "investigation states" not in text and "investigation has tested" not in text
+    # every statement counted as verified names the source it was checked against and how it was read;
+    # a verbatim quote is stored for some, and the disclosure gives that count
     verified = ev[ev["verification"] == "verified_live"]
     assert len(verified) == c["evidence_verified"]
     assert verified["source_ref"].str.len().gt(0).all() and verified["read_level"].str.len().gt(0).all()
     assert "primary source |" not in text
+    quoted = int(ev["quote"].fillna("").str.strip().ne("").sum())
+    disclosure = (ROOT / "docs" / "SI_DISCLOSURE.md").read_text(encoding="utf-8")
+    assert f"a verbatim quote is stored for {quoted} of the {len(ev)}" in disclosure
+    assert "a verbatim quote and the read level stored" not in disclosure
 
     # the partial-gravity count sits in its own row, not just anywhere on the page
     count = sum(1 for g in gravity if g is not None and 0.05 < g < 0.5)
