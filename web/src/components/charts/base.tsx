@@ -2,10 +2,14 @@
 
 // Shared chart frame and axis styling, so every chart reads the same way.
 
+import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 
 const EMPTY: ChartConfig = {};
+/** How many charts are waiting on a timer right now, so that their timers are spread out. */
+let waiting = 0;
 
 export function Chart({
   children,
@@ -18,10 +22,61 @@ export function Chart({
   className?: string;
   label: string;
 }) {
+  // A chart on screen is built at once. One further down is built in an idle moment after the page
+  // has loaded, or as soon as it comes near the viewport, whichever is first. Building every chart
+  // of a long page in one go kept the page busy for a second or more while it loaded; building one
+  // only when it scrolls into view makes scrolling hitch. The box keeps its height, so nothing
+  // moves when the chart appears, and it keeps its label, so a screen reader finds it either way.
+  const box = useRef<HTMLDivElement>(null);
+  // The size of the box at the moment the chart is built. The chart is drawn at that size on its
+  // very first render, with no placeholder size in between. null: not built yet.
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const built = size !== null;
+  useEffect(() => {
+    const el = box.current;
+    if (!el || built) return;
+    const build = () => {
+      const rect = el.getBoundingClientRect();
+      setSize({ width: Math.round(rect.width), height: Math.round(rect.height) });
+    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) build();
+      },
+      { rootMargin: "300px 0px" },
+    );
+    observer.observe(el);
+    // one chart per idle period: a callback that overruns its period pushes the rest to the next one.
+    // Where there is no idle callback (Safari), the charts still waiting are spaced out on a timer.
+    // The count goes down again when this chart is built or leaves the page, so it never grows
+    // from one page to the next.
+    const hasIdle = typeof window.requestIdleCallback === "function";
+    const idle = hasIdle ? window.requestIdleCallback(build, { timeout: 4000 }) : window.setTimeout(build, 400 + 150 * waiting);
+    if (!hasIdle) waiting += 1;
+    // A printed page shows every chart. The render is forced before the browser lays the page out,
+    // and it is drawn at the box's size on screen, not at a placeholder size. Like every chart
+    // here, it prints at its screen width: the charts are not re-measured for paper.
+    const beforePrint = () => flushSync(build);
+    window.addEventListener("beforeprint", beforePrint);
+    return () => {
+      window.removeEventListener("beforeprint", beforePrint);
+      observer.disconnect();
+      if (hasIdle) window.cancelIdleCallback(idle);
+      else {
+        window.clearTimeout(idle);
+        waiting = Math.max(0, waiting - 1);
+      }
+    };
+  }, [built]);
   return (
-    <ChartContainer config={EMPTY} role="img" aria-label={label} className={cn("aspect-auto w-full", className)} style={{ height }}>
-      {children}
-    </ChartContainer>
+    <div ref={box} role="img" aria-label={label} className={cn("w-full", className)} style={{ height }}>
+      {built && (
+        // a box that is hidden when its chart is built (a closed tab) has no width yet: the chart then takes its default and resizes itself
+        <ChartContainer config={EMPTY} className="aspect-auto h-full w-full" initialDimension={size.width > 0 && size.height > 0 ? size : undefined}>
+          {children}
+        </ChartContainer>
+      )}
+    </div>
   );
 }
 

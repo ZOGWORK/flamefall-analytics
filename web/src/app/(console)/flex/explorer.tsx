@@ -1,7 +1,7 @@
 "use client";
 
 import { Database, Download, Flame, RotateCcw, Zap } from "lucide-react";
-import { useMemo } from "react";
+import { memo, useDeferredValue, useMemo } from "react";
 
 import { AXIS_LABEL, D2Chart, MixChart, RateChart, ShareChart, type RateColumn } from "@/components/charts/flex-charts";
 import { OutcomeStrip } from "@/components/charts/outcome-strip";
@@ -16,6 +16,7 @@ import { flex, TABLE_SOURCE } from "@/lib/data";
 import { fmt, fuelName, pct } from "@/lib/format";
 import { d2Line, nearestTests, wilson, type GasColumn } from "@/lib/stats";
 import type { FlexRow, Outcome } from "@/lib/types";
+import { useSettled } from "@/lib/use-settled";
 import { list, oneOf, range, useUrlState } from "@/lib/use-url-state";
 
 const ROWS = flex.rows;
@@ -99,36 +100,23 @@ function download(rows: FlexRow[]) {
   URL.revokeObjectURL(url);
 }
 
+type Query = typeof DEFAULTS;
+
 export function Explorer() {
   const [q, set, reset] = useUrlState(DEFAULTS);
-  const fuels = list(q.fuel);
   // values typed into the address bar are checked: anything else falls back to the full range or the default
+  const fuels = list(q.fuel);
   const o2 = range(q.o2, O2);
   const pressure = range(q.p, P);
   const atm = list(q.atm);
   const outcomes = list(q.out);
-  const xcol = oneOf(q.x, GAS_COLUMNS, "o2_pct");
-  const kx = oneOf(q.kx, RATE_COLUMNS, "d0_mm");
-  const view = oneOf(q.view, ["share", "mix"] as const, "share");
-  const fullPressure = pressure[0] <= P[0] && pressure[1] >= P[1];
+  // The filter controls follow the pointer at once. The charts and the table are heavier, so they
+  // wait until the controls have paused for a moment and are then rendered as a deferred update.
+  // Nothing heavy runs while a slider is being dragged.
+  const settled = useDeferredValue(useSettled(q));
 
-  const d = useMemo(() => {
-    const families = new Set(atm.map((a) => FAMILY[a]));
-    return ROWS.filter(
-      (r) =>
-        fuels.includes(r.fuel) &&
-        r.o2_pct >= o2[0] &&
-        r.o2_pct <= o2[1] &&
-        // FLEX-114 has no pressure in the source: it is kept only when the pressure filter is at its full range
-        (r.pressure_atm === null ? fullPressure : r.pressure_atm >= pressure[0] && r.pressure_atm <= pressure[1]) &&
-        families.has(r.atmosphere) &&
-        outcomes.includes(r.outcome),
-    );
-    // the filter values are strings in the address bar: depend on those
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q.fuel, q.o2, q.p, q.atm, q.out]);
-
-  const filters = (
+  return (
+    <>
     <Panel
       title="Filter the tests"
       aside={
@@ -160,14 +148,64 @@ export function Explorer() {
         </Field>
       </div>
     </Panel>
+      <Results q={settled} view={q.view} x={q.x} kx={q.kx} test={q.test} set={set} />
+    </>
   );
+}
+
+/** Everything the filters produce. Re-rendered only when the settled filters change. */
+const Results = memo(function Results({
+  q,
+  view: liveView,
+  x: liveX,
+  kx: liveKx,
+  test: liveTest,
+  set,
+}: {
+  /** The settled filters: every chart and the table are computed from them. */
+  q: Query;
+  /** The four controls that sit among the results show the live choice, so they answer at once. */
+  view: string;
+  x: string;
+  kx: string;
+  test: string;
+  set: (patch: Partial<Query>) => void;
+}) {
+  const fuels = list(q.fuel);
+  // values typed into the address bar are checked: anything else falls back to the full range or the default
+  const o2 = range(q.o2, O2);
+  const pressure = range(q.p, P);
+  const atm = list(q.atm);
+  const outcomes = list(q.out);
+  const xcol = oneOf(q.x, GAS_COLUMNS, "o2_pct");
+  const kx = oneOf(q.kx, RATE_COLUMNS, "d0_mm");
+  const view = oneOf(liveView, ["share", "mix"] as const, "share");   // which tab is open changes no data: it is live
+  const xChoice = oneOf(liveX, GAS_COLUMNS, "o2_pct");
+  const kxChoice = oneOf(liveKx, RATE_COLUMNS, "d0_mm");
+  const fullPressure = pressure[0] <= P[0] && pressure[1] >= P[1];
+
+  const d = useMemo(() => {
+    const families = new Set(atm.map((a) => FAMILY[a]));
+    return ROWS.filter(
+      (r) =>
+        fuels.includes(r.fuel) &&
+        r.o2_pct >= o2[0] &&
+        r.o2_pct <= o2[1] &&
+        // FLEX-114 has no pressure in the source: it is kept only when the pressure filter is at its full range
+        (r.pressure_atm === null ? fullPressure : r.pressure_atm >= pressure[0] && r.pressure_atm <= pressure[1]) &&
+        families.has(r.atmosphere) &&
+        outcomes.includes(r.outcome),
+    );
+    // the filter values are strings in the address bar: depend on those
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q.fuel, q.o2, q.p, q.atm, q.out]);
+
 
   if (d.length === 0) {
     const pool = fuels.length ? ROWS.filter((r) => fuels.includes(r.fuel)) : ROWS;
     const near = nearestTests(pool, (o2[0] + o2[1]) / 2, (pressure[0] + pressure[1]) / 2);
     return (
       <>
-        {filters}
         <NoData title="No FLEX test matches these filters">
           Nothing in Table IX was run at this combination. The closest tests by oxygen and pressure are listed below so you can see what
           was actually tried.
@@ -196,7 +234,6 @@ export function Explorer() {
 
   return (
     <>
-      {filters}
 
       <section className="beam grid grid-cols-1 gap-px border border-line bg-line xl:grid-cols-12">
         <div className="scan bg-surface p-4 sm:p-5 xl:col-span-5">
@@ -234,7 +271,7 @@ export function Explorer() {
                 <TabsTrigger value="share" className="rounded-sm px-3">Share + trend</TabsTrigger>
                 <TabsTrigger value="mix" className="rounded-sm px-3">All three outcomes</TabsTrigger>
               </TabsList>
-              <Segments label="Compare against" value={xcol} onChange={(v) => set({ x: v })} options={[{ value: "o2_pct", label: "Oxygen" }, { value: "co2_pct", label: "Carbon dioxide" }, { value: "he_pct", label: "Helium" }]} />
+              <Segments label="Compare against" value={xChoice} onChange={(v) => set({ x: v })} options={[{ value: "o2_pct", label: "Oxygen" }, { value: "co2_pct", label: "Carbon dioxide" }, { value: "he_pct", label: "Helium" }]} />
             </div>
             <TabsContent value="share" className="mt-4">
               <ShareChart rows={d} xcol={xcol} />
@@ -269,7 +306,7 @@ export function Explorer() {
             title="Average burning-rate constant K, one point per test"
             aside={
               <div className="w-64 max-w-full">
-                <Pick label="Plot K against" value={kx} onChange={(v) => set({ kx: v })} options={Object.entries(AXIS_LABEL).map(([value, label]) => ({ value, label }))} />
+                <Pick label="Plot K against" value={kxChoice} onChange={(v) => set({ kx: v })} options={Object.entries(AXIS_LABEL).map(([value, label]) => ({ value, label }))} />
               </div>
             }
           >
@@ -292,7 +329,7 @@ export function Explorer() {
         explainer="The line is rebuilt from three printed numbers. It is not the measured trace."
       >
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-          <Panel className="xl:col-span-3" aside={<div className="w-40"><Pick mono label="Test" value={row.test_id} onChange={(v) => set({ test: v })} options={d.map((r) => ({ value: r.test_id, label: r.test_id }))} /></div>} title={`${row.test_id} · ${fuelName(row.fuel)}`}>
+          <Panel className="xl:col-span-3" aside={<div className="w-40"><Pick mono label="Test" value={d.some((r) => r.test_id === liveTest) ? liveTest : row.test_id} onChange={(v) => set({ test: v })} options={d.map((r) => ({ value: r.test_id, label: r.test_id }))} /></div>} title={`${row.test_id} · ${fuelName(row.fuel)}`}>
             {line ? (
               <D2Chart line={line} row={row} />
             ) : (
@@ -354,4 +391,4 @@ export function Explorer() {
       </Section>
     </>
   );
-}
+});

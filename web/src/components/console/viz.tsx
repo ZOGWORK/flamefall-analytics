@@ -109,8 +109,8 @@ export function Meter({
       {Array.from({ length: segments }, (_, i) => (
         <span
           key={i}
-          className={cn("min-w-0 flex-1 rounded-[1px]", i < lit && "cell")}
-          style={i < lit ? { background: color, animationDelay: `${i * 22}ms` } : { background: "rgba(255,255,255,0.07)" }}
+          className="min-w-0 flex-1 rounded-[1px]"
+          style={{ background: i < lit ? color : "rgba(255,255,255,0.07)" }}
         />
       ))}
     </div>
@@ -133,7 +133,7 @@ export function CellMatrix({
   return (
     <div className={cn("grid gap-[3px]", className)} style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${cell}px, 1fr))` }} role="img" aria-label={label}>
       {cells.map((g, i) => (
-        <span key={i} title={g.name} className="cell aspect-square rounded-[2px]" style={{ background: g.color, animationDelay: `${Math.min(i * 9, 900)}ms` }} />
+        <span key={i} title={g.name} className="aspect-square rounded-[2px]" style={{ background: g.color }} />
       ))}
     </div>
   );

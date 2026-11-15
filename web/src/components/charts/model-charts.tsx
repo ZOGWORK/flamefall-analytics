@@ -66,7 +66,7 @@ export function CalibrationChart({ card }: { card: ModelCard }) {
           />
           <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke="var(--dim)" strokeDasharray="3 3" />
           <Line data={bins} dataKey="y" stroke="var(--data)" strokeWidth={1.5} dot={false} activeDot={false} tooltipType="none" />
-          <Scatter
+          <Scatter isAnimationActive={false}
             data={bins}
             fill="var(--data)"
            
@@ -112,7 +112,7 @@ export function CoefficientChart({ card, label }: { card: ModelCard; label: (fea
             {rows.map((r) => (
               <Cell key={r.feature} fill={r.log_odds > 0 ? "var(--amber)" : "var(--data)"} />
             ))}
-            <ErrorBar dataKey="err" direction="x" width={4} strokeWidth={1} stroke="var(--foreground)" />
+            <ErrorBar isAnimationActive={false} dataKey="err" direction="x" width={4} strokeWidth={1} stroke="var(--foreground)" />
           </Bar>
         </BarChart>
       </Chart>

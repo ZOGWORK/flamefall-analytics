@@ -1,7 +1,7 @@
 "use client";
 
 import { Gauge, Orbit, RotateCcw, Wind } from "lucide-react";
-import { useMemo, useState } from "react";
+import { memo, useCallback, useDeferredValue, useMemo, useState } from "react";
 
 import { Field, Pick, Segments, SliderField } from "@/components/console/controls";
 import { DataTable, n, type Column } from "@/components/console/data-table";
@@ -22,6 +22,7 @@ import { nearestFlex, nearestSolid, type NearFlex, type NearSolid } from "@/lib/
 import { normalise, R, rank, sensitivity, terms, TERM_KEYS } from "@/lib/ranking";
 import { DEFAULT_STATE, FEATURED, gaps as findGaps, LIMITS, MATERIALS, parseState, toScenario, YOUR_SCENARIO, type LabState, type MaterialKey } from "@/lib/scenario";
 import type { Fuel, ModelCard, TermKey } from "@/lib/types";
+import { useSettled } from "@/lib/use-settled";
 import { useUrlState } from "@/lib/use-url-state";
 
 const EXT = extinctionJson as unknown as ModelCard;
@@ -114,42 +115,17 @@ const SOLID_COLS: Column<NearSolid>[] = [
 
 export function Lab() {
   const [q, set, reset] = useUrlState(URL_DEFAULTS);
-  const [rawWeights, setRawWeights] = useState<Record<TermKey, number>>({ ...R.weights });
   // the address bar is checked: an unknown material or gravity, or anything that is not a number, becomes the default
   const s: LabState = useMemo(() => parseState(q), [q]);
-  const apply = (next: Partial<LabState>) => set(Object.fromEntries(Object.entries(next).map(([k, v]) => [k, String(v)])) as Partial<typeof URL_DEFAULTS>);
-
-  const m = MATERIALS[s.material];
-  const droplet = m.kind === "droplet";
-  const po2 = (s.o2 / 100) * s.p;
-  const gravityLabel = GRAVITY.find((x) => Number(x.value) === s.g)?.label ?? `${s.g} g`;
-  const gaps = useMemo(() => findGaps(s, flex.rows, solid), [s]);
-  const nearF = useMemo(() => (droplet ? nearestFlex(flex.rows, m.code as Fuel, s.o2, s.p, s.co2, s.he, s.d0) : []), [droplet, m.code, s]);
-  const nearS = useMemo(() => (droplet ? [] : nearestSolid(solid.points, m.code, s.o2, s.p, s.flow)), [droplet, m.code, s]);
-  const fuelRows = useMemo(() => flex.rows.filter((r) => r.fuel === m.code), [m.code]);
-
-  // ---- model estimate (droplets in microgravity only)
-  const x = { o2_pct: s.o2, pressure_kpa: s.p, o2_partial_kpa: po2, co2_pct: s.co2, he_pct: s.he, d0_mm: s.d0, fuel_heptane: m.code === "Heptane" ? 1 : 0 };
-  const out = useMemo(() => (droplet && s.g === 0 ? predict(EXT, x) : null), [droplet, s]); // eslint-disable-line react-hooks/exhaustive-deps
-  const cool = useMemo(() => (droplet && s.g === 0 && m.code === "Heptane" ? predict(COOL, x) : null), [droplet, s, m.code]); // eslint-disable-line react-hooks/exhaustive-deps
-  const demo = out ? out.extrapolating || gaps.length > 0 : false;
-  const em = EXT.metrics;
-  const thr = em.youden_threshold;
-
-  // ---- triage score
-  const weights = normalise(rawWeights);
-  const mine = toScenario(s);
-  const t = terms(mine);
-  const score = TERM_KEYS.reduce((sum, k) => sum + weights[k] * t.values[k], 0);
-  const all = [mine, ...R.presets];
-  const order = rank(all, weights);
-  const sens = sensitivity(all, weights);
-  const disagreement = !droplet && t.values.M_O2 === 0 && nearS.some((x) => x.point.outcome === "sustained") && nearS.length > 0 && Math.min(...nearS.map((x) => x.distance)) < 1;
-  const tally = (list: string[]) => {
-    const counts = new Map<string, number>();
-    for (const o of list) counts.set(o, (counts.get(o) ?? 0) + 1);
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  };
+  const apply = useCallback(
+    (next: Partial<LabState>) => set(Object.fromEntries(Object.entries(next).map(([k, v]) => [k, String(v)])) as Partial<typeof URL_DEFAULTS>),
+    [set],
+  );
+  // The controls follow the pointer at once. Everything computed from them (charts, tables, the
+  // estimate) is heavier, so it waits until the controls have paused for a moment and is then
+  // rendered as a deferred update. Nothing heavy runs while a slider is being dragged.
+  const settled = useDeferredValue(useSettled(s));
+  const droplet = MATERIALS[s.material].kind === "droplet";
 
   return (
     <>
@@ -189,6 +165,60 @@ export function Lab() {
         </div>
       </Panel>
 
+      <Results s={settled} hrr={s.hrr} volume={s.volume} apply={apply} />
+    </>
+  );
+}
+
+/** Everything the scenario produces. Re-rendered only when the settled scenario changes. */
+const Results = memo(function Results({
+  s,
+  hrr,
+  volume,
+  apply,
+}: {
+  /** The settled scenario: everything computed and drawn here comes from it. */
+  s: LabState;
+  /** The two controls that sit among the results show the live value, so they answer at once. */
+  hrr: string;
+  volume: number;
+  apply: (next: Partial<LabState>) => void;
+}) {
+  const [rawWeights, setRawWeights] = useState<Record<TermKey, number>>({ ...R.weights });
+  const m = MATERIALS[s.material];
+  const droplet = m.kind === "droplet";
+  const po2 = (s.o2 / 100) * s.p;
+  const gravityLabel = GRAVITY.find((x) => Number(x.value) === s.g)?.label ?? `${s.g} g`;
+  const gaps = useMemo(() => findGaps(s, flex.rows, solid), [s]);
+  const nearF = useMemo(() => (droplet ? nearestFlex(flex.rows, m.code as Fuel, s.o2, s.p, s.co2, s.he, s.d0) : []), [droplet, m.code, s]);
+  const nearS = useMemo(() => (droplet ? [] : nearestSolid(solid.points, m.code, s.o2, s.p, s.flow)), [droplet, m.code, s]);
+  const fuelRows = useMemo(() => flex.rows.filter((r) => r.fuel === m.code), [m.code]);
+
+  // ---- model estimate (droplets in microgravity only)
+  const x = { o2_pct: s.o2, pressure_kpa: s.p, o2_partial_kpa: po2, co2_pct: s.co2, he_pct: s.he, d0_mm: s.d0, fuel_heptane: m.code === "Heptane" ? 1 : 0 };
+  const out = useMemo(() => (droplet && s.g === 0 ? predict(EXT, x) : null), [droplet, s]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cool = useMemo(() => (droplet && s.g === 0 && m.code === "Heptane" ? predict(COOL, x) : null), [droplet, s, m.code]); // eslint-disable-line react-hooks/exhaustive-deps
+  const demo = out ? out.extrapolating || gaps.length > 0 : false;
+  const em = EXT.metrics;
+  const thr = em.youden_threshold;
+
+  // ---- triage score
+  const weights = normalise(rawWeights);
+  const mine = toScenario(s);
+  const t = terms(mine);
+  const score = TERM_KEYS.reduce((sum, k) => sum + weights[k] * t.values[k], 0);
+  const all = [mine, ...R.presets];
+  const order = rank(all, weights);
+  const sens = sensitivity(all, weights);
+  const disagreement = !droplet && t.values.M_O2 === 0 && nearS.some((x) => x.point.outcome === "sustained") && nearS.length > 0 && Math.min(...nearS.map((x) => x.distance)) < 1;
+  const tally = (list: string[]) => {
+    const counts = new Map<string, number>();
+    for (const o of list) counts.set(o, (counts.get(o) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  };
+
+  return (
+    <>
       <HeroBand
         kicker="Oxygen partial pressure"
         value={
@@ -359,10 +389,10 @@ export function Lab() {
             ))}
             <div className="mt-4 space-y-4">
               <Field label="Size of the burning item">
-                <Segments label="Size of the burning item" value={s.hrr} onChange={(v) => apply({ hrr: v })} options={Object.keys(R.hrr_scale_w).map((k) => ({ value: k, label: capitalise(k) }))} />
+                <Segments label="Size of the burning item" value={hrr} onChange={(v) => apply({ hrr: v })} options={Object.keys(R.hrr_scale_w).map((k) => ({ value: k, label: capitalise(k) }))} />
               </Field>
               <Field label="Free volume of the cabin, m³">
-                <Input type="number" min={1} max={1000} step={1} value={s.volume} onChange={(e) => apply({ volume: Math.min(1000, Math.max(1, Number(e.target.value) || 1)) })} className="num h-8 w-32 rounded-sm border-input bg-background" aria-label="Free volume of the cabin, cubic metres" />
+                <Input type="number" min={1} max={1000} step={1} value={volume} onChange={(e) => apply({ volume: Math.min(1000, Math.max(1, Number(e.target.value) || 1)) })} className="num h-8 w-32 rounded-sm border-input bg-background" aria-label="Free volume of the cabin, cubic metres" />
               </Field>
             </div>
           </Panel>
@@ -485,4 +515,4 @@ export function Lab() {
       </Section>
     </>
   );
-}
+});
