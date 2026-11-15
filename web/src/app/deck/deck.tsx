@@ -117,7 +117,7 @@ const steps = (from: number, to: number, step: number) => Array.from({ length: M
 function ShareScatter({ label }: { label: string }) {
   const [x0, x1, dx] = D.o2_axis;
   const [y0, y1, dy] = D.share_axis;
-  const W = 640, H = 172, L = 46, R = 14, T = 10, B = 28;
+  const W = 640, H = 172, L = 58, R = 14, T = 10, B = 34;      // room for the labels at their phone size
   const px = (v: number) => L + ((v - x0) / (x1 - x0)) * (W - L - R);
   const py = (v: number) => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
   return (
@@ -134,13 +134,13 @@ function ShareScatter({ label }: { label: string }) {
         {steps(y0, y1, dy).map((v) => (
           <g key={v}>
             <line x1={L} x2={W - R} y1={py(v)} y2={py(v)} stroke="var(--line)" />
-            <text x={L - 8} y={py(v) + 4} textAnchor="end" fill="var(--muted-foreground)" className="num text-[11px] max-sm:text-[19px]">
+            <text x={L - 8} y={py(v) + 4} textAnchor="end" fill="var(--muted-foreground)" className="num text-[11px] max-sm:text-[16px]">
               {Math.round(v * 100)}%
             </text>
           </g>
         ))}
         {steps(x0, x1, dx).map((v) => (
-          <text key={v} x={px(v)} y={H - 8} textAnchor="middle" fill="var(--muted-foreground)" className="num text-[11px] max-sm:text-[19px]">
+          <text key={v} x={px(v)} y={H - 8} textAnchor="middle" fill="var(--muted-foreground)" className="num text-[11px] max-sm:text-[16px]">
             {v}% O2
           </text>
         ))}
