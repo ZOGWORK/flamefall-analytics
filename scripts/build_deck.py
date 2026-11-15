@@ -79,6 +79,9 @@ def numbers() -> dict:
     panels = json.loads((ROOT / "data" / "panels.json").read_text(encoding="utf-8"))
     cool_temp = ev.loc["cfig-press", "statement"]
     assert "600 to 1000 K" in cool_temp, cool_temp
+    solid_limit = float(ev.loc["sofie-gel-envelope", "o2_max_pct"])
+    assert solid_limit == float(ev.loc[ev["evidence_class"] == "solid", "o2_max_pct"].max()), "the widest solid range is no longer SoFIE-GEL's"
+    assert top["outcome"] == "no_ignition" and float(top["o2_at_outcome_pct"]) < solid_limit, top
     return {
         "n": s["n"], "outcomes": s["outcomes"], "first": s["first_test"], "last": s["last_test"], "report": flex.REPORT,
         "extinction_share": s["extinction_share"], "by_fuel": s["by_fuel"],
@@ -97,7 +100,7 @@ def numbers() -> dict:
         "n_models": len(cards), "failed_models": sum(1 for m in cards.values() if m["headline_auc"] < 0.6),
         "partial_g": sum(1 for g in gravity if g is not None and 0.05 < g < 0.5),
         "solid_top_o2": float(top["o2_at_outcome_pct"]), "solid_top_source": top["source_ref"].split(" (")[0],
-        "solid_limit": float(ev.loc["sofie-gel-envelope", "o2_max_pct"]), "outside_search": c["outside_psi_search"],
+        "solid_limit": solid_limit, "outside_search": c["outside_psi_search"],
         "scenario": scenario,
         "near": [dict(test=f"{r['investigation_id']} {r['test_no']}", o2=float(r["o2_at_outcome_pct"]), flow=float(r["flow_cm_s"]),
                       direction=r["flow_direction"], outcome=r["outcome"], distance=float(r["distance"])) for _, r in near.iterrows()],
@@ -333,14 +336,14 @@ def slide_fuel(prs, n):
         prs, 4, "The quantitative core",
         f"{n['report']}, Table IX, recomputed from the data. Scatter: share of tests ending in Extinction at each tested oxygen level.",
         f"{pct(n['extinction_share'])} of all {n['n']} tests ended with the visible flame going out. For methanol it was {pct(m['extinction_share'])} "
-        f"({m['Extinction']} of {m['n']}); for n-heptane {pct(h['extinction_share'])} ({h['Extinction']} of {h['n']}). Same apparatus, same range of "
+        f"({m['Extinction']} of {m['n']}); for n-heptane {pct(h['extinction_share'])} ({h['Extinction']} of {h['n']}). Same apparatus, overlapping "
         f"atmospheres, different fuel. The scatter shows the share ending in extinction at each oxygen level tested; no trend line is fitted.")
     text(s, LEFT, 1.05, 6.0, 0.6, "Fuel matters as much as atmosphere", size=28, font=HEAD, bold=True, name="Title")
     hero(s, LEFT, 1.9, 5.2, pct(n["extinction_share"]), f"of all {n['n']} tests ended with the visible flame going out", size=96, color=RED,
          caption_w=4.6)
     hero(s, LEFT, 4.1, 2.5, pct(m["extinction_share"]), f"methanol\n{m['Extinction']} of {m['n']}", size=40, color=CYAN, name="Methanol share")
     hero(s, LEFT + 2.6, 4.1, 2.5, pct(h["extinction_share"]), f"n-heptane\n{h['Extinction']} of {h['n']}", size=40, color=AMBER, name="n-Heptane share")
-    text(s, LEFT, 5.9, 4.9, 0.6, "Same apparatus, same atmospheres, different fuel, very different outcome.", size=15, color=MUTED, name="One line")
+    text(s, LEFT, 5.9, 4.9, 0.6, "Same apparatus, overlapping atmospheres, different fuel, very different outcome.", size=15, color=MUTED, name="One line")
 
     x0 = 6.15
     text(s, x0, 1.95, 6.5, 0.3, "HOW EACH FUEL'S TESTS ENDED", size=11, font=MONO, color=DIM, name="Chart label 1")
@@ -399,7 +402,7 @@ def slide_cool(prs, n):
     hero(s, LEFT, 1.9, 6.0, f"{c['indicated']} of {total}", "n-heptane “extinctions” show evidence that the droplet kept burning as a cool flame",
          size=110, color=RED, caption_w=5.2)
     text(s, LEFT, 5.25, 5.3, 1.1,
-         f"A sensor that watches for visible flame will miss a cool flame. Cool flames burn at {n['cool_temp']}.", size=15, color=MUTED,
+         f"A sensor that watches for visible flame will miss a cool flame. Gas cool flames burn at {n['cool_temp']}.", size=15, color=MUTED,
          spacing=1.1, name="Why it matters")
     text(s, 6.75, 2.0, 5.8, 0.3, f"THE {total} N-HEPTANE TESTS LOGGED AS EXTINCTION", size=11, font=MONO, color=DIM, name="Chart label")
     bar_chart(s, 6.55, 2.3, 6.1, 3.6, [p[0] for p in parts], [p[1] for p in parts], [p[2] for p in parts], name="Cool-flame evidence in the captions")
@@ -418,26 +421,27 @@ def slide_model(prs, n):
         f"Nearest tests: {'; '.join(n['near_source'])}.{assumed}",
         f"Three small logistic models, each trained on one kind of evidence and scored on groups of tests it never saw. The droplet-extinction "
         f"model scores {n['auc_cv']:.2f} in grouped cross-validation and {n['auc_headline']:.2f} when a whole fuel is left out; the lower number "
-        f"is the headline. At the working threshold it calls {n['fp']} of {negatives} negatives positive. The solid-fuel model does no better than "
-        f"chance and is shown failing, so for a solid the Scenario Lab gives the nearest real tests and no probability. The model uses "
+        f"is the headline. Its second class holds both Disruption and Completion: a disrupted droplet is not an extinguished flame. "
+        f"At the working threshold it calls {n['fp']} of {negatives} negatives positive. The solid-fuel model does no better than "
+        f"chance and the console shows it failing, so for a solid the Scenario Lab gives the nearest real tests and no probability. The model uses "
         f"{n['model_rows']} of the {n['n']} tests: the source prints the pressure of {', '.join(n['model_left_out'])} as 0 mmHg, which is treated "
         f"as missing. The nearest tests are the closest in oxygen, pressure and flow speed; flow direction is shown but not compared.")
     hero(s, LEFT, 1.0, 4.6, f"{n['auc_headline']:.2f}",
          f"headline AUC: the worse of grouped cross-validation ({n['auc_cv']:.2f}) and leave-one-fuel-out ({n['auc_headline']:.2f}). "
          "0.5 is a coin flip, 1 is perfect.", size=130, caption_w=4.7)
-    text(s, LEFT, 4.45, 4.7, 0.9, "Three small logistic models, one per kind of evidence, each tested on unseen groups.",
+    text(s, LEFT, 4.45, 4.7, 0.9, "Three small logistic models, each trained on one kind of evidence and tested on unseen groups.",
          size=15, color=MUTED, spacing=1.1, name="What the model is")
     text(s, LEFT, 5.6, 4.7, 0.9,
          [(f"{pct(n['fpr'], 0)} false-positive rate", {"color": RED, "bold": True}),
-          (f": {n['fp']} of {negatives} negatives called positive. One of three models fails, and is shown failing.", {})],
+          (f" at the working threshold: {n['fp']} of {negatives} negatives called positive. One of three models fails; the console shows it.", {})],
          size=15, color=MUTED, spacing=1.1, name="The honest line")
 
     x0 = 6.1
     text(s, x0, 1.12, 6.5, 0.3, f"DROPLET EXTINCTION MODEL · {n['model_rows']} OF {n['n']} TESTS", size=11, font=MONO, color=DIM, name="Chart label 1")
     cw, ch, lx = 1.75, 0.78, x0 + 2.35
-    text(s, lx, 1.5, cw, 0.3, "called “goes out”", size=12, color=MUTED, align=PP_ALIGN.CENTER, name="Column 1")
-    text(s, lx + cw + 0.08, 1.5, cw, 0.3, "called “keeps burning”", size=12, color=MUTED, align=PP_ALIGN.CENTER, name="Column 2")
-    cells = [("flame went out", n["tp"], n["fn"], SURFACE, SURFACE), ("flame did not go out", n["fp"], n["tn"], RED, SURFACE)]
+    text(s, lx, 1.5, cw, 0.3, "called “Extinction”", size=12, color=MUTED, align=PP_ALIGN.CENTER, name="Column 1")
+    text(s, lx + cw + 0.08, 1.5, cw, 0.3, "called “not Extinction”", size=12, color=MUTED, align=PP_ALIGN.CENTER, name="Column 2")
+    cells = [("Extinction", n["tp"], n["fn"], SURFACE, SURFACE), ("Disruption or Completion", n["fp"], n["tn"], RED, SURFACE)]
     for r, (label, a, b, fa, fb) in enumerate(cells):
         y = 1.85 + r * (ch + 0.08)
         text(s, x0, y, 2.25, ch, label, size=13, color=TEXT, anchor=MSO_ANCHOR.MIDDLE, name=f"Row {r + 1}")
@@ -476,14 +480,15 @@ def slide_unknown(prs, n):
         f"PSI Data Repository and the official challenge brief; {n['report']}, Table IX and Appendix B; {n['solid_top_source']}; NASA/TM-20210011385; "
         "SAME Final Report; T'ien et al., Combust. Flame 277 (2025).",
         f"The most useful thing the console shows is where the measurements stop. There are {n['partial_g']} combustion tests in lunar or Martian "
-        f"gravity in the repository; what exists elsewhere is short drop-tower and parabolic-flight tests and one suborbital flight's slides. The highest oxygen level of any solid-fuel test point is {n['solid_top_o2']:.1f}%, and no solid-fuel "
-        f"investigation maps beyond {n['solid_limit']:g}%. {n['co2_and_he']} of {n['n']} droplet tests contain both carbon dioxide and helium. "
+        f"gravity in the repository; what exists elsewhere is short drop-tower and parabolic-flight tests and one suborbital flight. The highest oxygen level of any solid-fuel test point in the console's data is "
+        f"{n['solid_top_o2']:.1f}% (a test that did not ignite), and the widest range mapped for a solid in its evidence ends at {n['solid_limit']:g}% "
+        f"(PMMA spheres, T'ien et al. 2025). {n['co2_and_he']} of {n['n']} droplet tests contain both carbon dioxide and helium. "
         f"Every number in this deck is in the console, with its source: {SITE_URL}.")
     text(s, LEFT, 1.05, 11.9, 1.0,
          "A console that shows only what was measured would hide the most useful fact: where the measurements stop.", size=26, font=HEAD,
          bold=True, spacing=1.05, name="Title")
     heroes = [(str(n["partial_g"]), "partial-gravity combustion tests in the PSI repository"),
-              (f"{n['solid_top_o2']:.1f}%", "highest oxygen level of any solid-fuel test point with a stated outcome"),
+              (f"{n['solid_top_o2']:.1f}%", "highest oxygen of any solid-fuel test point with a stated outcome"),
               (f"{n['co2_and_he']} of {n['n']}", "droplet tests that contain both CO2 and helium")]
     for i, (value, caption) in enumerate(heroes):
         hero(s, LEFT + i * 2.35, 2.45, 2.2, value, caption, size=44, color=AMBER if i == 1 else TEXT, caption_w=2.1, name=f"Hero number {i + 1}")
@@ -503,10 +508,10 @@ def slide_unknown(prs, n):
     text(s, px + 0.25, py + 1.0, pw - 0.5, 1.0,
          f"cool flames after the visible flame goes out\npale-blue flames near the limit\nsmoke particles below {n['smoke_nm']} nm", size=13.5,
          color=TEXT, spacing=1.12, name="Cannot see")
-    text(s, px + 0.25, py + 2.12, pw - 0.5, 0.3, "WHERE THE MEASUREMENTS STOP", size=11, font=MONO, color=DIM, name="Panel label 2")
+    text(s, px + 0.25, py + 2.12, pw - 0.5, 0.3, "WHERE THIS CONSOLE'S DATA STOPS", size=11, font=MONO, color=DIM, name="Panel label 2")
     text(s, px + 0.25, py + 2.4, pw - 0.5, 1.0,
-         f"lunar or Martian gravity: no data in the PSI repository\nsolid materials: no test above {n['solid_limit']:g}% oxygen\n"
-         "CO2 with helium: never in one droplet test", size=13.5, color=TEXT, spacing=1.12, name="Where it stops")
+         f"lunar or Martian gravity: no data in the PSI repository\nsolid materials: no test point above {n['solid_top_o2']:.1f}% oxygen\n"
+         "CO2 with helium: never in one FLEX test", size=13.5, color=TEXT, spacing=1.12, name="Where it stops")
 
     text(s, LEFT, 4.75, 7.0, 0.7, SITE, size=30, font=MONO, color=AMBER, bold=True, link=SITE_URL, name="Live link")
     text(s, LEFT, 5.5, 7.0, 0.4, "Every number in this deck is in the console, with its source.", size=16, name="Last line")
