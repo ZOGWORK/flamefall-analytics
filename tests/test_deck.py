@@ -104,9 +104,14 @@ def test_two_builds_from_the_same_data_are_the_same_file(tmp_path):
     assert a.read_bytes() == b.read_bytes()
     core = zipfile.ZipFile(a).read("docProps/core.xml").decode("utf-8")
     assert "Team Flamefall Analytics" in core and "Steve Canny" not in core and "python-pptx" not in core
-    app = zipfile.ZipFile(DECK).read("docProps/app.xml").decode("utf-8")           # the file describes itself, not a template
-    assert "<Slides>7</Slides>" in app and "<PresentationFormat>Widescreen</PresentationFormat>" in app
-    assert "Macintosh" not in app and "4:3" not in app
+    for path in (a, DECK):                                                         # the file describes itself, not a template
+        app = zipfile.ZipFile(path).read("docProps/app.xml").decode("utf-8")
+        assert app == build_deck.APP_PROPERTIES
+        assert "<Slides>7</Slides><Notes>7</Notes>" in app and "Widescreen" in app
+        assert not any(left in app for left in ("Macintosh", "4:3", "Office Theme", "<Words>", "AppVersion"))
+    with zipfile.ZipFile(a) as z:
+        assert {(i.date_time, i.create_system, i.external_attr) for i in z.infolist()} == {
+            (build_deck.FIXED_DATE, build_deck.ZIP_SYSTEM, build_deck.ZIP_ATTR)}
 
 
 def test_exactly_seven_slides_each_with_a_source_line_and_speaker_notes(deck):
@@ -133,7 +138,7 @@ def test_every_number_on_the_slides_is_the_one_in_the_data(n, deck):
             f"{h['Extinction']} of {h['n']}", f"Extinction {m['Extinction']}", f"Extinction {h['Extinction']}"],
         5: [f"{c['indicated']} of {n['heptane_extinctions']}", n["cool_temp"], "as reported for gas cool flames"],
         6: [f"{n['auc_headline']:.2f}", f"({n['auc_cv']:.2f})", f"{pct(n['fpr'], 0)} false-positive rate",
-            f"{n['fp']} of {n['fp'] + n['tn']} negatives", f"{n['model_rows']} OF {n['n']} TESTS", "NO PROBABILITY FOR A SOLID"],
+            f"{n['fp']} of {n['fp'] + n['tn']} negatives", f"{n['model_rows']} OF {n['n']} TESTS"],
         7: [f"{n['solid_top_o2']:.1f}%", f"{n['co2_and_he']} of {n['n']}", f"above {n['solid_limit']:g}% oxygen", f"below {n['smoke_nm']} nm"],
     }
     for number, strings in expected.items():
@@ -161,10 +166,15 @@ def test_every_number_on_the_slides_is_the_one_in_the_data(n, deck):
     for row in n["near"]:
         assert row["test"] in flat[5]
     assert [r["distance"] for r in n["near"]] == sorted(r["distance"] for r in n["near"])
+    notes = pptx.Presentation(str(DECK)).slides[5].notes_slide.notes_text_frame.text
+    assert "the nearest real tests and no probability" in notes
+    table = " ".join(t for t in deck[5] if "sustained" in t or "BASS" in t)
+    assert table and not re.search(r"\d+(\.\d+)?%", table)                       # no chance is printed for the solid
 
 
 def test_the_confusion_matrix_has_each_count_in_its_own_cell(n):
-    shapes = by_name(pptx.Presentation(str(DECK)).slides[5])
+    slide = pptx.Presentation(str(DECK)).slides[5]
+    shapes = by_name(slide)
     cell = lambda name: shapes[name].text_frame.text                                       # noqa: E731
     assert shapes["Row 1"].text_frame.text == "flame went out" and shapes["Row 2"].text_frame.text == "flame did not go out"
     assert "goes out" in shapes["Column 1"].text_frame.text and "keeps burning" in shapes["Column 2"].text_frame.text
@@ -177,6 +187,11 @@ def test_the_confusion_matrix_has_each_count_in_its_own_cell(n):
     source = shapes["Source"].text_frame.text
     assert all(test in source for test in n["model_left_out"]) and n["model_left_out"] == ["FLEX-114"]
     assert "printed as 0 mmHg and treated as missing" in source                 # what the source shows, not "no pressure"
+    assert f"{n['report']}, Table IX" in source                                 # the table the 275 of 276 tests come from
+    slide_text = "\n".join(s.text_frame.text for s in slide.shapes if s.has_text_frame)   # the cells of one row share a name
+    for row in n["near"]:                                                       # each nearest test shows its flow direction,
+        assert f"{row['flow']:g} cm/s {row['direction']}" in slide_text         # which the distance does not compare
+    assert "BY OXYGEN, PRESSURE AND FLOW SPEED" in slide_text
 
 
 def test_the_last_slide_claims_only_what_the_data_supports(n):
@@ -186,15 +201,20 @@ def test_the_last_slide_claims_only_what_the_data_supports(n):
     for needed in ("PSI Data Repository", "challenge brief", "SAME Final Report", "T'ien et al."):
         assert needed in source, needed
     assert "Appendix B" in source                                               # where the cool-flame evidence is
-    panel = shapes["Panel label 2"].text_frame.text + "\n" + shapes["Not in the repository"].text_frame.text
+    panel = shapes["Panel label 2"].text_frame.text + "\n" + shapes["Where it stops"].text_frame.text
     # Partial-gravity combustion has been tested: drop towers, parabolic flights and one suborbital
     # flight, all in the project's own evidence. What is true is that the repository holds none.
     from flamefall import catalogue as cat
 
     assert (cat.load_evidence()["evidence_class"] == "partial_g").sum() >= 5
     assert "NEVER TESTED" not in panel.upper() and "THE DATA DOES NOT HOLD" not in panel.upper()
-    assert "WHAT THE REPOSITORY DOES NOT HOLD" in panel and "combustion data in lunar or Martian gravity" in panel
-    assert n["partial_g"] == 0
+    # each line carries its own scope: the first is about the PSI repository, the other two about every test in the data
+    assert "lunar or Martian gravity: no data in the PSI repository" in panel and n["partial_g"] == 0
+    solid = cat.load_solid_points()
+    assert f"solid materials: no test above {n['solid_limit']:g}% oxygen" in panel
+    assert solid["o2_at_outcome_pct"].max() <= n["solid_limit"] and solid["o2_pct"].max() <= n["solid_limit"]
+    assert "CO2 with helium: never in one droplet test" in panel and n["co2_and_he"] == 0
+    assert "in the PSI repository" in shapes["Hero number 1 caption"].text_frame.text
 
 
 def test_the_waffle_has_one_cell_per_test_in_test_order(n):
@@ -238,14 +258,16 @@ def test_the_biggest_type_on_every_slide_is_a_number():
 
 
 def test_no_slide_is_a_wall_of_text(deck):
-    """A word budget over everything on the slide a reader has to read: every piece of text except
-    the source line, the slide number and bare numbers. Labels count, whatever their letter case, and
-    so does anything added later, whatever its shape is called. The limits are round ceilings, not
+    """A word budget over everything on the slide a reader has to read: every text box and shape
+    except the source line, the slide number and bare numbers (the words inside a chart, its category
+    names and legend, are not counted). Labels count, whatever their letter case, and so does
+    anything added later, whatever its shape is called. The limits are round ceilings, not
     the deck's own figures: a slide may carry at most 120 words, no single piece of text more than
-    22, and at most five pieces of nine words or more (a headline, the hero captions and one line)."""
+    22, and at most five pieces of nine words or more (a headline, the hero captions and one line).
+    A piece is one line as written: three lines in one box are three pieces."""
     for i, texts in enumerate(deck, start=1):
-        read = [t for t in texts if not t.startswith(("Source: ", "chart: ")) and not re.fullmatch(r"\d / 7", t)
-                and re.search(r"[A-Za-z]{3}", t)]
+        read = [line for t in texts if not t.startswith(("Source: ", "chart: ")) and not re.fullmatch(r"\d / 7", t)
+                for line in t.split("\n") if re.search(r"[A-Za-z]{3}", line)]
         words = [len(re.findall(r"\S*[A-Za-z0-9]\S*", t)) for t in read]              # a separator dot is not a word
         assert sum(words) <= 120, f"slide {i}: {sum(words)} words"
         assert max(words) <= 22, f"slide {i}: {read[words.index(max(words))]}"
