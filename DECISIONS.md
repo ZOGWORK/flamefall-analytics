@@ -249,7 +249,9 @@ sources themselves.
   links, in-place navigation, the glass card). The numbers are from one machine and move from run
   to run; the scripts are in the repository so they can be measured again.
 - **D45. One deck in two places (15 Nov).** The team lead asked for the page at `/deck/` to
-  show the same seven slides as the PowerPoint file. The page now types no words of its own.
+  show the same seven slides as the PowerPoint file. The page now has no slide text of its own (it types
+  only its shell, the three outcome names in the legends, the axis units and labels for screen
+  readers).
   `scripts/build_deck.py` builds the slides, and its `web_content()` reads back from them the text
   of every box, the accent colour it is set in and the numbers the drawings need;
   `scripts/export_web.py` writes that to `web/src/data/deck.json`. A change to a slide's wording
@@ -258,7 +260,10 @@ sources themselves.
   tables), so it is the same content and not a picture of the slides. Speaker notes stay in the
   PowerPoint file. The earlier web slides are gone: the cabin atmospheres, the three steps of the
   intelligence layer and the use of SI tools. The first two are in the console's own pages
-  (Overview and Gaps; Scenario Lab and Models). The SI disclosure was on no other page, so the
+  (the atmospheres in Overview and What We Don't Know; retrieval in the Investigation Catalogue,
+  the ranking formula in the Scenario Lab, the models in the Model Lab). The deck page sits on a
+  flat background, without the console's backdrop, and carries one line under its controls: not
+  affiliated with NASA, and a link to the SI disclosure. The SI disclosure was on no other page, so the
   sidebar now links `docs/SI_DISCLOSURE.md`.
 - **D44. The PowerPoint deck (14 Nov).** The team lead asked for the seven slides as a PowerPoint
   file as well as the page at `/deck/`. `scripts/build_deck.py` builds it with python-pptx and reads
