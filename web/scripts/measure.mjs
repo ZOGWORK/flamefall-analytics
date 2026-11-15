@@ -34,7 +34,7 @@ const pending = new Map();
 const listeners = [];
 ws.addEventListener("message", (e) => {
   const m = JSON.parse(e.data);
-  if (m.id && pending.has(m.id)) { const { resolve, reject } = pending.get(m.id); pending.delete(m.id); m.error ? reject(new Error(m.error.message)) : resolve(m.result); }
+  if (m.id && pending.has(m.id)) { const { resolve, reject } = pending.get(m.id); pending.delete(m.id); if (m.error) reject(new Error(m.error.message)); else resolve(m.result); }
   else for (const l of listeners) l(m);
 });
 const send = (method, params = {}, sessionId) => new Promise((resolve, reject) => {
