@@ -225,9 +225,10 @@ sources themselves.
 - **D43. Performance (14 Nov).** The team lead reported the site as very laggy. Measured in
   headless Chrome with `web/scripts/measure.mjs`, old build and new build back to back, four causes
   were found and fixed:
-  - Two backdrop animations never stopped (a drifting masked grid and two blurred embers), so the
-    whole screen was repainted on every frame on every page. The backdrop is now still, and the
-    status dot no longer pulses. Animations left running on a page at rest: 4 before, 0 after.
+  - Four animations never stopped: in the backdrop, a drifting masked grid and two blurred
+    embers, and in the status strip a pulsing dot. The backdrop ones repainted the whole screen on
+    every frame on every page. The backdrop is now still and the dot no longer pulses. Animations
+    left running on a page at rest: 4 before, 0 after.
   - The liquid-glass card recomputes its distortion on every frame in which anything behind it
     changes. With the backdrop moving, the Overview ran at about 24 frames a second at rest and
     30 while scrolling; it now runs at the display's rate at rest and close to it while scrolling.
@@ -236,9 +237,10 @@ sources themselves.
   - Every step of a slider or filter redrew every chart and table at once. In a 30-step drag the
     page was blocked for about 1.1 s in the FLEX Explorer and 0.35 s in the Scenario Lab; it is
     now about 0.07 s and 0.02 s. The controls render on their own; the results wait until the
-    control has paused for a tenth of a second and are then rendered as a deferred update. Table
-    rows and charts whose inputs did not change are not rendered again, and these charts do not
-    animate.
+    control has paused for a tenth of a second and are then rendered as a deferred update. The
+    few controls that sit among the results (the chart tabs and pickers, the size and volume
+    inputs) show the live value, so they answer at once. Table rows and charts whose inputs did
+    not change are not rendered again. A chart that a filter or slider redraws does not animate.
   - At load, several hundred cells each ran their own entrance animation, every section entered
     through a blur, and every chart on the page was built at once. Cells now arrive with their
     panel, entrances use opacity and position only, and a chart below the fold is built in an
