@@ -22,5 +22,5 @@ node scripts/measure.mjs http://localhost:3211    # load, idle, scrolling and sl
 
 The app reads only the JSON in `src/data/` and `public/psi/`. Those files are written by
 `python scripts/export_web.py` in the repository root and are committed; do not edit them by hand.
-The page at `/deck/` types no words of its own: `src/data/deck.json` holds the text of every slide
+The page at `/deck/` has no slide text of its own: `src/data/deck.json` holds the text of every slide
 of the PowerPoint file, and a change to a slide is made in `scripts/build_deck.py`.
