@@ -100,9 +100,34 @@ def test_no_single_burning_rate_is_quoted_for_n_heptane():
 
 OWN_SCREENSHOTS = {"docs/img/overview.png", "docs/img/scenario-lab.png"}
 OWN_IMAGES = OWN_SCREENSHOTS | {"web/src/app/icon.svg"}
-IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp", ".ico", ".avif", ".bmp", ".tif", ".tiff")
-# a run of path or address characters ending in an image suffix, wherever it appears
-IMAGE_FILE = re.compile(r"[\w.:/%~+-]*\.(?:png|jpe?g|svg|gif|webp|ico|avif|bmp|tiff?)\b", re.I)
+IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp", ".ico", ".avif", ".bmp", ".tif", ".tiff", ".heic",
+                  ".heif", ".jxl", ".apng")
+# A whole token (everything up to white space, a quote, a bracket or a backtick) that ends in an
+# image suffix. Taking the whole token means an address that merely contains an allowed path
+# ("https://elsewhere/get?u=docs/img/overview.png") is not mistaken for that path.
+IMAGE_FILE = re.compile(r"""[^\s"'()<>\[\]`]*\.(?:png|jpe?g|svg|gif|webp|ico|avif|bmp|tiff?|heic|heif|jxl|apng)\b""", re.I)
+MARKDOWN_IMAGE = re.compile(r"!\[[^\]]*\]\(([^)\s]*)[^)]*\)")
+CSS_URL = re.compile(r"(?<![\w.])url\(\s*([^)]*)\)")          # the CSS function, not a name that ends in "url"
+IMAGE_CHECKED = READER_FACING + [ROOT / "web" / "src" / "app" / "globals.css"]
+# the liquid-glass surface builds its displacement maps as SVG text in code; they are not pictures
+COMPUTED_SVG_ONLY = {"liquid-glass.tsx"}
+
+
+def foreign_images(name: str, text: str) -> list[str]:
+    """Every way this text could show an image that is not one of the project's own.
+
+    Caught: a file name or address ending in an image suffix; a Markdown image; an <img> or
+    next/image element; an inline `data:image`; a CSS `url(...)` that is not a reference to an
+    element on the page. A picture loaded in some other way would need a new check here.
+    """
+    found = [t for t in IMAGE_FILE.findall(text) if t not in OWN_IMAGES]
+    found += [f"markdown image: {t}" for t in MARKDOWN_IMAGE.findall(text) if t not in OWN_SCREENSHOTS]
+    if re.search(r"<img\b|<Image\b|next/image", text):
+        found.append("an image element")
+    if "data:image" in text and name not in COMPUTED_SVG_ONLY:
+        found.append("an inline data:image")
+    found += [f"css url: {t}" for t in CSS_URL.findall(text) if not t.strip().strip("\"'").startswith("#")]
+    return found
 NOT_SOURCE = {".git", ".venv", "node_modules", ".next", "out", "__pycache__", ".pytest_cache"}
 
 
@@ -128,11 +153,17 @@ def test_the_only_image_files_in_the_repository_are_the_icon_and_the_two_screens
 def test_the_image_rule_catches_an_image_however_it_is_referenced():
     """The rule must fail for a foreign image in each way one can be written, or it proves nothing."""
     for text in ("![](https://example.org/nasa-logo.png?x=1)", "<img src=logo.png>", "[logo]: assets/logo.png",
-                 "see patch.webp", 'src="/meatball.SVG"', "background: url(insignia.jpeg)", "favicon.ico"):
-        assert not set(IMAGE_FILE.findall(text)) <= OWN_IMAGES, text
-    for text in ("![Overview](docs/img/overview.png)", "`web/src/app/icon.svg`", "docs/img/scenario-lab.png)"):
-        assert set(IMAGE_FILE.findall(text)) <= OWN_IMAGES and IMAGE_FILE.findall(text), text
-    assert IMAGE_FILE.findall("no image here: config.json, icon={Flame}, a.pngx") == []
+                 "see patch.webp", 'src="/meatball.SVG"', "background: url(insignia.jpeg)", "favicon.ico",
+                 "![](data:image/png;base64,AAAA)", '<img src="https://images.example/abc123">',
+                 "https://elsewhere.example/get?u=docs/img/overview.png", "photo.heic", "![x](https://images.example/abc123)",
+                 'import Image from "next/image"', "background: url(https://images.example/abc123)",
+                 "x,docs/img/overview.png"):
+        assert foreign_images("README.md", text) != [], text
+    for text in ("![Overview](docs/img/overview.png)", "`web/src/app/icon.svg`", "(docs/img/scenario-lab.png)",
+                 "no image here: config.json, icon={Flame}, a.pngx", "fill=\"url(#grad-1)\"", "filter: url(#${filterId})"):
+        assert foreign_images("README.md", text) == [], text
+    assert foreign_images("liquid-glass.tsx", "`data:image/svg+xml,${encodeURIComponent(svg)}`") == []
+    assert foreign_images("page.tsx", "`data:image/svg+xml,${encodeURIComponent(svg)}`") != []
 
 
 def test_no_agency_marks_are_referenced():
@@ -140,7 +171,5 @@ def test_no_agency_marks_are_referenced():
     for p in READER_FACING:
         text = p.read_text(encoding="utf-8")
         assert not re.search(r"<img[^>]+(nasa|meatball|insignia|patch)", text, re.I), p.name
-        # Any mention of an image file, however it is written (a link, a tag, a bare path, a web
-        # address), must be one of this project's own images. Anything else has to be looked at
-        # before it is allowed.
-        assert set(IMAGE_FILE.findall(text)) <= OWN_IMAGES, f"{p.name}: {sorted(set(IMAGE_FILE.findall(text)) - OWN_IMAGES)}"
+    for p in IMAGE_CHECKED:
+        assert foreign_images(p.name, p.read_text(encoding="utf-8")) == [], p.name
