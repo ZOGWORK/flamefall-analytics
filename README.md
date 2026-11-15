@@ -30,9 +30,10 @@ Each number below is recomputed from the data files by the tests (`tests/test_do
 | Fuel matters as much as atmosphere | Extinction in 126 of 157 methanol tests and 60 of 119 n-heptane tests | Same table |
 | "No visible flame" is not "fire out" | 39 of 60 n-heptane extinctions show evidence of cool-flame burning afterwards | Same report, Appendix B captions |
 | Repository search for "combustion" | 26 records, 24 of them combustion science, 25 experimental tables | PSI Data Repository |
-| Solid-fuel test points | 313 transcribed, 275 with a stated outcome; none above 34% oxygen | NASA/TM-20210011385, PSI-99 and four papers |
+| Solid-fuel test points | 313 transcribed, 275 with a stated outcome; the highest oxygen among them is 31.9% | NASA/TM-20210011385, PSI-99 and four papers |
+| Widest oxygen range any solid-fuel investigation states | up to 34%; above that there is no solid-material test point at all | T'ien et al., Combust. Flame 277 (2025) 114244 (SoFIE-GEL) |
 | Combustion tests in lunar or Martian gravity in the repository | 0 | Official challenge brief; PSI search |
-| Sourced statements | 66, of which 60 were verified in full text | `data/evidence.json` |
+| Sourced statements | 66, of which 60 were verified against their primary source | `data/evidence.json` |
 
 Three small models were fitted, each on one kind of evidence, and reported as they scored on
 groups they had never seen:
