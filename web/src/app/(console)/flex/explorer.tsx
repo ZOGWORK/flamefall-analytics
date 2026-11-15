@@ -148,13 +148,29 @@ export function Explorer() {
         </Field>
       </div>
     </Panel>
-      <Results q={settled} set={set} />
+      <Results q={settled} view={q.view} x={q.x} kx={q.kx} test={q.test} set={set} />
     </>
   );
 }
 
 /** Everything the filters produce. Re-rendered only when the settled filters change. */
-const Results = memo(function Results({ q, set }: { q: Query; set: (patch: Partial<Query>) => void }) {
+const Results = memo(function Results({
+  q,
+  view: liveView,
+  x: liveX,
+  kx: liveKx,
+  test: liveTest,
+  set,
+}: {
+  /** The settled filters: every chart and the table are computed from them. */
+  q: Query;
+  /** The four controls that sit among the results show the live choice, so they answer at once. */
+  view: string;
+  x: string;
+  kx: string;
+  test: string;
+  set: (patch: Partial<Query>) => void;
+}) {
   const fuels = list(q.fuel);
   // values typed into the address bar are checked: anything else falls back to the full range or the default
   const o2 = range(q.o2, O2);
@@ -163,7 +179,9 @@ const Results = memo(function Results({ q, set }: { q: Query; set: (patch: Parti
   const outcomes = list(q.out);
   const xcol = oneOf(q.x, GAS_COLUMNS, "o2_pct");
   const kx = oneOf(q.kx, RATE_COLUMNS, "d0_mm");
-  const view = oneOf(q.view, ["share", "mix"] as const, "share");
+  const view = oneOf(liveView, ["share", "mix"] as const, "share");   // which tab is open changes no data: it is live
+  const xChoice = oneOf(liveX, GAS_COLUMNS, "o2_pct");
+  const kxChoice = oneOf(liveKx, RATE_COLUMNS, "d0_mm");
   const fullPressure = pressure[0] <= P[0] && pressure[1] >= P[1];
 
   const d = useMemo(() => {
@@ -253,7 +271,7 @@ const Results = memo(function Results({ q, set }: { q: Query; set: (patch: Parti
                 <TabsTrigger value="share" className="rounded-sm px-3">Share + trend</TabsTrigger>
                 <TabsTrigger value="mix" className="rounded-sm px-3">All three outcomes</TabsTrigger>
               </TabsList>
-              <Segments label="Compare against" value={xcol} onChange={(v) => set({ x: v })} options={[{ value: "o2_pct", label: "Oxygen" }, { value: "co2_pct", label: "Carbon dioxide" }, { value: "he_pct", label: "Helium" }]} />
+              <Segments label="Compare against" value={xChoice} onChange={(v) => set({ x: v })} options={[{ value: "o2_pct", label: "Oxygen" }, { value: "co2_pct", label: "Carbon dioxide" }, { value: "he_pct", label: "Helium" }]} />
             </div>
             <TabsContent value="share" className="mt-4">
               <ShareChart rows={d} xcol={xcol} />
@@ -288,7 +306,7 @@ const Results = memo(function Results({ q, set }: { q: Query; set: (patch: Parti
             title="Average burning-rate constant K, one point per test"
             aside={
               <div className="w-64 max-w-full">
-                <Pick label="Plot K against" value={kx} onChange={(v) => set({ kx: v })} options={Object.entries(AXIS_LABEL).map(([value, label]) => ({ value, label }))} />
+                <Pick label="Plot K against" value={kxChoice} onChange={(v) => set({ kx: v })} options={Object.entries(AXIS_LABEL).map(([value, label]) => ({ value, label }))} />
               </div>
             }
           >
@@ -311,7 +329,7 @@ const Results = memo(function Results({ q, set }: { q: Query; set: (patch: Parti
         explainer="The line is rebuilt from three printed numbers. It is not the measured trace."
       >
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-          <Panel className="xl:col-span-3" aside={<div className="w-40"><Pick mono label="Test" value={row.test_id} onChange={(v) => set({ test: v })} options={d.map((r) => ({ value: r.test_id, label: r.test_id }))} /></div>} title={`${row.test_id} · ${fuelName(row.fuel)}`}>
+          <Panel className="xl:col-span-3" aside={<div className="w-40"><Pick mono label="Test" value={d.some((r) => r.test_id === liveTest) ? liveTest : row.test_id} onChange={(v) => set({ test: v })} options={d.map((r) => ({ value: r.test_id, label: r.test_id }))} /></div>} title={`${row.test_id} · ${fuelName(row.fuel)}`}>
             {line ? (
               <D2Chart line={line} row={row} />
             ) : (
