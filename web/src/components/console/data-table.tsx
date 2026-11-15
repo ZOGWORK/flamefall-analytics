@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DASH } from "@/lib/format";
@@ -22,6 +22,20 @@ export interface Column<T> {
 export function n(value: number | null | undefined, digits = 2): React.ReactNode {
   return value === null || value === undefined || Number.isNaN(value) ? <span className="text-dim">{DASH}</span> : value.toFixed(digits);
 }
+
+function RowCells<T>({ row, columns }: { row: T; columns: Column<T>[] }) {
+  return (
+    <TableRow className="border-line hover:bg-accent">
+      {columns.map((c) => (
+        <TableCell key={c.key} className={cn("px-2.5 py-1.5 align-top", c.numeric && "num text-right whitespace-nowrap", c.className)}>
+          {c.cell(row)}
+        </TableCell>
+      ))}
+    </TableRow>
+  );
+}
+/** One row. It renders again only when its row or the column list changes, so narrowing a filter does not redraw the rows that stay. */
+const Row = memo(RowCells) as typeof RowCells;
 
 /**
  * A sortable table. Sorting happens in the browser. Empty cells are empty in the source and stay
@@ -93,13 +107,7 @@ export function DataTable<T>({
         </TableHeader>
         <TableBody>
           {sorted.map((row) => (
-            <TableRow key={rowKey(row)} className="border-line hover:bg-accent">
-              {columns.map((c) => (
-                <TableCell key={c.key} className={cn("px-2.5 py-1.5 align-top", c.numeric && "num text-right whitespace-nowrap", c.className)}>
-                  {c.cell(row)}
-                </TableCell>
-              ))}
-            </TableRow>
+            <Row key={rowKey(row)} row={row} columns={columns} />
           ))}
         </TableBody>
       </Table>
