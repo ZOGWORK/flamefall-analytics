@@ -9,6 +9,7 @@ before clicking **Submit for Judging**. Submission closes Sunday 15 November 202
 |---|---|
 | Live project | https://flamefall-analytics.onrender.com |
 | Demo (7 slides, public, no sign-in) | https://flamefall-analytics.onrender.com/deck/ |
+| The same seven-slide story as a PowerPoint file, for presenting | `docs/Flamefall-Analytics-deck.pptx` in the repository |
 | Code and data | https://github.com/ZOGWORK/flamefall-analytics |
 
 ## Project name
